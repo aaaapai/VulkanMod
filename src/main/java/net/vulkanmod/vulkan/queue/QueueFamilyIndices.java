@@ -33,7 +33,7 @@ public class QueueFamilyIndices {
                 return true;
             }
 
-
+            //TODO: Change back to upstream defaults (No Compute for present)
             //Instead using VK_QUEUE_COMPUTE_BIT to check for Present Support
             for (int i = 0; i < queueFamilies.capacity(); i++) {
                 int queueFlags = queueFamilies.get(i).queueFlags();
