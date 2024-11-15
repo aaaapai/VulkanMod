@@ -31,10 +31,7 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -482,6 +479,7 @@ public abstract class Pipeline {
     }
 
     public static class Builder {
+        final EnumSet<SPIRVUtils.SpecConstant> specConstants = EnumSet.noneOf(SPIRVUtils.SpecConstant.class);
         final VertexFormat vertexFormat;
         final String shaderPath;
         List<UBO> UBOs;
@@ -552,6 +550,7 @@ public abstract class Pipeline {
             JsonArray jsonManualUbos = GsonHelper.getAsJsonArray(jsonObject, "ManualUBOs", null);
             JsonArray jsonSamplers = GsonHelper.getAsJsonArray(jsonObject, "samplers", null);
             JsonArray jsonPushConstants = GsonHelper.getAsJsonArray(jsonObject, "PushConstants", null);
+            JsonArray jsonSpecConstants = GsonHelper.getAsJsonArray(jsonObject, "SpecConstants", null);
 
             if (jsonUbos != null) {
                 for (JsonElement jsonelement : jsonUbos) {
@@ -572,10 +571,30 @@ public abstract class Pipeline {
             if (jsonPushConstants != null) {
                 this.parsePushConstantNode(jsonPushConstants);
             }
+
+            if (jsonSpecConstants != null) {
+                this.parseSpecConstantNode(jsonSpecConstants);
+            }
+
         }
 
         public void setUniformSupplierGetter(Function<Uniform.Info, Supplier<MappedBuffer>> uniformSupplierGetter) {
             this.uniformSupplierGetter = uniformSupplierGetter;
+        }
+
+        private void parseSpecConstantNode(JsonArray jsonSpecConstants) {
+//            AlignedStruct.Builder builder = new AlignedStruct.Builder();
+
+            for(JsonElement jsonelement : jsonSpecConstants) {
+                JsonObject jsonobject2 = GsonHelper.convertToJsonObject(jsonelement, "SC");
+
+                String name = GsonHelper.getAsString(jsonobject2, "name");
+//                String type2 = GsonHelper.getAsString(jsonobject2, "type");
+
+
+                this.specConstants.add(SPIRVUtils.SpecConstant.valueOf(name));
+            }
+
         }
 
         private void parseUboNode(JsonElement jsonelement) {
