@@ -31,17 +31,16 @@ public class DrawBuffers {
 
     private static final long cmdBufferPtr = MemoryUtil.nmemAlignedAlloc(CMD_STRIDE, (long) ChunkAreaManager.AREA_SIZE * QuadFacing.COUNT * CMD_STRIDE);
 
-    private final int index;
+
     private final Vector3i origin;
     private final int minHeight;
 
-    private boolean allocated = false;
     AreaBuffer indexBuffer;
     private final EnumMap<TerrainRenderType, AreaBuffer> vertexBuffers = new EnumMap<>(TerrainRenderType.class);
 
     //Need ugly minHeight Parameter to fix custom world heights (exceeding 384 Blocks in total)
     public DrawBuffers(int index, Vector3i origin, int minHeight) {
-        this.index = index;
+//        this.index = index;
         this.origin = origin;
         this.minHeight = minHeight;
     }
@@ -93,8 +92,6 @@ public class DrawBuffers {
     }
 
     private AreaBuffer getAreaBufferOrAlloc(TerrainRenderType renderType) {
-        this.allocated = true;
-
         int initialSize = switch (renderType) {
             case SOLID, CUTOUT -> 100000;
             case CUTOUT_MIPPED -> 250000;
@@ -138,7 +135,6 @@ public class DrawBuffers {
     }
 
     public void buildDrawBatchesIndirect(Vec3 cameraPos, IndirectBuffer indirectBuffer, StaticQueue<RenderSection> queue, TerrainRenderType terrainRenderType) {
-        long bufferPtr = cmdBufferPtr;
 
         boolean isTranslucent = terrainRenderType == TerrainRenderType.TRANSLUCENT;
 
@@ -159,7 +155,7 @@ public class DrawBuffers {
                 if (drawParameters.indexCount <= 0)
                     continue;
 
-                long ptr = bufferPtr + ((long) drawCount * CMD_STRIDE);
+                long ptr = cmdBufferPtr + ((long) drawCount * CMD_STRIDE);
                 MemoryUtil.memPutInt(ptr, drawParameters.indexCount);
                 MemoryUtil.memPutInt(ptr + 4, 1);
                 MemoryUtil.memPutInt(ptr + 8, drawParameters.firstIndex == -1 ? 0 : drawParameters.firstIndex);
@@ -235,7 +231,7 @@ public class DrawBuffers {
     }
 
     public void releaseBuffers() {
-        if (!this.allocated)
+        if (this.vertexBuffers.isEmpty())
             return;
 
         this.vertexBuffers.values().forEach(AreaBuffer::freeBuffer);
@@ -244,8 +240,6 @@ public class DrawBuffers {
         if (this.indexBuffer != null)
             this.indexBuffer.freeBuffer();
         this.indexBuffer = null;
-
-        this.allocated = false;
     }
 
     public boolean isAllocated() {
@@ -265,8 +259,6 @@ public class DrawBuffers {
         int firstIndex = -1;
         int vertexOffset = -1;
         int baseInstance;
-
-        public DrawParameters() {}
 
         public void reset(ChunkArea chunkArea, TerrainRenderType r) {
             AreaBuffer areaBuffer = chunkArea.getDrawBuffers().getAreaBuffer(r);
