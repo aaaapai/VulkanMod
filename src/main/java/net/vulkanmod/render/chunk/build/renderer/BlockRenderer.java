@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -32,19 +33,17 @@ import org.joml.Vector3f;
 public class BlockRenderer extends AbstractBlockRenderContext {
     private Vector3f pos;
 
-    private BuilderResources resources;
+    private final BuilderResources resources;
     private TerrainBuilder terrainBuilder;
 
-    final boolean backFaceCulling = Initializer.CONFIG.backFaceCulling;
+    private final boolean backFaceCulling = Initializer.CONFIG.backFaceCulling;
 
     private TerrainRenderType renderType;
+    private static final BlockRenderDispatcher blockRenderer = Minecraft.getInstance().getBlockRenderer();
 
-    public void setResources(BuilderResources resources) {
-        this.resources = resources;
-    }
-
-    public BlockRenderer(LightPipeline flatLightPipeline, LightPipeline smoothLightPipeline) {
+    public BlockRenderer(LightPipeline flatLightPipeline, LightPipeline smoothLightPipeline, BuilderResources builderResources) {
         super();
+        this.resources = builderResources;
         this.setupLightPipelines(flatLightPipeline, smoothLightPipeline);
 
         this.random = new SingleThreadedRandomSource(42L);
@@ -61,8 +60,8 @@ public class BlockRenderer extends AbstractBlockRenderContext {
         this.renderType = renderType;
         this.terrainBuilder = this.resources.builderPack.builder(renderType);
         this.terrainBuilder.setBlockAttributes(blockState);
-
-        BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockState);
+        //Don't load the Minecraft class everytime
+        BakedModel model = blockRenderer.getBlockModel(blockState);
 
         BlockAndTintGetter renderRegion = this.renderRegion;
         Vec3 offset = blockState.getOffset(renderRegion, blockPos);
