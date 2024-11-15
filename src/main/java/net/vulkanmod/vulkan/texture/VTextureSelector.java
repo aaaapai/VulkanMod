@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.gl.GlTexture;
+import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.descriptor.ImageDescriptor;
 
 import java.nio.ByteBuffer;
