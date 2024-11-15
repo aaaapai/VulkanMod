@@ -1,5 +1,6 @@
 package net.vulkanmod.vulkan.texture;
 
+import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.queue.CommandPool;
