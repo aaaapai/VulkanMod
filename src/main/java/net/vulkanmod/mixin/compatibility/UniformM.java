@@ -28,15 +28,6 @@ public class UniformM {
         return 1;
     }
 
-    /**
-     * @author
-     * @reason
-     */
-    @Overwrite
-    public static int glGetAttribLocation(int i, CharSequence charSequence) {
-        return 0;
-    }
-
     @Inject(method = "upload", at = @At("HEAD"), cancellable = true)
     public void redirectUpload(CallbackInfo ci) {
         Renderer renderer = Renderer.getInstance();

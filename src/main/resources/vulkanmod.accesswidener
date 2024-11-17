@@ -13,5 +13,14 @@ accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTe
 accessible field net/minecraft/client/renderer/texture/SpriteContents$FrameInfo time I
 
 #1.20
-accessible field com/mojang/blaze3d/systems/RenderSystem vertexSorting Lcom/mojang/blaze3d/vertex/VertexSorting;
 accessible field net/minecraft/client/renderer/RenderStateShard name Ljava/lang/String;
+
+accessible class net/minecraft/client/renderer/ShaderManager$ShaderCompilationKey
+accessible method net/minecraft/client/renderer/ShaderManager$ShaderCompilationKey <init> (Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/shaders/CompiledShader$Type;Lnet/minecraft/client/renderer/ShaderDefines;)V
+accessible class net/minecraft/client/renderer/ShaderManager$ShaderSourceKey
+accessible method net/minecraft/client/renderer/ShaderManager$ShaderSourceKey <init> (Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/shaders/CompiledShader$Type;)V
+accessible class net/minecraft/client/renderer/ShaderManager$CompilationCache
+accessible field net/minecraft/client/renderer/ShaderManager$CompilationCache programs Ljava/util/Map;
+accessible field net/minecraft/client/renderer/ShaderManager$CompilationCache shaders Ljava/util/Map;
+accessible field net/minecraft/client/renderer/ShaderManager$CompilationCache postChains Ljava/util/Map;
+accessible method net/minecraft/client/renderer/CompiledShaderProgram <init> (I)V

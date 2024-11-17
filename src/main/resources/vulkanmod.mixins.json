@@ -7,8 +7,11 @@
   "mixins": [
   ],
   "client": [
-    "chunk.ClientChunkCacheM",
+    "window.WindowMixin",
+    "window.WindowAccessor",
+
     "chunk.ClientPacketListenerM",
+    "chunk.ClientChunkCacheM",
     "chunk.DirectionMixin",
     "chunk.FrustumMixin",
     "chunk.LevelRendererMixin",
@@ -16,32 +19,32 @@
     "chunk.SectionRenderDispatcherM",
     "chunk.ViewAreaM",
     "chunk.VisibilitySetMixin",
+
     "compatibility.EffectInstanceM",
-    "compatibility.PostChainM",
-    "compatibility.PostPassM",
     "compatibility.ProgramM",
     "compatibility.UniformM",
     "compatibility.gl.GL11M",
     "compatibility.gl.GL15M",
     "compatibility.gl.GL30M",
+
+    "debug.crash_report.SystemReportM",
     "debug.DebugScreenOverlayM",
     "debug.GlDebugInfoM",
     "debug.KeyboardHandlerM",
-    "debug.crash_report.SystemReportM",
+
     "matrix.Matrix4fM",
     "matrix.PoseAccessor",
-    "profiling.ClientMetricsSamplersProviderMixin",
+
     "profiling.GuiMixin",
     "profiling.KeyboardHandlerM",
     "profiling.LevelRendererMixin",
+
     "render.BufferUploaderM",
     "render.GameRendererMixin",
-    "render.GlProgramManagerMixin",
     "render.GlStateManagerM",
     "render.MinecraftMixin",
     "render.RenderSystemMixin",
     "render.RenderTypeM",
-    "render.ShaderInstanceM",
     "render.biome.BiomeManagerM",
     "render.block.BakedQuadM",
     "render.clouds.LevelRendererM",
@@ -57,6 +60,10 @@
     "render.frapi.ItemRendererMixin",
     "render.frapi.ModelBlockRendererM",
     "render.particle.SingleQuadParticleM",
+    "render.shader.CompilationCacheM",
+    "render.shader.CompiledShaderProgramM",
+    "render.shader.ShadeProgramConfigM",
+    "render.shader.ShaderManagerM",
     "render.target.MainTargetMixin",
     "render.target.RenderTargetMixin",
     "render.vertex.BufferBuilderM",
@@ -64,28 +71,37 @@
     "render.vertex.IndexTypeMixin",
     "render.vertex.VertexBufferM",
     "render.vertex.VertexFormatMixin",
-    "screen.OptionsScreenM",
+
     "screen.ScreenM",
-    "texture.MAbstractTexture",
-    "texture.MTextureUtil",
+    "screen.OptionsScreenM",
+
+    "texture.mip.MipmapGeneratorM",
     "texture.image.MNativeImage",
     "texture.image.NativeImageAccessor",
-    "texture.mip.MipmapGeneratorM",
     "texture.update.GameRendererM",
     "texture.update.MLightTexture",
     "texture.update.MSpriteContents",
     "texture.update.MTextureManager",
+    "texture.MAbstractTexture",
+    "texture.MTextureUtil",
+
     "util.ScreenshotRecorderM",
+
     "vertex.EntityOutlineGeneratorM",
     "vertex.SpriteCoordinateExpanderM",
     "vertex.VertexMultiConsumersM$DoubleM",
     "vertex.VertexMultiConsumersM$MultipleM",
     "vertex.VertexMultiConsumersM$SheetDecalM",
-    "voxel.VoxelShapeMixin",
+
     "wayland.InputConstantsM",
     "wayland.MinecraftMixin",
-    "window.WindowAccessor",
-    "window.WindowMixin"
+
+    "texture.mip.MipmapGeneratorM",
+
+    "compatibility.PostChainM",
+    "compatibility.PostPassM",
+
+    "voxel.VoxelShapeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -28,7 +28,7 @@ public class BakedQuadM implements ModelQuadView {
     private QuadFacing facing;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onInit(int[] vertices, int tintIndex, Direction face, TextureAtlasSprite textureAtlasSprite, boolean shade, CallbackInfo ci) {
+    private void onInit(int[] vertices, int tintIndex, Direction face, TextureAtlasSprite textureAtlasSprite, boolean shade, int lightEmission, CallbackInfo ci) {
         this.flags = ModelQuadFlags.getQuadFlags(this, face);
 
         int packedNormal = NormalHelper.computePackedNormal(this);

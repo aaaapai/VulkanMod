@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(AbstractTexture.class)
 public abstract class MAbstractTexture {
-    @Shadow protected boolean blur;
-    @Shadow protected boolean mipmap;
-
     @Shadow protected int id;
+
+    private boolean blur;
+    private boolean mipmap;
 
     /**
      * @author

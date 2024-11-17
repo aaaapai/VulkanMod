@@ -1,5 +1,6 @@
 package net.vulkanmod.mixin.texture.update;
 
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -8,6 +9,8 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.Mth;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -27,19 +30,34 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MLightTexture {
     @Shadow @Final private Minecraft minecraft;
     @Shadow @Final private GameRenderer renderer;
+    @Shadow @Final private TextureTarget target;
 
     @Shadow private boolean updateLightTexture;
     @Shadow private float blockLightRedFlicker;
 
-    @Shadow @Final private DynamicTexture lightTexture;
-    @Shadow @Final private NativeImage lightPixels;
-
+    private DynamicTexture lightTexture;
+    private NativeImage lightPixels;
 
     private Vector3f[] tempVecs;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(GameRenderer gameRenderer, Minecraft minecraft, CallbackInfo ci) {
+        initLightMap();
+
         this.tempVecs = new Vector3f[]{new Vector3f(), new Vector3f(), new Vector3f()};
+    }
+
+    private void initLightMap() {
+        this.lightTexture = new DynamicTexture(16, 16, false);
+        this.lightPixels = this.lightTexture.getPixels();
+
+        for(int i = 0; i < 16; ++i) {
+            for(int j = 0; j < 16; ++j) {
+                this.lightPixels.setPixel(j, i, 0xFFFFFFFF);
+            }
+        }
+
+        this.lightTexture.upload();
     }
 
     /**
@@ -57,7 +75,8 @@ public class MLightTexture {
         if (this.updateLightTexture) {
             this.updateLightTexture = false;
 
-            this.minecraft.getProfiler().push("lightTex");
+            ProfilerFiller profilerFiller = Profiler.get();
+            profilerFiller.push("lightTex");
 
             // TODO: Other mods might be changing lightmap behaviour, we can't be aware of that here
 
@@ -162,9 +181,7 @@ public class MLightTexture {
                     VkGlTexture.getTexture(this.lightTexture.getId()).getVulkanImage().readOnlyLayout(stack, commandBuffer.getHandle());
                 }
 
-                ImageUploadHelper.INSTANCE.submitCommands();
-
-                this.minecraft.getProfiler().pop();
+                profilerFiller.pop();
             }
         }
 

@@ -65,7 +65,7 @@ public class BlockRenderer extends AbstractBlockRenderContext {
         BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockState);
 
         BlockAndTintGetter renderRegion = this.renderRegion;
-        Vec3 offset = blockState.getOffset(renderRegion, blockPos);
+        Vec3 offset = blockState.getOffset(blockPos);
         pos.add((float) offset.x, (float) offset.y, (float) offset.z);
 
         this.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
@@ -112,7 +112,7 @@ public class BlockRenderer extends AbstractBlockRenderContext {
 
         TerrainBufferBuilder bufferBuilder = terrainBuilder.getBufferBuilder(quadFacing.ordinal());
 
-        Vec3i normal = quad.getFacingDirection().getNormal();
+        Vec3i normal = quad.getFacingDirection().getUnitVec3i();
         int packedNormal = I32_SNorm.packNormal(normal.getX(), normal.getY(), normal.getZ());
 
         float[] brightnessArr = quadLightData.br;

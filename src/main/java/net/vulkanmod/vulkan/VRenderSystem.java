@@ -61,6 +61,8 @@ public abstract class VRenderSystem {
 
     public static void initRenderer() {
         Vulkan.initVulkan(window);
+
+        setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     public static MappedBuffer getScreenSize() {
