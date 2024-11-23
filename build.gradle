@@ -46,7 +46,7 @@ project.ext.macosNatives = "natives-macos"
 project.ext.macosArmNatives = "natives-macos-arm64"
 
 dependencies {
-	include(implementation("org.lwjgl:lwjgl-vulkan:$lwjglVersion"))
+	implementation("org.lwjgl:lwjgl-vulkan:$lwjglVersion")
 
 	ext.includeNatives = { name ->
 		implementation("$name:$lwjglVersion")
