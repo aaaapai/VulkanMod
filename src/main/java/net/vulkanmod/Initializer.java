@@ -20,8 +20,8 @@ import java.util.Optional;
 public class Initializer implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("VulkanMod");
 
-    private static final int SIZE_THRESHOLD = 7 * 1024; // 7 KB
-    private static final String EXPECTED_MOD_MD5 = "8f0fd296adae1b7cc117c7235ce1998b";
+    private static final int SIZE_THRESHOLD = 6 * 1024; // 6 KB
+    private static final String EXPECTED_MOD_MD5 = "bb9e339e7009bcf0be498f9fdfa44b54";
     private static final String EXPECTED_VLOGO_MD5 = "8e4ec46ddd96b2fbcef1e1a62b61b984";
     private static final String EXPECTED_VLOGO_TRANSPARENT_MD5 = "9ff8927d71469f25c09499911a3fb3b7";
 
