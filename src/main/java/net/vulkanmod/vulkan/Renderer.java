@@ -375,7 +375,7 @@ public class Renderer {
 
             currentFrame = (currentFrame + 1) % framesNum;
 
-            inFlightSubmits.set(currentFrame, submitId); //TODO: frameQueue length
+            inFlightSubmits.set(currentFrame, submitId);
         }
     }
 
@@ -495,7 +495,7 @@ public class Renderer {
     @SuppressWarnings("UnreachableCode")
     private void recreateSwapChain() {
 
-        //TODO: need Host Wait here maybe...
+        //TODO: No sure if Host Wait needed here
 
         Synchronization.INSTANCE.recycleCmdBuffers();
 

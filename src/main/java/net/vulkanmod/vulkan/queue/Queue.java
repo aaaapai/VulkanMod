@@ -24,7 +24,7 @@ public abstract class Queue {
     final long tmSemaphore;
 
     protected final CommandPool commandPool;
-    final AtomicLong pending = new AtomicLong(0);
+    final AtomicLong submits = new AtomicLong(0);
 
     public synchronized CommandPool.CommandBuffer beginCommands() {
         try (MemoryStack stack = stackPush()) {
@@ -46,7 +46,7 @@ public abstract class Queue {
 
         this.commandPool = initCommandPool ? new CommandPool(familyIndex) : null;
 
-        if(initCommandPool) {
+        if (initCommandPool) {
             VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = VkSemaphoreTypeCreateInfo.calloc(stack)
                     .sType$Default()
                     .semaphoreType(VK12.VK_SEMAPHORE_TYPE_TIMELINE)
@@ -91,7 +91,7 @@ public abstract class Queue {
     }
 
     public AtomicLong submitCount() {
-        return pending;
+        return submits;
     }
 
     public long getTmSemaphore() {
