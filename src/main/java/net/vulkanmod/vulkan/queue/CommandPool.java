@@ -84,7 +84,7 @@ public class CommandPool {
     public static class CommandBuffer {
         public final CommandPool commandPool;
         public final VkCommandBuffer handle;
-        public int submitId; //Emulates fence Functionality:
+        public long submitId; //Emulates fence Functionality:
 
         boolean submitted;
         boolean recording;
@@ -140,13 +140,13 @@ public class CommandPool {
 
             vkEndCommandBuffer(this.handle);
 
-            int submitId = queue.submitCount().incrementAndGet(); //Has same function as individual fence
+            long submitId = queue.submitCount().incrementAndGet(); //Has same function as individual fence
 
             VkTimelineSemaphoreSubmitInfo timelineSemaphoreSubmitInfo = VkTimelineSemaphoreSubmitInfo.calloc(stack)
                     .sType$Default()
                     .pSignalSemaphoreValues(stack.longs(submitId));
 
-            //TODO: No Wait,just Submit
+
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pNext(timelineSemaphoreSubmitInfo);

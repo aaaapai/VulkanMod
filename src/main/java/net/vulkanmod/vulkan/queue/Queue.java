@@ -9,8 +9,8 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR;
@@ -24,7 +24,7 @@ public abstract class Queue {
     final long tmSemaphore;
 
     protected final CommandPool commandPool;
-    final AtomicInteger pending = new AtomicInteger(0); //completed
+    final AtomicLong pending = new AtomicLong(0);
 
     public synchronized CommandPool.CommandBuffer beginCommands() {
         try (MemoryStack stack = stackPush()) {
@@ -90,7 +90,7 @@ public abstract class Queue {
         return commandPool;
     }
 
-    public AtomicInteger submitCount() {
+    public AtomicLong submitCount() {
         return pending;
     }
 

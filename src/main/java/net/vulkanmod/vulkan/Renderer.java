@@ -89,7 +89,7 @@ public class Renderer {
     private List<VkCommandBuffer> commandBuffers;
     private ArrayList<Long> imageAvailableSemaphores;
     private ArrayList<Long> renderFinishedSemaphores;
-    private ArrayList<Integer> inFlightSubmits;
+    private ArrayList<Long> inFlightSubmits;
 
     private Framebuffer boundFramebuffer;
     private RenderPass boundRenderPass;
@@ -185,7 +185,7 @@ public class Renderer {
 
                 imageAvailableSemaphores.add(pImageAvailableSemaphore.get(0));
                 renderFinishedSemaphores.add(pRenderFinishedSemaphore.get(0));
-                inFlightSubmits.add(0);
+                inFlightSubmits.add(0L);
 
             }
 
@@ -230,8 +230,10 @@ public class Renderer {
         }
 
 
-        if (skipRendering || recordingCmds)
+        if (skipRendering || recordingCmds) {
             return;
+        }
+        //Why does grouping the Graphics Queue Submits/fences like this Fix Vsync?
         try (MemoryStack stack = stackPush()) {
             VkSemaphoreWaitInfo vkSemaphoreWaitInfo = VkSemaphoreWaitInfo.calloc(stack)
                     .sType$Default()
@@ -325,7 +327,7 @@ public class Renderer {
             int vkResult;
 
             GraphicsQueue graphicsQueue = DeviceManager.getGraphicsQueue();
-            final int submitId = graphicsQueue.submitCount().get();
+            final long submitId = graphicsQueue.submitCount().get();
             VkTimelineSemaphoreSubmitInfo mainSemaphoreSubmitInfo = VkTimelineSemaphoreSubmitInfo.calloc(stack)
                     .sType$Default()
                     .pSignalSemaphoreValues(stack.longs(0, graphicsQueue.submitCount().incrementAndGet()));
@@ -347,8 +349,6 @@ public class Renderer {
                             .pValues(stack.longs(transferQueue.submitCount().get()));
             //Wait Async Transfers on host to avoid invalid frees (Destroy Buffer during use)
             VK12.vkWaitSemaphores(device, vkSemaphoreWaitInfo, VUtil.UINT64_MAX);
-
-            Synchronization.INSTANCE.recycleCmdBuffers();
 
             if ((vkResult = vkQueueSubmit(graphicsQueue.queue(), submitInfo, 0)) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
