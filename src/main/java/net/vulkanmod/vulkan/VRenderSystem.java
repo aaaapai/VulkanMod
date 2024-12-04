@@ -83,7 +83,7 @@ public abstract class VRenderSystem {
     }
 
     public static int maxSupportedTextureSize() {
-        return DeviceManager.deviceProperties.limits().maxImageDimension2D();
+        return DeviceManager.deviceLimits.maxImageDimension2D();
     }
 
     public static void applyMVP(Matrix4f MV, Matrix4f P) {

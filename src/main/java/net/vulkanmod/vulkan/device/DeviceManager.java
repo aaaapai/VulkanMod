@@ -33,7 +33,7 @@ public abstract class DeviceManager {
 
     public static Device device;
 
-    public static VkPhysicalDeviceProperties deviceProperties;
+    public static VkPhysicalDeviceLimits deviceLimits;
     public static VkPhysicalDeviceMemoryProperties memoryProperties;
 
     public static SurfaceProperties surfaceProperties;
@@ -108,8 +108,8 @@ public abstract class DeviceManager {
 
             physicalDevice = DeviceManager.device.physicalDevice;
 
-            // Get device properties
-            deviceProperties = device.properties;
+            // Get device limits
+            deviceLimits = device.properties.properties().limits();
 
             memoryProperties = VkPhysicalDeviceMemoryProperties.malloc();
             vkGetPhysicalDeviceMemoryProperties(physicalDevice, memoryProperties);
@@ -128,7 +128,7 @@ public abstract class DeviceManager {
         for (Device device : suitableDevices) {
             currentDevice = device;
 
-            int deviceType = device.properties.deviceType();
+            int deviceType = device.properties.properties().deviceType();
             if (deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                 flag = true;
                 break;
