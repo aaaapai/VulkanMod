@@ -10,6 +10,7 @@ import net.vulkanmod.vulkan.memory.StagingBuffer;
 import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.texture.SamplerManager;
+import net.vulkanmod.vulkan.util.VK14;
 import net.vulkanmod.vulkan.util.VkResult;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -35,7 +36,6 @@ import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
 public class Vulkan {
 
@@ -219,7 +219,7 @@ public class Vulkan {
             appInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
             appInfo.pEngineName(stack.UTF8Safe("VulkanMod Engine"));
             appInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
-            appInfo.apiVersion(VK_API_VERSION_1_2);
+            appInfo.apiVersion(VK14.VK_API_VERSION_1_4);
 
             VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack);
 
@@ -321,7 +321,7 @@ public class Vulkan {
             allocatorCreateInfo.device(DeviceManager.vkDevice);
             allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
             allocatorCreateInfo.instance(instance);
-            allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_2);
+            allocatorCreateInfo.vulkanApiVersion(VK14.VK_API_VERSION_1_4);
 
             PointerBuffer pAllocator = stack.pointers(VK_NULL_HANDLE);
 

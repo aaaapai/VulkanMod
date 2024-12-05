@@ -1,5 +1,7 @@
 package net.vulkanmod.vulkan.device;
 
+import net.vulkanmod.vulkan.util.VK14;
+import net.vulkanmod.vulkan.util.VkPhysicalDeviceVulkan14Features;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -33,10 +35,12 @@ public class Device {
 //    public final VkPhysicalDeviceVulkan13Features availableFeatures13;
     private final boolean vulkan14;
 
-    private final boolean drawIndirectSupported;
+    private final boolean drawIndirectSupported, hostImageCopy, pushDescriptor;
 
     public Device(VkPhysicalDevice device) {
         this.physicalDevice = device;
+//        int VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES   = 55;
+//        int VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES = 56;
         //Cleanup/Avoid unused heap allocations
         try(MemoryStack stack = MemoryStack.stackPush()) {
 
@@ -53,15 +57,18 @@ public class Device {
 
             this.availableFeatures = VkPhysicalDeviceFeatures2.calloc();
             this.availableFeatures.sType$Default();
+            //TODO: Bad Alignment: Custom struct alignment is broken
+            VkPhysicalDeviceVulkan14Features availableFeatures14 = VkPhysicalDeviceVulkan14Features.malloc(stack).sType(VK14.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES);
 
-            VkPhysicalDeviceVulkan11Features availableFeatures11 = VkPhysicalDeviceVulkan11Features.malloc(stack);
-            this.availableFeatures.pNext(availableFeatures11.sType$Default());
+            this.availableFeatures.pNext(availableFeatures14.address());
 
             this.vulkan14 = VK_VERSION_MINOR(properties.properties().apiVersion()) > 3; //VkCapabilitiesDevice.Vulkan1* is outdated and does not include vk14
 
             vkGetPhysicalDeviceFeatures2(this.physicalDevice, this.availableFeatures);
 
-            this.drawIndirectSupported = this.availableFeatures.features().multiDrawIndirect() && availableFeatures11.shaderDrawParameters();
+            this.drawIndirectSupported = this.availableFeatures.features().multiDrawIndirect();
+            this.hostImageCopy = availableFeatures14.hostImageCopy();
+            this.pushDescriptor = availableFeatures14.pushDescriptor();
         }
 
     }
@@ -94,6 +101,14 @@ public class Device {
 
     public boolean isDrawIndirectSupported() {
         return drawIndirectSupported;
+    }
+
+    public boolean isHostImageCopy() {
+        return hostImageCopy;
+    }
+
+    public boolean isPushDescriptor() {
+        return pushDescriptor;
     }
 
     // Added these to allow detecting GPU vendor, to allow handling vendor specific circumstances:

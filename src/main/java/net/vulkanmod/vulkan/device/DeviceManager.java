@@ -5,6 +5,8 @@ import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.queue.*;
+import net.vulkanmod.vulkan.util.VK14;
+import net.vulkanmod.vulkan.util.VkPhysicalDeviceVulkan14Features;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -175,44 +177,35 @@ public abstract class DeviceManager {
             timelineSemaphoreFeatures.sType$Default();
             timelineSemaphoreFeatures.timelineSemaphore(true);
 
+//            //Identical to vk1.4 struct
+//            VkPhysicalDeviceHostImageCopyFeaturesEXT hostImageCopyFeaturesEXT = VkPhysicalDeviceHostImageCopyFeaturesEXT.calloc(stack)
+//                    .sType$Default()
+//                    .hostImageCopy(device.isHostImageCopy());
+
+//            int VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES   = 55;
+//            int VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES = 56;
+            VkPhysicalDeviceVulkan14Features availableFeatures14 = VkPhysicalDeviceVulkan14Features.calloc(stack)
+                    .sType(VK14.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES)
+                    .hostImageCopy(device.isHostImageCopy())
+                    .pushDescriptor(device.isPushDescriptor());
+
             VkPhysicalDeviceFeatures2 deviceFeatures = VkPhysicalDeviceFeatures2.calloc(stack);
             deviceFeatures.sType$Default();
             deviceFeatures.features().samplerAnisotropy(device.availableFeatures.features().samplerAnisotropy());
             deviceFeatures.features().logicOp(device.availableFeatures.features().logicOp());
             // TODO: Disable indirect draw option if unsupported.
             deviceFeatures.features().multiDrawIndirect(device.isDrawIndirectSupported());
-
             // Must not set line width to anything other than 1.0 if this is not supported
-            if (device.availableFeatures.features().wideLines()) {
-                deviceFeatures.features().wideLines(true);
-                VRenderSystem.canSetLineWidth = true;
-            }
+            deviceFeatures.features().wideLines(VRenderSystem.canSetLineWidth = device.availableFeatures.features().wideLines());
+
 
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
             createInfo.sType$Default();
             createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
             createInfo.pQueueCreateInfos(queueCreateInfos);
             createInfo.pEnabledFeatures(deviceFeatures.features());
-            createInfo.pNext(deviceVulkan11Features).pNext(timelineSemaphoreFeatures);
-
-            if (Vulkan.DYNAMIC_RENDERING) {
-                VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeaturesKHR = VkPhysicalDeviceDynamicRenderingFeaturesKHR.calloc(stack);
-                dynamicRenderingFeaturesKHR.sType$Default();
-                dynamicRenderingFeaturesKHR.dynamicRendering(true);
-
-                deviceVulkan11Features.pNext(dynamicRenderingFeaturesKHR.address());
-
-//                //Vulkan 1.3 dynamic rendering
-//                VkPhysicalDeviceVulkan13Features deviceVulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack);
-//                deviceVulkan13Features.sType$Default();
-//                if(!deviceInfo.availableFeatures13.dynamicRendering())
-//                    throw new RuntimeException("Device does not support dynamic rendering feature.");
-//
-//                deviceVulkan13Features.dynamicRendering(true);
-//                createInfo.pNext(deviceVulkan13Features);
-//                deviceVulkan13Features.pNext(deviceVulkan11Features.address());
-            }
-
+            createInfo.pNext(deviceVulkan11Features).pNext(availableFeatures14.address()).pNext(timelineSemaphoreFeatures);
+//            int VK_API_VERSION_1_4 = VK_MAKE_API_VERSION(0, 1, 4, 0);
             createInfo.ppEnabledExtensionNames(asPointerBuffer(Vulkan.REQUIRED_EXTENSION));
 
 //            Configuration.DEBUG_FUNCTIONS.set(true);
@@ -224,7 +217,7 @@ public abstract class DeviceManager {
             int res = vkCreateDevice(physicalDevice, createInfo, null, pDevice);
             Vulkan.checkResult(res, "Failed to create logical device");
 
-            vkDevice = new VkDevice(pDevice.get(0), physicalDevice, createInfo, VK_API_VERSION_1_2);
+            vkDevice = new VkDevice(pDevice.get(0), physicalDevice, createInfo, VK14.VK_API_VERSION_1_4);
 
             graphicsQueue = new GraphicsQueue(stack, indices.graphicsFamily);
             transferQueue = new TransferQueue(stack, indices.transferFamily);
