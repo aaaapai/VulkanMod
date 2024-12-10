@@ -90,7 +90,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    public void onChunkLoaded(ChunkPos chunkPos) {
+    public void onChunkReadyToRender(ChunkPos chunkPos) {
     }
 
     /**

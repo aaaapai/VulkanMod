@@ -40,16 +40,14 @@ public class LevelRendererMixin {
     // TODO: fix
     @Inject(method = "method_62213", at = @At(value = "HEAD"))
     private void pushProfiler3(FogParameters fogParameters, ResourceHandle resourceHandle,
-                               ResourceHandle resourceHandle2, LightTexture lightTexture, Camera camera, float f,
-                               CallbackInfo ci) {
+                               ResourceHandle resourceHandle2, Camera camera, float f, CallbackInfo ci) {
         Profiler profiler = Profiler.getMainProfiler();
         profiler.push("Particles");
     }
 
     @Inject(method = "method_62213", at = @At(value = "RETURN"))
     private void popProfiler3(FogParameters fogParameters, ResourceHandle resourceHandle,
-                              ResourceHandle resourceHandle2, LightTexture lightTexture, Camera camera, float f,
-                              CallbackInfo ci) {
+                              ResourceHandle resourceHandle2, Camera camera, float f, CallbackInfo ci) {
         Profiler profiler = Profiler.getMainProfiler();
         profiler.pop();
     }

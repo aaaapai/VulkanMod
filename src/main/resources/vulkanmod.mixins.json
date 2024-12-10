@@ -59,6 +59,7 @@
     "render.frapi.ItemRendererAccessor",
     "render.frapi.ItemRendererMixin",
     "render.frapi.ModelBlockRendererM",
+    "render.frapi.QuadEmitterM",
     "render.particle.SingleQuadParticleM",
     "render.shader.CompilationCacheM",
     "render.shader.CompiledShaderProgramM",

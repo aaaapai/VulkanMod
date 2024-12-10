@@ -41,7 +41,9 @@ public class LevelRendererM {
                     target = "Lnet/minecraft/client/renderer/LevelRenderer;setupRender(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;ZZ)V",
                     shift = At.Shift.AFTER)
     )
-    private void clearMap(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    private void clearMap(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl,
+                          Camera camera, GameRenderer gameRenderer, Matrix4f matrix4f, Matrix4f matrix4f2,
+                          CallbackInfo ci) {
         for (var bufferSource : this.bufferSourceMap.keySet()) {
             var entityMap = this.bufferSourceMap.get(bufferSource);
             entityMap.clear();

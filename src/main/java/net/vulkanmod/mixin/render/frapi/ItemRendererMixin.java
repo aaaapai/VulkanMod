@@ -16,37 +16,30 @@
 
 package net.vulkanmod.mixin.render.frapi;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.vulkanmod.render.chunk.build.frapi.render.ItemRenderContext;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 @Mixin(ItemRenderer.class)
-public abstract class ItemRendererMixin {
-    @Final
-    @Shadow
-    private ItemColors itemColors;
-
+abstract class ItemRendererMixin {
     @Unique
-    private final ThreadLocal<ItemRenderContext> fabric_contexts = ThreadLocal.withInitial(() -> new ItemRenderContext(itemColors));
+    private static final ThreadLocal<ItemRenderContext> CONTEXTS = ThreadLocal.withInitial(ItemRenderContext::new);
 
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderSimpleItemModel(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Z)V"), method = "render", cancellable = true)
-    public void hook_renderItem(ItemStack stack, ItemDisplayContext transformMode, boolean invert, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay, BakedModel model, CallbackInfo ci) {
+    @Inject(method = "renderItem", at = @At(value = "HEAD"), cancellable = true)
+    private static void hookRenderItem(ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, int[] is, BakedModel model, RenderType renderType, ItemStackRenderState.FoilType foilType, CallbackInfo ci) {
         if (!model.isVanillaAdapter()) {
-            fabric_contexts.get().renderModel(stack, transformMode, invert, matrixStack, vertexConsumerProvider, light, overlay, model);
-            matrixStack.popPose();
+            CONTEXTS.get().renderModel(itemDisplayContext, poseStack, multiBufferSource, i, j, is, model, renderType, foilType);
             ci.cancel();
         }
     }

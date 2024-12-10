@@ -2,44 +2,42 @@ package net.vulkanmod.render.chunk.build.frapi.render;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.vulkanmod.interfaces.color.BlockColorsExtended;
 import net.vulkanmod.render.chunk.build.color.BlockColorRegistry;
+import net.vulkanmod.render.chunk.build.frapi.VulkanModRenderer;
 import net.vulkanmod.render.chunk.build.light.LightPipeline;
 import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
 import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableQuadViewImpl;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
-	private static final Renderer RENDERER = RendererAccess.INSTANCE.getRenderer();
+	private static final Renderer RENDERER = VulkanModRenderer.INSTANCE;
 	protected static final RenderMaterial STANDARD_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).find();
 	protected static final RenderMaterial NO_AO_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).ambientOcclusion(TriState.FALSE).find();
 
@@ -54,6 +52,12 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		@Override
 		public void emitDirectly() {
 			renderQuad(this);
+		}
+
+		@Override
+		public void emitBlockQuads(QuadEmitter emitter, BakedModel model, BlockState state,
+								   Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
+			AbstractBlockRenderContext.this.emitBlockQuads(model, state, randomSupplier, cullTest);
 		}
 	};
 
@@ -100,17 +104,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		this.smoothLightPipeline = smoothLightPipeline;
 	}
 
-	@Override
-	public QuadEmitter getEmitter() {
-		editorQuad.clear();
-		return editorQuad;
-	}
-
-	@Override
-	public ItemDisplayContext itemTransformationMode() {
-		throw new IllegalStateException("itemTransformationMode() can only be called on an item render context.");
-	}
-
 	public void prepareForWorld(BlockAndTintGetter blockView, boolean enableCulling) {
 		this.renderRegion = blockView;
 		this.enableCulling = enableCulling;
@@ -127,7 +120,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		this.cullResultFlags = 0;
 	}
 
-	@Override
 	public boolean isFaceCulled(@Nullable Direction face) {
 		return !this.shouldRenderFace(face);
 	}
@@ -198,11 +190,17 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		return true;
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad) {
-		if (!transform(quad)) {
-			return;
-		}
+	public QuadEmitter getEmitter() {
+		editorQuad.clear();
+		return editorQuad;
+	}
 
+	@Override
+	protected void bufferQuad(MutableQuadViewImpl quadView) {
+		this.renderQuad(quadView);
+	}
+
+	private void renderQuad(MutableQuadViewImpl quad) {
 		if (isFaceCulled(quad.cullFace())) {
 			return;
 		}
@@ -213,9 +211,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	protected void endRenderQuad(MutableQuadViewImpl quad) {}
 
 	/** handles block color, common to all renders. */
-	protected void colorizeQuad(MutableQuadViewImpl quad, int colorIndex) {
-		if (colorIndex != -1) {
-			final int blockColor = getBlockColor(this.renderRegion, colorIndex);
+	protected void tintQuad(MutableQuadViewImpl quad) {
+		int tintIndex = quad.tintIndex();
+
+		if (tintIndex != -1) {
+			final int blockColor = getBlockColor(this.renderRegion, tintIndex);
 
 			for (int i = 0; i < 4; i++) {
 				quad.color(i, ColorHelper.multiplyColor(blockColor, quad.color(i)));
@@ -251,46 +251,27 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	public void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<Direction> cullTest) {
 		MutableQuadViewImpl quad = this.editorQuad;
 		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? STANDARD_MATERIAL : NO_AO_MATERIAL;
 
-		boolean noTransform = !this.hasTransform();
+		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
+			final Direction cullFace = ModelHelper.faceFromIndex(i);
 
-		if (noTransform) {
-			for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-				final Direction cullFace = ModelHelper.faceFromIndex(i);
-
-				if (context.isFaceCulled(cullFace)) {
-					// Skip entire quad list if possible.
-					continue;
-				}
-
-				final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());
-				final int count = quads.size();
-
-				//noinspection ForLoopReplaceableByForEach
-				for (int j = 0; j < count; j++) {
-					final BakedQuad q = quads.get(j);
-					quad.fromVanilla(q, defaultMaterial, cullFace);
-
-                    this.endRenderQuad(quad);
-                }
+			if (cullTest.test(cullFace)) {
+				// Skip entire quad list if possible.
+				continue;
 			}
-		} else {
-			for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-				final Direction cullFace = ModelHelper.faceFromIndex(i);
 
-				final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());
-				final int count = quads.size();
+			final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());
+			final int count = quads.size();
 
-				//noinspection ForLoopReplaceableByForEach
-				for (int j = 0; j < count; j++) {
-					final BakedQuad q = quads.get(j);
-					quad.fromVanilla(q, defaultMaterial, cullFace);
+			//noinspection ForLoopReplaceableByForEach
+			for (int j = 0; j < count; j++) {
+				final BakedQuad q = quads.get(j);
+				quad.fromVanilla(q, defaultMaterial, cullFace);
 
-                    this.renderQuad(quad);
-                }
+				this.endRenderQuad(quad);
 			}
 		}
 

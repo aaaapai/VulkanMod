@@ -163,7 +163,7 @@ public abstract class BufferBuilderM
     @Unique
     private void putQuadData(PoseStack.Pose matrixEntry, BakedQuad quad, float[] brightness, float red, float green, float blue, float alpha, int[] lights, int overlay, boolean useQuadColorData) {
         int[] quadData = quad.getVertices();
-        Vec3i vec3i = quad.getDirection().getNormal();
+        Vec3i vec3i = quad.getDirection().getUnitVec3i();
         Matrix4f matrix4f = matrixEntry.pose();
 
         boolean trustedNormals = ((PoseAccessor)(Object)matrixEntry).trustedNormals();

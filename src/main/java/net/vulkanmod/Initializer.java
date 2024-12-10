@@ -1,7 +1,7 @@
 package net.vulkanmod;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.vulkanmod.config.Config;
 import net.vulkanmod.config.Platform;
@@ -38,7 +38,7 @@ public class Initializer implements ClientModInitializer {
 
 		CONFIG = loadConfig(configPath);
 
-		RendererAccess.INSTANCE.registerRenderer(VulkanModRenderer.INSTANCE);
+		Renderer.register(VulkanModRenderer.INSTANCE);
 	}
 
 	private static Config loadConfig(Path path) {

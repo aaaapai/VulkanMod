@@ -70,12 +70,11 @@ public class BlockRenderer extends AbstractBlockRenderContext {
 
         this.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
 
-        model.emitBlockQuads(renderRegion, blockState, blockPos, this.randomSupplier, this);
+        model.emitBlockQuads(this.getEmitter(), renderRegion, blockState, blockPos, this.randomSupplier, this::isFaceCulled);
     }
 
     protected void endRenderQuad(MutableQuadViewImpl quad) {
         final RenderMaterial mat = quad.material();
-        final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
         final TriState aoMode = mat.ambientOcclusion();
         final boolean ao = this.useAO && (aoMode == TriState.TRUE || (aoMode == TriState.DEFAULT && this.defaultAO));
         final boolean emissive = mat.emissive();
@@ -85,7 +84,7 @@ public class BlockRenderer extends AbstractBlockRenderContext {
 
         LightPipeline lightPipeline = ao ? this.smoothLightPipeline : this.flatLightPipeline;
 
-        colorizeQuad(quad, colorIndex);
+        tintQuad(quad);
         shadeQuad(quad, lightPipeline, emissive, vanillaShade);
         bufferQuad(terrainBuilder, this.pos, quad, this.quadLightData);
     }

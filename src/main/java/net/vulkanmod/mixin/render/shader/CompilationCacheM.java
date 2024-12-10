@@ -12,7 +12,7 @@ import net.vulkanmod.render.shader.ShaderLoadUtil;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
-import net.vulkanmod.vulkan.shader.parser.GlslConverter;
+import net.vulkanmod.vulkan.shader.converter.GlslConverter;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

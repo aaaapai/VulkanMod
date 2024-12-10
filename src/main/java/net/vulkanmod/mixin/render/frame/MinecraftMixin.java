@@ -22,10 +22,9 @@ public class MinecraftMixin {
         Renderer.getInstance().preInitFrame();
     }
 
-    // Main target (framebuffer) ops
-    @Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V"))
+    //Main target (framebuffer) ops
+    @Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(I)V"))
     private void beginRender(int i, boolean bl) {
-        RenderSystem.clear(i, bl);
         Renderer.getInstance().beginFrame();
     }
 
@@ -53,9 +52,4 @@ public class MinecraftMixin {
     private void removeThreadYield() {
     }
 
-    @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
-    private void limitWhenMinimized(CallbackInfoReturnable<Integer> cir) {
-        if (this.noRender)
-            cir.setReturnValue(10);
-    }
 }

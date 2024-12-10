@@ -17,7 +17,7 @@
 package net.vulkanmod.render.chunk.build.frapi.mesh;
 
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_BITS;
-import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_COLOR_INDEX;
+import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_TINT_INDEX;
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_FACE_NORMAL;
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_STRIDE;
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.HEADER_TAG;
@@ -166,22 +166,22 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 		return data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_LIGHTMAP];
 	}
 
-	public int normalFlags() {
+	public final int normalFlags() {
 		return EncodingFormat.normalFlags(data[baseIndex + HEADER_BITS]);
 	}
 
 	@Override
-	public boolean hasNormal(int vertexIndex) {
+	public final boolean hasNormal(int vertexIndex) {
 		return (normalFlags() & (1 << vertexIndex)) != 0;
 	}
 
 	/** True if any vertex normal has been set. */
-	public boolean hasVertexNormals() {
+	public final boolean hasVertexNormals() {
 		return normalFlags() != 0;
 	}
 
 	/** True if all vertex normals have been set. */
-	public boolean hasAllVertexNormals() {
+	public final boolean hasAllVertexNormals() {
 		return (normalFlags() & 0b1111) == 0b1111;
 	}
 
@@ -190,23 +190,23 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	}
 
 	@Override
-	public float normalX(int vertexIndex) {
+	public final float normalX(int vertexIndex) {
 		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalX(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
-	public float normalY(int vertexIndex) {
+	public final float normalY(int vertexIndex) {
 		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalY(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
-	public float normalZ(int vertexIndex) {
+	public final float normalZ(int vertexIndex) {
 		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalZ(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
 	@Nullable
-	public Vector3f copyNormal(int vertexIndex, @Nullable Vector3f target) {
+	public final Vector3f copyNormal(int vertexIndex, @Nullable Vector3f target) {
 		if (hasNormal(vertexIndex)) {
 			if (target == null) {
 				target = new Vector3f();
@@ -256,8 +256,8 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	}
 
 	@Override
-	public final int colorIndex() {
-		return data[baseIndex + HEADER_COLOR_INDEX];
+	public final int tintIndex() {
+		return data[baseIndex + HEADER_TINT_INDEX];
 	}
 
 	@Override
@@ -269,10 +269,7 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	public final void toVanilla(int[] target, int targetIndex) {
 		System.arraycopy(data, baseIndex + HEADER_STRIDE, target, targetIndex, QUAD_STRIDE);
 
-		// The color is the fourth integer in each vertex.
-		// EncodingFormat.VERTEX_COLOR is not used because it also
-		// contains the header size; vanilla quads do not have a header.
-		int colorIndex = targetIndex + 3;
+		int colorIndex = targetIndex + VERTEX_COLOR - HEADER_STRIDE;
 
 		for (int i = 0; i < 4; i++) {
 			target[colorIndex] = ColorHelper.toVanillaColor(target[colorIndex]);
@@ -317,7 +314,7 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 
 	@Override
 	public int getColorIndex() {
-		return this.colorIndex();
+		return this.tintIndex();
 	}
 
 	@Override

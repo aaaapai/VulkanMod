@@ -41,7 +41,6 @@ public class RenderRegionBuilder {
 
         DataLayer[][] lightData = new DataLayer[RenderRegion.SIZE][2 /* Light types */];
 
-        final int minHeightSec = level.getMinY() >> 4;
         long biomeZoomSeed = BiomeManagerExtended.of(level.getBiomeManager()).getBiomeZoomSeed();
         BiomeData biomeData = new BiomeData(biomeZoomSeed, minSecX, minSecY, minSecZ);
 
