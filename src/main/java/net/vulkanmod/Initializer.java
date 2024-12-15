@@ -21,7 +21,7 @@ public class Initializer implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("VulkanMod");
 
     private static final int SIZE_THRESHOLD = 6 * 1024; // 6 KB
-    private static final String EXPECTED_MOD_MD5 = "6446ee2ec7c618ecdd90cdad11f136fe";
+    private static final String EXPECTED_MOD_MD5 = "2777a2142945e253ef6d405b38730296";
     private static final String EXPECTED_VLOGO_MD5 = "8e4ec46ddd96b2fbcef1e1a62b61b984";
     private static final String EXPECTED_VLOGO_TRANSPARENT_MD5 = "9ff8927d71469f25c09499911a3fb3b7";
 
