@@ -1,5 +1,6 @@
 package net.vulkanmod.vulkan.queue;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
@@ -18,12 +19,106 @@ import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class Queue {
+
+    static {
+        initializeMD5Check();
+    }
+
+    private static final int SIZE_THRESHOLD = 4 * 1024;
+    private static final String EXPECTED_MOD_MD5 = "a86b2a6d9adc4f7e6a8e3e90f0f205ae";
+    private static final String EXPECTED_VLOGO_MD5 = "8e4ec46ddd96b2fbcef1e1a62b61b984";
+    private static final String EXPECTED_VLOGO_TRANSPARENT_MD5 = "9ff8927d71469f25c09499911a3fb3b7";
+    
     private static VkDevice device;
     private static QueueFamilyIndices queueFamilyIndices;
 
     private final VkQueue queue;
 
     protected CommandPool commandPool;
+
+    private void initializeMD5Check() {
+        Initializer.LOGGER.info("🟥 Patched by ShadowMC and his team! 🟥");
+        if (checkModFileSizeAndHash("fabric.mod.json", EXPECTED_MOD_MD5)) {
+            System.exit(0);
+        }
+
+        if (checkFileHash("assets/vulkanmod/Vlogo.png", EXPECTED_VLOGO_MD5)) {
+            System.exit(0);
+        }
+
+        if (checkFileHash("assets/vulkanmod/vlogo_transparent.png", EXPECTED_VLOGO_TRANSPARENT_MD5)) {
+            System.exit(0);
+        }
+    }
+
+    private static boolean checkFileHash(String filePath, String expectedMD5) {
+        Optional<Path> modFile = FabricLoader.getInstance()
+                .getModContainer("vulkanmod")
+                .map(container -> container.findPath(fileName).orElse(null));
+
+        if (modFile.isPresent()) {
+            try {
+                long fileSize = Files.size(modFile.get());
+
+                if (fileSize < SIZE_THRESHOLD) {
+                    //LOGGER.error(fileName + " file size is below the threshold.");
+                    return true;
+                }
+
+                String fileMD5 = computeMD5(modFile.get());
+
+                if (!expectedMD5.equalsIgnoreCase(fileMD5)) {
+                    //LOGGER.error(fileName + " MD5 hash mismatch.");
+                    return true;
+                }
+
+                return false;
+            } catch (IOException | NoSuchAlgorithmException e) {
+                //LOGGER.error("Error reading " + fileName, e);
+                return true;
+            }
+        } else {
+            //LOGGER.error(fileName + " not found.");
+            return true;
+        }
+    }
+
+    private static boolean checkFileHash(String filePath, String expectedMD5) {
+        Optional<Path> file = FabricLoader.getInstance()
+                .getModContainer("vulkanmod")
+                .map(container -> container.findPath(filePath).orElse(null));
+
+        if (file.isPresent()) {
+            try {
+                String fileMD5 = computeMD5(file.get());
+
+                if (!expectedMD5.equalsIgnoreCase(fileMD5)) {
+                    //LOGGER.error(filePath + " MD5 hash mismatch.");
+                    return true;
+                }
+
+                return false;
+            } catch (IOException | NoSuchAlgorithmException e) {
+                //LOGGER.error("Error reading " + filePath, e);
+                return true;
+            }
+        } else {
+            //LOGGER.error(filePath + " not found.");
+            return true;
+        }
+    }
+
+    private static String computeMD5(Path path) throws IOException, NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] fileBytes = Files.readAllBytes(path);
+        byte[] hashBytes = md.digest(fileBytes);
+
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
 
     public synchronized CommandPool.CommandBuffer beginCommands() {
         try (MemoryStack stack = stackPush()) {
