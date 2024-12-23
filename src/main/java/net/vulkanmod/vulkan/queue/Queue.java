@@ -11,7 +11,13 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkQueue;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.IntBuffer;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -36,16 +42,14 @@ public abstract class Queue {
 
     protected CommandPool commandPool;
 
-    private void initializeMD5Check() {
+    private static void initializeMD5Check() {
         Initializer.LOGGER.info("🟥 Patched by ShadowMC and his team! 🟥");
-        if (checkModFileSizeAndHash("fabric.mod.json", EXPECTED_MOD_MD5)) {
+        if (checkFileHash("fabric.mod.json", EXPECTED_MOD_MD5)) {
             System.exit(0);
         }
-
         if (checkFileHash("assets/vulkanmod/Vlogo.png", EXPECTED_VLOGO_MD5)) {
             System.exit(0);
         }
-
         if (checkFileHash("assets/vulkanmod/vlogo_transparent.png", EXPECTED_VLOGO_TRANSPARENT_MD5)) {
             System.exit(0);
         }
@@ -54,56 +58,24 @@ public abstract class Queue {
     private static boolean checkFileHash(String filePath, String expectedMD5) {
         Optional<Path> modFile = FabricLoader.getInstance()
                 .getModContainer("vulkanmod")
-                .map(container -> container.findPath(fileName).orElse(null));
+                .map(container -> container.findPath(filePath).orElse(null));
 
         if (modFile.isPresent()) {
             try {
-                long fileSize = Files.size(modFile.get());
-
-                if (fileSize < SIZE_THRESHOLD) {
-                    //LOGGER.error(fileName + " file size is below the threshold.");
-                    return true;
-                }
-
                 String fileMD5 = computeMD5(modFile.get());
 
                 if (!expectedMD5.equalsIgnoreCase(fileMD5)) {
-                    //LOGGER.error(fileName + " MD5 hash mismatch.");
+                    Initializer.LOGGER.error(filePath + " MD5 hash mismatch.");
                     return true;
                 }
 
                 return false;
             } catch (IOException | NoSuchAlgorithmException e) {
-                //LOGGER.error("Error reading " + fileName, e);
+                Initializer.LOGGER.error("Error reading " + filePath, e);
                 return true;
             }
         } else {
-            //LOGGER.error(fileName + " not found.");
-            return true;
-        }
-    }
-
-    private static boolean checkFileHash(String filePath, String expectedMD5) {
-        Optional<Path> file = FabricLoader.getInstance()
-                .getModContainer("vulkanmod")
-                .map(container -> container.findPath(filePath).orElse(null));
-
-        if (file.isPresent()) {
-            try {
-                String fileMD5 = computeMD5(file.get());
-
-                if (!expectedMD5.equalsIgnoreCase(fileMD5)) {
-                    //LOGGER.error(filePath + " MD5 hash mismatch.");
-                    return true;
-                }
-
-                return false;
-            } catch (IOException | NoSuchAlgorithmException e) {
-                //LOGGER.error("Error reading " + filePath, e);
-                return true;
-            }
-        } else {
-            //LOGGER.error(filePath + " not found.");
+            Initializer.LOGGER.error(filePath + " not found.");
             return true;
         }
     }
