@@ -339,7 +339,16 @@ public class Renderer {
             submitInfo.pSignalSemaphores(stack.longs(renderFinishedSemaphores.get(currentFrame), graphicsQueue.getTmSemaphore()));
             submitInfo.pCommandBuffers(stack.pointers(currentCmdBuffer));
 
-
+            //TODO: Does moving the Transfer Wait after Submit cause Sync Hazards...
+            //Nvidia blocks on present, not Acquire : https://github.com/KhronosGroup/Vulkan-Docs/issues/1158
+            TransferQueue transferQueue = DeviceManager.getTransferQueue();
+            VkSemaphoreWaitInfo vkSemaphoreWaitInfo = VkSemaphoreWaitInfo.calloc(stack)
+                    .sType$Default()
+                    .semaphoreCount(1)
+                    .pSemaphores(stack.longs(transferQueue.getTmSemaphore()))
+                    .pValues(stack.longs(transferQueue.submitCount().get()));
+            //Wait Async Transfers on host to avoid invalid frees (Destroy Buffer during use)
+            VK12.vkWaitSemaphores(device, vkSemaphoreWaitInfo, VUtil.UINT64_MAX);
 
             if ((vkResult = vkQueueSubmit(graphicsQueue.queue(), submitInfo, 0)) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
@@ -367,16 +376,7 @@ public class Renderer {
             currentFrame = (currentFrame + 1) % framesNum;
 
             inFlightSubmits.set(currentFrame, submitId);
-            //TODO: Does moving the Transfer Wait after Submit cause Sync Hazards...
-            //Nvidia blocks on present, not Acquire : https://github.com/KhronosGroup/Vulkan-Docs/issues/1158
-            TransferQueue transferQueue = DeviceManager.getTransferQueue();
-            VkSemaphoreWaitInfo vkSemaphoreWaitInfo = VkSemaphoreWaitInfo.calloc(stack)
-                    .sType$Default()
-                    .semaphoreCount(1)
-                    .pSemaphores(stack.longs(transferQueue.getTmSemaphore()))
-                    .pValues(stack.longs(transferQueue.submitCount().get()));
-            //Wait Async Transfers on host to avoid invalid frees (Destroy Buffer during use)
-            VK12.vkWaitSemaphores(device, vkSemaphoreWaitInfo, VUtil.UINT64_MAX);
+
         }
     }
 

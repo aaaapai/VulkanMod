@@ -212,6 +212,13 @@ public abstract class Queue {
             if (indices.computeFamily == VK_QUEUE_FAMILY_IGNORED)
                 throw new RuntimeException("Unable to find queue family with compute support.");
 
+            VkExtent3D minTexDMAAlign = queueFamilies.get(indices.transferFamily).minImageTransferGranularity();
+
+            //Some drivers use either 1 or 0 when specifying Min DMA texture alignment
+
+            //TODO: Risk mitigation: Should this be made Nvidia exclusive...
+            indices.permitDMAQueue = minTexDMAAlign.width() < 2 && minTexDMAAlign.height() < 2 && minTexDMAAlign.depth() < 2;
+
             return indices;
         }
     }
@@ -221,6 +228,7 @@ public abstract class Queue {
         public int presentFamily = VK_QUEUE_FAMILY_IGNORED;
         public int transferFamily = VK_QUEUE_FAMILY_IGNORED;
         public int computeFamily = VK_QUEUE_FAMILY_IGNORED;
+        public boolean permitDMAQueue = false;
 
         public boolean isComplete() {
             return graphicsFamily != -1 && presentFamily != -1 && transferFamily != -1 && computeFamily != -1;

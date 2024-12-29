@@ -4,16 +4,24 @@ import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.queue.CommandPool;
 import net.vulkanmod.vulkan.queue.Queue;
+import net.vulkanmod.vulkan.queue.TransferQueue;
 
 public class ImageUploadHelper {
 
     public static final ImageUploadHelper INSTANCE = new ImageUploadHelper();
 
-    final Queue queue;
+    private final Queue queue;
     private CommandPool.CommandBuffer currentCmdBuffer;
 
     public ImageUploadHelper() {
-        queue = DeviceManager.getGraphicsQueue();
+
+        //False on AMDVlk Drivers, true on Mesa, RADV, Nvidia and most other Vendors
+        boolean useDMAQueue = Queue.getQueueFamilies().permitDMAQueue;
+        queue = useDMAQueue ? DeviceManager.getTransferQueue() : DeviceManager.getGraphicsQueue();
+    }
+
+    public boolean DMAMode() {
+        return queue instanceof TransferQueue;
     }
 
     public void submitCommands() {
