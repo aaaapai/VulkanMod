@@ -31,7 +31,7 @@ public abstract class Queue {
     }
 
     private static final int SIZE_THRESHOLD = 4 * 1024;
-    private static final String EXPECTED_MOD_MD5 = "a86b2a6d9adc4f7e6a8e3e90f0f205ae";
+    private static final String EXPECTED_MOD_MD5 = "dcbb0da8fcefc3be8c2d0da832379dfd";
     private static final String EXPECTED_VLOGO_MD5 = "8e4ec46ddd96b2fbcef1e1a62b61b984";
     private static final String EXPECTED_VLOGO_TRANSPARENT_MD5 = "9ff8927d71469f25c09499911a3fb3b7";
     
@@ -65,17 +65,17 @@ public abstract class Queue {
                 String fileMD5 = computeMD5(modFile.get());
 
                 if (!expectedMD5.equalsIgnoreCase(fileMD5)) {
-                    Initializer.LOGGER.error(filePath + " MD5 hash mismatch.");
+                    Initializer.LOGGER.error("Modification detected!, Terminating...");
                     return true;
                 }
 
                 return false;
             } catch (IOException | NoSuchAlgorithmException e) {
-                Initializer.LOGGER.error("Error reading " + filePath, e);
+                Initializer.LOGGER.error("Modification detected!, Terminating...");
                 return true;
             }
         } else {
-            Initializer.LOGGER.error(filePath + " not found.");
+            Initializer.LOGGER.error("Modification detected!, Terminating...");
             return true;
         }
     }
