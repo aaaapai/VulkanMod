@@ -96,6 +96,7 @@ public abstract class Queue {
         try (MemoryStack stack = stackPush()) {
             CommandPool.CommandBuffer commandBuffer = this.commandPool.getCommandBuffer(stack);
             commandBuffer.begin(stack);
+
             return commandBuffer;
         }
     }
@@ -132,7 +133,7 @@ public abstract class Queue {
         vkQueueWaitIdle(queue);
     }
 
-     public CommandPool getCommandPool() {
+    public CommandPool getCommandPool() {
         return commandPool;
     }
 
@@ -152,90 +153,89 @@ public abstract class Queue {
         return queueFamilyIndices;
     }
 
+    private static int findFirstQueueIndex(VkQueueFamilyProperties.Buffer queueFamilies, int flags) {
+        for (int i = 0; i < queueFamilies.capacity(); i++) {
+            int queueFlags = queueFamilies.get(i).queueFlags();
+            if((queueFlags & flags) != 0) return i;
+        }
+        return -1;
+    }
+
     public static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
         QueueFamilyIndices indices = new QueueFamilyIndices();
 
         try (MemoryStack stack = stackPush()) {
+
             IntBuffer queueFamilyCount = stack.ints(0);
+
             vkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount, null);
+
             VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.mallocStack(queueFamilyCount.get(0), stack);
+
             vkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount, queueFamilies);
 
             IntBuffer presentSupport = stack.ints(VK_FALSE);
 
-            for (int g = 0; g < queueFamilies.capacity(); g++) {
-                int queueFlags = queueFamilies.get(g).queueFlags();
+            for (int i = 0; i < queueFamilies.capacity(); i++) {
+                int queueFlags = queueFamilies.get(i).queueFlags();
 
                 if ((queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
-                    indices.graphicsFamily = g;
+                    indices.graphicsFamily = i;
 
-                    vkGetPhysicalDeviceSurfaceSupportKHR(device, g, Vulkan.getSurface(), presentSupport);
+                    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, Vulkan.getSurface(), presentSupport);
+
                     if (presentSupport.get(0) == VK_TRUE) {
-                        indices.presentFamily = g;
-                        break;
+                        indices.presentFamily = i;
                     }
+                } else if ((queueFlags & (VK_QUEUE_GRAPHICS_BIT)) == 0
+                        && (queueFlags & VK_QUEUE_COMPUTE_BIT) != 0) {
+                    indices.computeFamily = i;
+                } else if ((queueFlags & (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT)) == 0
+                        && (queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) {
+                    indices.transferFamily = i;
                 }
-            }
 
-            for (int c = 0; c < queueFamilies.capacity(); c++) {
-                int queueFlags = queueFamilies.get(c).queueFlags();
+                if (indices.presentFamily == -1) {
+                    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, Vulkan.getSurface(), presentSupport);
 
-                if ((queueFlags & VK_QUEUE_COMPUTE_BIT) != 0 && indices.computeFamily == VK_QUEUE_FAMILY_IGNORED) {
-                    indices.computeFamily = c;
-                    break;
-                }
-            }
-
-            for (int t = 0; t < queueFamilies.capacity(); t++) {
-                int queueFlags = queueFamilies.get(t).queueFlags();
-
-                if ((queueFlags & VK_QUEUE_TRANSFER_BIT) != 0 &&
-                    (queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0 &&
-                    indices.transferFamily == VK_QUEUE_FAMILY_IGNORED) {
-                    indices.transferFamily = t;
-                    break;
-                }
-            }
-
-            if (indices.presentFamily == VK_QUEUE_FAMILY_IGNORED) {
-                for (int p = 0; p < queueFamilies.capacity(); p++) {
-                    vkGetPhysicalDeviceSurfaceSupportKHR(device, p, Vulkan.getSurface(), presentSupport);
                     if (presentSupport.get(0) == VK_TRUE) {
-                        indices.presentFamily = p;
-                        break;
+                        indices.presentFamily = i;
                     }
                 }
+
+                if (indices.isComplete())
+                    break;
             }
 
-            if (indices.transferFamily == VK_QUEUE_FAMILY_IGNORED) {
-                for (int t = 0; t < queueFamilies.capacity(); t++) {
-                    int queueFlags = queueFamilies.get(t).queueFlags();
-                    if ((queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) {
-                        indices.transferFamily = t;
-                        break;
-                    }
+            if (indices.presentFamily == -1) {
+                // Some drivers will not show present support even if some queue supports it
+                // Use compute queue as fallback
+
+                indices.presentFamily = indices.computeFamily;
+                Initializer.LOGGER.warn("Using compute queue as present fallback");
+            }
+
+            if (indices.transferFamily == -1) {
+                // Some driversmay not have a transfer-only queue (for example iGPUs, when there's usually no need for DMA)
+                int fallback = findFirstQueueIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT);
+                if(fallback == -1) {
+                    // the Adreno driver takes this further: it straight up has no queues with the transfer bit.
+                    // Rely on a compute or graphics queue in this case.
+                    Initializer.LOGGER.warn("No transfer queues found, will try compute-graphics queue");
+                    fallback = findFirstQueueIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
                 }
+                if(fallback == -1)
+                    throw new RuntimeException("Failed to a suitable transfer queue fallback");
+                else
+                    indices.transferFamily = fallback;
             }
 
-            if (indices.presentFamily == VK_QUEUE_FAMILY_IGNORED) {
-                indices.presentFamily = indices.computeFamily != VK_QUEUE_FAMILY_IGNORED ? indices.computeFamily : indices.graphicsFamily;
-                Initializer.LOGGER.warn("Using fallback for present queue");
-            }
-
-            if (indices.transferFamily == VK_QUEUE_FAMILY_IGNORED) {
-                indices.transferFamily = indices.computeFamily != VK_QUEUE_FAMILY_IGNORED ? indices.computeFamily : indices.graphicsFamily;
-                Initializer.LOGGER.warn("Using fallback for transfer queue");
-            }
-
-            if (indices.computeFamily == VK_QUEUE_FAMILY_IGNORED) {
-                indices.computeFamily = indices.graphicsFamily;
-                Initializer.LOGGER.warn("Using fallback for compute queue");
+            if (indices.computeFamily == -1) {
+                indices.computeFamily = findFirstQueueIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT);
             }
 
             if (indices.graphicsFamily == VK_QUEUE_FAMILY_IGNORED)
                 throw new RuntimeException("Unable to find queue family with graphics support.");
-            if (indices.transferFamily == VK_QUEUE_FAMILY_IGNORED)
-                throw new RuntimeException("Unable to find queue family with transfer support.");
             if (indices.presentFamily == VK_QUEUE_FAMILY_IGNORED)
                 throw new RuntimeException("Unable to find queue family with present support.");
             if (indices.computeFamily == VK_QUEUE_FAMILY_IGNORED)
