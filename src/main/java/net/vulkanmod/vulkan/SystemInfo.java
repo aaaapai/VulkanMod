@@ -1,82 +1,65 @@
 package net.vulkanmod.vulkan;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
+import net.vulkanmod.Initializer;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class SystemInfo {
+    private static final String UNKNOWN_CPU = "Unknown CPU";
+    private static final String PROC_CPUINFO = "/proc/cpuinfo";
+    private static final String SOC_MANUFACTURER_PROP = "/system/bin/getprop ro.soc.manufacturer";
+    private static final String SOC_MODEL_PROP = "/system/bin/getprop ro.soc.model";
+    
     public static final String cpuInfo = getCPUNameSafely();
-    public static String getCPUNameSafely() {
-        String tmp = getCPUNameFromProc();
-        if (tmp == null) {
-            tmp = getCPUNameFromProp();
-            if (tmp == null) {
-                return "Unknown CPU";
-            }
-        }
 
-        return tmp;
+    public static String getCPUNameSafely() {
+        return Optional.ofNullable(getCPUNameFromProc())
+                      .orElseGet(() -> Optional.ofNullable(getCPUNameFromProp())
+                      .orElse(UNKNOWN_CPU));
     }
 
     private static String getCPUNameFromProc() {
-        try (Stream<String> lines = Files.lines(Paths.get("/proc/cpuinfo"))) {
-            return lines.filter(line -> line.startsWith("Hardware") || line.startsWith("model name"))
-                .reduce((f, s) -> f.startsWith("H") ? f : s)
+        try {
+            return Files.lines(Paths.get(PROC_CPUINFO))
+                .filter(line -> line.startsWith("Hardware") || line.startsWith("model name"))
+                .findFirst()
                 .map(line -> {
-                    String value = line.split(":")[1].strip();
-                    return value.startsWith("H") ? value + " (SoC)" : value;
+                    String value = line.split(":", 2)[1].strip();
+                    return line.startsWith("Hardware") ? value + " (SoC)" : value;
                 }).orElse(null);
         } catch (IOException e) {
+            Initializer.LOGGER.warn("Failed to read CPU info from proc", e);
             return null;
         }
     }
 
     private static String getCPUNameFromProp() {
-        Set<String> manufacturer = shellExec("getprop ro.soc.manufacturer");
-        Set<String> model = shellExec("getprop ro.soc.model");
-
-        if (manufacturer.size() == 0) {
-            // manu is null but model not null -> model. ex: "MT6833V/NZA"
-            if (model.size() >= 1) return model.iterator().next();
-        } else {
-            // manu not null but model is null -> manu + " CPU". ex: "Mediatek CPU"
-            if (model.size() == 0) return manufacturer.iterator().next() + " CPU";
-            // best case scenario
-            // manu not null and model not null -> manu + model. ex: "Mediatek MT6833V/NZA"
-            else return manufacturer.iterator().next() + " " + model.iterator().next();
-        }
-
-        // worst case scenario
-        // manu is null and model is null
-        return null;
+        String manufacturer = executeCommand(SOC_MANUFACTURER_PROP);
+        String model = executeCommand(SOC_MODEL_PROP);
+        
+        if (manufacturer == null) return model != null ? model : null;
+        else return model != null ? manufacturer + " " + model
+                                  : manufacturer + " CPU";
     }
 
-     private static Set<String> shellExec(String commands) {
-        Set<String> lines = new HashSet<>();
-        
-        // idk
-        String[] args = {
-            "sh", "-c", "\"" + commands + "\""
-        };
-        
+    private static String executeCommand(String command) {
         try {
-            ProcessBuilder procBuilder = new ProcessBuilder(args);
-            procBuilder.redirectErrorStream(true);
-
-            Process proc = procBuilder.start();
-            try (
-                BufferedReader stdin = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            ) {
-                String tmp = null;            
-                while ((tmp = stdin.readLine()) != null) lines.add(tmp.strip());
-            } catch (IOException e1) { }
-        } catch (IOException e) { }
-
-        return lines;
+            Process process = new ProcessBuilder(command.split(" ")).start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                
+                if (process.waitFor() != 0) {
+                    Initializer.LOGGER.warn("Command failed: " + command);
+                    return null;
+                }
+                
+                return reader.readLine();
+            }
+        } catch (IOException | InterruptedException e) {
+            Initializer.LOGGER.warn("Failed to execute command: " + command, e);
+            Thread.currentThread().interrupt();
+            return null;
+        }
     }
 }
