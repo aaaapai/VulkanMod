@@ -40,7 +40,7 @@ public class SystemInfo {
         
         if (manufacturer == null) return model != null ? model : null;
         else return model != null ? manufacturer + " " + model
-                                  : manufacturer + " CPU";
+                                  : "A " + manufacturer + " CPU";
     }
 
     private static String executeCommand(String command) {
