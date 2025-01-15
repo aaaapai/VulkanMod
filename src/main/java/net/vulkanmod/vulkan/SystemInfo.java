@@ -6,7 +6,6 @@ import java.nio.file.*;
 import java.util.*;
 
 public class SystemInfo {
-    private static final String UNKNOWN_CPU = "Unknown CPU";
     private static final String PROC_CPUINFO = "/proc/cpuinfo";
     private static final String SOC_MANUFACTURER_PROP = "/system/bin/getprop ro.soc.manufacturer";
     private static final String SOC_MODEL_PROP = "/system/bin/getprop ro.soc.model";
@@ -14,9 +13,9 @@ public class SystemInfo {
     public static final String cpuInfo = getCPUNameSafely();
 
     public static String getCPUNameSafely() {
-        return Optional.ofNullable(getCPUNameFromProc())
-                      .orElseGet(() -> Optional.ofNullable(getCPUNameFromProp())
-                      .orElse(UNKNOWN_CPU));
+        return Optional.ofNullable(getCPUNameFromProp())
+                      .orElseGet(() -> Optional.ofNullable(getCPUNameFromProc())
+                      .orElse("Unknown CPU"));
     }
 
     private static String getCPUNameFromProc() {
