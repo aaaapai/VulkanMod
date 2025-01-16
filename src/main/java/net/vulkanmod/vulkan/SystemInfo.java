@@ -16,8 +16,9 @@ public class SystemInfo {
 
     public static String getCPUNameSafely() {
         return Optional.ofNullable(getCPUNameFromProp())
-                      .orElseGet(() -> Optional.ofNullable(getCPUNameFromProc())
-                      .orElse("Unknown CPU"));
+                   .map(name -> name + " (SoC)")
+                   .orElseGet(() -> Optional.ofNullable(getCPUNameFromProc())
+                                            .orElse("Unknown CPU"));
     }
 
     private static String getCPUNameFromProc() {
