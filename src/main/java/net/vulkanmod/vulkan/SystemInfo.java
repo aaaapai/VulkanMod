@@ -1,6 +1,8 @@
 package net.vulkanmod.vulkan;
 
 import net.vulkanmod.Initializer;
+import oshi.hardware.CentralProcessor;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -10,7 +12,7 @@ public class SystemInfo {
     private static final String SOC_MANUFACTURER_PROP = "/system/bin/getprop ro.soc.manufacturer";
     private static final String SOC_MODEL_PROP = "/system/bin/getprop ro.soc.model";
     
-    public static final String cpuInfo = getCPUNameSafely();
+    public static final String cpuInfo = isRunningOnAndroid() ? getCPUNameSafely() : getCPUNameForDesktop();
 
     public static String getCPUNameSafely() {
         return Optional.ofNullable(getCPUNameFromProp())
@@ -60,5 +62,23 @@ public class SystemInfo {
             Thread.currentThread().interrupt();
             return null;
         }
+    }
+
+    public static String getCPUNameForDesktop() {
+        try {
+            CentralProcessor centralProcessor = new oshi.SystemInfo().getHardware().getProcessor();
+            return String.format("%s", centralProcessor.getProcessorIdentifier().getName()).replaceAll("\\s+", " ");
+        } catch (NoClassDefFoundError | Exception e) {
+            return getCPUNameSafely();
+        }
+    }
+
+    private static boolean isRunningOnAndroid() {
+        boolean hasAndroidEnvironmentVars = System.getenv("POJAV_ENVIRON") != null ||
+                                            System.getenv("SCL_ENVIRON") != null ||
+                                            System.getenv("SCL_RENDERER") != null ||
+                                            System.getenv("POJAV_RENDERER") != null;
+        boolean isBuildPropAvailable = Files.exists(Paths.get("/system/build.prop"));
+        return (hasAndroidEnvironmentVars || isBuildPropAvailable);
     }
 }
