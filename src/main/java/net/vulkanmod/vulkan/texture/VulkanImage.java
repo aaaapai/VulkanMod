@@ -27,6 +27,7 @@ public class VulkanImage {
     public static int DefaultFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
     private static final VkDevice DEVICE = Vulkan.getVkDevice();
+    private static final boolean DMAMode = ImageUploadHelper.INSTANCE.DMAMode();
 
     public final int format;
     public final int aspect;
@@ -223,7 +224,7 @@ public class VulkanImage {
     }
 
     private void transferDstLayout(MemoryStack stack, VkCommandBuffer commandBuffer) {
-        transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, DMAMode);
     }
 
     public void readOnlyLayout() {
@@ -244,7 +245,7 @@ public class VulkanImage {
     }
 
     public void readOnlyLayout(MemoryStack stack, VkCommandBuffer commandBuffer) {
-        transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, DMAMode);
     }
 
     public void updateTextureSampler(boolean blur, boolean clamp, boolean mipmaps) {
@@ -264,16 +265,22 @@ public class VulkanImage {
     }
 
     public void transitionImageLayout(MemoryStack stack, VkCommandBuffer commandBuffer, int newLayout) {
-        transitionImageLayout(stack, commandBuffer, this, newLayout);
+        transitionImageLayout(stack, commandBuffer, this, newLayout, false);
     }
 
-    public static void transitionImageLayout(MemoryStack stack, VkCommandBuffer commandBuffer, VulkanImage image, int newLayout) {
+    public void transitionImageLayout(MemoryStack stack, VkCommandBuffer commandBuffer, int newLayout, boolean dma) {
+        transitionImageLayout(stack, commandBuffer, this, newLayout, dma);
+    }
+
+    public static void transitionImageLayout(MemoryStack stack, VkCommandBuffer commandBuffer, VulkanImage image, int newLayout, boolean dma) {
         if (image.currentLayout == newLayout) {
 //            System.out.println("new layout is equal to current layout");
             return;
         }
 
         int sourceStage, srcAccessMask, destinationStage, dstAccessMask = 0;
+        final int defShdReadOnlyAccessMsk = dma ? VK_ACCESS_TRANSFER_READ_BIT : VK_ACCESS_SHADER_READ_BIT;
+        final int defReadOnlyStage = dma ? VK_PIPELINE_STAGE_TRANSFER_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
         switch (image.currentLayout) {
             case VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> {
@@ -288,9 +295,10 @@ public class VulkanImage {
                 srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
+            //TODO: Confirm if Perf regressions from these flags
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL -> {
-                srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                srcAccessMask = defShdReadOnlyAccessMsk;
+                sourceStage = defReadOnlyStage;
             }
             case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL -> {
                 srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -312,9 +320,10 @@ public class VulkanImage {
                 dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
+            //TODO: Confirm if Perf regressions from these flags
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL -> {
-                dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dstAccessMask = defShdReadOnlyAccessMsk;
+                destinationStage = defReadOnlyStage;
             }
             case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL -> {
                 dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
