@@ -263,7 +263,7 @@ public class Renderer {
             int vkResult = vkAcquireNextImageKHR(device, swapChain.getId(), VUtil.UINT64_MAX,
                                                  imageAvailableSemaphores.get(currentFrame), VK_NULL_HANDLE, pImageIndex);
 
-             if (swapChain.isActuallySuboptimal(vkResult) || vkResult == VK_ERROR_OUT_OF_DATE_KHR || swapChainUpdate) {
+            if (swapChain.isActuallySuboptimal(vkResult) || vkResult == VK_ERROR_OUT_OF_DATE_KHR || swapChainUpdate) {
                 swapChainUpdate = true;
                 skipRendering = true;
                 beginFrame();
