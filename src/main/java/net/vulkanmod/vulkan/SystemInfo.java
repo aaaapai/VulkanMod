@@ -4,6 +4,11 @@ import net.vulkanmod.Initializer;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import oshi.hardware.CentralProcessor;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class SystemInfo {
     private static final String PROC_CPUINFO = "/proc/cpuinfo";

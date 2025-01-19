@@ -124,7 +124,6 @@ public class SwapChain extends Framebuffer {
             int surfaceTransform = surfaceProperties.capabilities.currentTransform();
             shouldPreRotate = (surfaceTransform &
                     (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR |VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)) != 0;
-
             createInfo.preTransform(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
 
             int supportedCompositeAlpha = surfaceProperties.capabilities.supportedCompositeAlpha();
