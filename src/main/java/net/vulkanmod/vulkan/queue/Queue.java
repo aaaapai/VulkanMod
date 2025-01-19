@@ -6,14 +6,13 @@ import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkPhysicalDevice;
-import org.lwjgl.vulkan.VkQueue;
-import org.lwjgl.vulkan.VkQueueFamilyProperties;
+import org.lwjgl.vulkan.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,8 +38,10 @@ public abstract class Queue {
     private static QueueFamilyIndices queueFamilyIndices;
 
     private final VkQueue queue;
+    final long tmSemaphore;
 
-    protected CommandPool commandPool;
+    protected final CommandPool commandPool;
+    final AtomicLong submits = new AtomicLong(0);
 
     private static void initializeMD5Check() {
         Initializer.LOGGER.info("🟥 Patched by ShadowMC and his team! 🟥");
@@ -110,13 +111,30 @@ public abstract class Queue {
         vkGetDeviceQueue(DeviceManager.vkDevice, familyIndex, 0, pQueue);
         this.queue = new VkQueue(pQueue.get(0), DeviceManager.vkDevice);
 
-        if (initCommandPool)
-            this.commandPool = new CommandPool(familyIndex);
+        this.commandPool = initCommandPool ? new CommandPool(familyIndex) : null;
+
+        if (initCommandPool) {
+            VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = VkSemaphoreTypeCreateInfo.calloc(stack)
+                    .sType$Default()
+                    .semaphoreType(VK12.VK_SEMAPHORE_TYPE_TIMELINE)
+                    .initialValue(0);
+
+            VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc(stack)
+                    .sType$Default()
+                    .pNext(semaphoreTypeCreateInfo);
+
+            LongBuffer pPointer = stack.mallocLong(1);
+
+            VK12.vkCreateSemaphore(Vulkan.getVkDevice(), semaphoreCreateInfo, null, pPointer);
+
+            this.tmSemaphore = pPointer.get(0);
+        }
+        else this.tmSemaphore = VK_NULL_HANDLE;
     }
 
-    public synchronized long submitCommands(CommandPool.CommandBuffer commandBuffer) {
+    public synchronized void submitCommands(CommandPool.CommandBuffer commandBuffer) {
         try (MemoryStack stack = stackPush()) {
-            return commandBuffer.submitCommands(stack, queue, false);
+            commandBuffer.submitCommands(stack, this);
         }
     }
 
@@ -125,8 +143,10 @@ public abstract class Queue {
     }
 
     public void cleanUp() {
-        if (commandPool != null)
+        if (commandPool != null) {
             commandPool.cleanUp();
+            vkDestroySemaphore(Vulkan.getVkDevice(), this.tmSemaphore, null);
+        }
     }
 
     public void waitIdle() {
@@ -135,6 +155,14 @@ public abstract class Queue {
 
     public CommandPool getCommandPool() {
         return commandPool;
+    }
+
+    public AtomicLong submitCount() {
+        return submits;
+    }
+
+    public long getTmSemaphore() {
+        return this.tmSemaphore;
     }
 
     public enum Family {
@@ -241,6 +269,13 @@ public abstract class Queue {
             if (indices.computeFamily == VK_QUEUE_FAMILY_IGNORED)
                 throw new RuntimeException("Unable to find queue family with compute support.");
 
+            VkExtent3D minTexDMAAlign = queueFamilies.get(indices.transferFamily).minImageTransferGranularity();
+
+            //Some drivers use either 1 or 0 when specifying Min DMA texture alignment
+
+            //TODO: Risk mitigation: Should this be made Nvidia exclusive...
+            indices.permitDMAQueue = minTexDMAAlign.width() < 2 && minTexDMAAlign.height() < 2 && minTexDMAAlign.depth() < 2;
+
             return indices;
         }
     }
@@ -250,6 +285,7 @@ public abstract class Queue {
         public int presentFamily = VK_QUEUE_FAMILY_IGNORED;
         public int transferFamily = VK_QUEUE_FAMILY_IGNORED;
         public int computeFamily = VK_QUEUE_FAMILY_IGNORED;
+        public boolean permitDMAQueue = false;
 
         public boolean isComplete() {
             return graphicsFamily != -1 && presentFamily != -1 && transferFamily != -1 && computeFamily != -1;
