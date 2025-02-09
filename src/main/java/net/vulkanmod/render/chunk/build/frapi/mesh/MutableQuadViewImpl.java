@@ -67,6 +67,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		quad.tintIndex(-1);
 	}
 
+	protected boolean hasTransform = false;
 	private QuadTransform activeTransform = NO_TRANSFORM;
 	private final ObjectArrayList<QuadTransform> transformStack = new ObjectArrayList<>();
 	private final QuadTransform stackTransform = q -> {
@@ -258,6 +259,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		}
 
 		transformStack.push(transform);
+		hasTransform = true;
 
 		if (transformStack.size() == 1) {
 			activeTransform = transform;
@@ -272,6 +274,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 
 		if (transformStack.size() == 0) {
 			activeTransform = NO_TRANSFORM;
+			hasTransform = false;
 		} else if (transformStack.size() == 1) {
 			activeTransform = transformStack.get(0);
 		}

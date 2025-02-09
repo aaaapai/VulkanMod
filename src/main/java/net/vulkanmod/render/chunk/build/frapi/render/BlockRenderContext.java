@@ -31,13 +31,17 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.Initializer;
+import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableQuadViewImpl;
 import net.vulkanmod.render.chunk.build.light.LightMode;
 import net.vulkanmod.render.chunk.build.light.LightPipeline;
 import net.vulkanmod.render.chunk.build.light.data.ArrayLightDataCache;
+import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
 import net.vulkanmod.render.chunk.build.light.flat.FlatLightPipeline;
 import net.vulkanmod.render.chunk.build.light.smooth.NewSmoothLightPipeline;
 import net.vulkanmod.render.chunk.build.light.smooth.SmoothLightPipeline;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /**
  * Context for non-terrain block rendering.
@@ -79,7 +83,7 @@ public class BlockRenderContext extends AbstractBlockRenderContext {
 		this.prepareForWorld(blockView, cull);
 		this.prepareForBlock(state, pos, model.useAmbientOcclusion());
 
-		model.emitBlockQuads(blockView, state, pos, this.randomSupplier, this);
+		model.emitBlockQuads(getEmitter(), blockView, state, pos, this.randomSupplier, this::isFaceCulled);
 
 		this.vertexConsumer = null;
 	}
@@ -97,6 +101,12 @@ public class BlockRenderContext extends AbstractBlockRenderContext {
 		shadeQuad(quad, lightPipeline, emissive, vanillaShade);
 		copyLightData(quad);
         bufferQuad(quad, vertexConsumer);
+	}
+
+	private void copyLightData(MutableQuadViewImpl quad) {
+        for (int i = 0; i < 4; i++) {
+			quad.lightmap(i, this.quadLightData.lm[i]);
+		}
 	}
 
 }

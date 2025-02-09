@@ -57,7 +57,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		@Override
 		public void emitBlockQuads(QuadEmitter emitter, BakedModel model, BlockState state,
 								   Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
-			AbstractBlockRenderContext.this.emitBlockQuads(model, state, randomSupplier, cullTest);
+			if (this.hasTransform) {
+				super.emitBlockQuads(emitter, model, state, randomSupplier, cullTest);
+			} else {
+				AbstractBlockRenderContext.this.emitVanillaBlockQuads(model, state, randomSupplier, cullTest);
+			}
 		}
 	};
 
@@ -251,7 +255,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	public void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<Direction> cullTest) {
+	public void emitVanillaBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<Direction> cullTest) {
 		MutableQuadViewImpl quad = this.editorQuad;
 		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? STANDARD_MATERIAL : NO_AO_MATERIAL;
 

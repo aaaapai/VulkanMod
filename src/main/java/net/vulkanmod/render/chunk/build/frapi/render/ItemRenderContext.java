@@ -21,33 +21,23 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.MatrixUtil;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
 import net.fabricmc.fabric.api.renderer.v1.material.GlintMode;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.vulkanmod.mixin.render.frapi.ItemRendererAccessor;
-import org.jetbrains.annotations.Nullable;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.util.TriState;
 import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableQuadViewImpl;
@@ -83,8 +73,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 		@Override
 		public void emitItemQuads(QuadEmitter emitter, BakedModel model, BlockState state,
 								  Supplier<RandomSource> randomSupplier) {
-//			super.emitItemQuads(emitter, model, state, randomSupplier);
-			ItemRenderContext.this.emitItemQuads(model, state, randomSupplier);
+			super.emitItemQuads(emitter, model, state, randomSupplier);
 		}
 	};
 
@@ -130,21 +119,6 @@ public class ItemRenderContext extends AbstractRenderContext {
 
 		specialGlintEntry = null;
 		Arrays.fill(vertexConsumerCache, null);
-	}
-
-	public void emitItemQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier) {
-		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-			final Direction cullFace = ModelHelper.faceFromIndex(i);
-			final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());
-			final int count = quads.size();
-
-			for (int j = 0; j < count; j++) {
-				final BakedQuad q = quads.get(j);
-				editorQuad.fromVanilla(q, STANDARD_MATERIAL, cullFace);
-
-				bufferQuad(editorQuad);
-			}
-		}
 	}
 
 	@Override
