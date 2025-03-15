@@ -90,7 +90,7 @@ public class Renderer {
     private List<VkCommandBuffer> commandBuffers;
     private ArrayList<Long> imageAvailableSemaphores;
     private ArrayList<Long> renderFinishedSemaphores;
-    private ArrayList<Long> inFlightSubmits;
+    private long inFlightSubmits;
 
     private Framebuffer boundFramebuffer;
     private RenderPass boundRenderPass;
@@ -166,7 +166,6 @@ public class Renderer {
     private void createSyncObjects() {
         imageAvailableSemaphores = new ArrayList<>(framesNum);
         renderFinishedSemaphores = new ArrayList<>(framesNum);
-        inFlightSubmits = new ArrayList<>(framesNum);
 
         try (MemoryStack stack = stackPush()) {
 
@@ -186,7 +185,6 @@ public class Renderer {
 
                 imageAvailableSemaphores.add(pImageAvailableSemaphore.get(0));
                 renderFinishedSemaphores.add(pRenderFinishedSemaphore.get(0));
-                inFlightSubmits.add(0L);
 
             }
 
@@ -236,7 +234,12 @@ public class Renderer {
 
         try (MemoryStack stack = stackPush()) {
 
-            DeviceManager.getGraphicsQueue().waitSubmits(stack, inFlightSubmits.get(currentFrame));
+            //Wait on previous frame's submit: (framesNum - 1) is equal to Max Frames in Flight
+            // Mimics Array and Current Frame index by "Stepping Back" in the timeline
+
+            //TODO: Possible Nvidia VSync bug: stutter when submitting > 1 Submits in Flight (when in FIFO mode)
+            final int maxFiF = swapChain.isVsync() ? 1 : framesNum - 1;
+            DeviceManager.getGraphicsQueue().waitSubmits(stack, Math.max(0L, inFlightSubmits - maxFiF));
             //Testing using Graphics Timeline as a substitute for inFlightFences
             //Aggregate frame fences and Graphics Queue fences together as one
 
@@ -343,7 +346,7 @@ public class Renderer {
 
             currentFrame = (currentFrame + 1) % framesNum;
 
-            inFlightSubmits.set(currentFrame, submitId);
+            inFlightSubmits = submitId;
 
         }
     }
@@ -357,7 +360,6 @@ public class Renderer {
         Queue graphicsQueue = DeviceManager.getGraphicsQueue();
 
         final int vkResult;
-        final long submitId = graphicsQueue.submitCount();
 
 
         //Can't sync the GPU fully w/o Sync2, must use Host sync instead (Breaks Nvidia VSync)
@@ -379,7 +381,7 @@ public class Renderer {
         if ((vkResult = vkQueueSubmit(graphicsQueue.queue(), submitInfo, 0)) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
         }
-        return submitId;
+        return graphicsQueue.submitCount();
     }
 
     //Used to Fix VSync stability on Nvidia: Used when Sync2 is supported (Most Vk1.2 Systems)
@@ -387,7 +389,6 @@ public class Renderer {
 
         Queue graphicsQueue = DeviceManager.getGraphicsQueue();
         final int vkResult;
-        final long submitId = graphicsQueue.submitCount();
 
         VkCommandBufferSubmitInfo.Buffer commandBufferSubmitInfo = VkCommandBufferSubmitInfo.calloc(1, stack)
                 .sType$Default()
@@ -426,7 +427,7 @@ public class Renderer {
         if ((vkResult = KHRSynchronization2.vkQueueSubmit2KHR(graphicsQueue.queue(), submitInfo, 0)) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
         }
-        return submitId;
+        return graphicsQueue.submitCount();
     }
 
     /**
