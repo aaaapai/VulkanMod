@@ -421,7 +421,6 @@ public class Renderer {
             .sType$Default()
             .pWaitSemaphoreInfos(waitSemaphoreSubmitInfo)
             .pSignalSemaphoreInfos(mainSemaphoreSubmitInfo)
-            .pWaitSemaphoreInfos(waitSemaphoreSubmitInfo)
             .pCommandBufferInfos(commandBufferSubmitInfo);
 
         if ((vkResult = KHRSynchronization2.vkQueueSubmit2KHR(graphicsQueue.queue(), submitInfo, 0)) != VK_SUCCESS) {
