@@ -3,10 +3,10 @@ package net.vulkanmod.vulkan;
 import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.framebuffer.SwapChain;
-import net.vulkanmod.vulkan.memory.Buffer;
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
-import net.vulkanmod.vulkan.memory.StagingBuffer;
+import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
 import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.texture.SamplerManager;
@@ -34,6 +34,7 @@ import static org.lwjgl.util.vma.Vma.vmaDestroyAllocator;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRSynchronization2.VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
@@ -60,6 +61,7 @@ public class Vulkan {
     }
 
     public static final Set<String> REQUIRED_EXTENSION = getRequiredExtensionSet();
+    public static final Set<String> OPTIONAL_EXTENSION = new HashSet<>(List.of(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME));
 
     private static Set<String> getRequiredExtensionSet() {
         ArrayList<String> extensions = new ArrayList<>(List.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME));

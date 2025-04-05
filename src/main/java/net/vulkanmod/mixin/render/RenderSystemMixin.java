@@ -276,9 +276,9 @@ public abstract class RenderSystemMixin {
      * @author
      */
     @Overwrite(remap = false)
-    public static void polygonMode(final int i, final int j) {
+    public static void polygonMode(final int face, final int mode) {
         assertOnRenderThread();
-        VRenderSystem.setPolygonModeGL(i);
+        VRenderSystem.setPolygonModeGL(mode);
     }
 
     /**
@@ -303,9 +303,9 @@ public abstract class RenderSystemMixin {
      * @author
      */
     @Overwrite(remap = false)
-    public static void polygonOffset(float p_69864_, float p_69865_) {
+    public static void polygonOffset(float factor, float units) {
         assertOnRenderThread();
-        VRenderSystem.polygonOffset(p_69864_, p_69865_);
+        VRenderSystem.polygonOffset(factor, units);
     }
 
     /**

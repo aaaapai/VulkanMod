@@ -3,14 +3,13 @@ package net.vulkanmod.vulkan.queue;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
+import net.vulkanmod.vulkan.util.VUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkPhysicalDevice;
-import org.lwjgl.vulkan.VkQueue;
-import org.lwjgl.vulkan.VkQueueFamilyProperties;
+import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.stream.IntStream;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -22,8 +21,10 @@ public abstract class Queue {
     private static QueueFamilyIndices queueFamilyIndices;
 
     private final VkQueue queue;
+    final long tmSemaphore;
 
-    protected CommandPool commandPool;
+    protected final CommandPool commandPool;
+    private long submits;
 
     public synchronized CommandPool.CommandBuffer beginCommands() {
         try (MemoryStack stack = stackPush()) {
@@ -43,13 +44,30 @@ public abstract class Queue {
         vkGetDeviceQueue(DeviceManager.vkDevice, familyIndex, 0, pQueue);
         this.queue = new VkQueue(pQueue.get(0), DeviceManager.vkDevice);
 
-        if (initCommandPool)
-            this.commandPool = new CommandPool(familyIndex);
+        this.commandPool = initCommandPool ? new CommandPool(familyIndex) : null;
+
+        if (initCommandPool) {
+            VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = VkSemaphoreTypeCreateInfo.calloc(stack)
+                    .sType$Default()
+                    .semaphoreType(VK12.VK_SEMAPHORE_TYPE_TIMELINE)
+                    .initialValue(0);
+
+            VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc(stack)
+                    .sType$Default()
+                    .pNext(semaphoreTypeCreateInfo);
+
+            LongBuffer pPointer = stack.mallocLong(1);
+
+            VK12.vkCreateSemaphore(Vulkan.getVkDevice(), semaphoreCreateInfo, null, pPointer);
+
+            this.tmSemaphore = pPointer.get(0);
+        }
+        else this.tmSemaphore = VK_NULL_HANDLE;
     }
 
-    public synchronized long submitCommands(CommandPool.CommandBuffer commandBuffer) {
+    public synchronized void submitCommands(CommandPool.CommandBuffer commandBuffer) {
         try (MemoryStack stack = stackPush()) {
-            return commandBuffer.submitCommands(stack, queue, false);
+            commandBuffer.submitCommands(stack, this);
         }
     }
 
@@ -58,8 +76,10 @@ public abstract class Queue {
     }
 
     public void cleanUp() {
-        if (commandPool != null)
+        if (commandPool != null) {
             commandPool.cleanUp();
+            vkDestroySemaphore(Vulkan.getVkDevice(), this.tmSemaphore, null);
+        }
     }
 
     public void waitIdle() {
@@ -68,6 +88,33 @@ public abstract class Queue {
 
     public CommandPool getCommandPool() {
         return commandPool;
+    }
+
+    public long submitCountAdd() {
+        return ++submits;
+    }
+
+    public long submitCount() {
+        return submits;
+    }
+
+    public long getTmSemaphore() {
+        return this.tmSemaphore;
+    }
+
+    public void waitSubmits(MemoryStack stack) {
+        waitSubmits(stack, this.submits);
+    }
+
+    //Functionally identical to Synchronisation.waitFences(), but for a specific queue
+    public void waitSubmits(MemoryStack stack, long submitId) {
+
+        VkSemaphoreWaitInfo vkSemaphoreWaitInfo = VkSemaphoreWaitInfo.calloc(stack)
+                .sType$Default()
+                .semaphoreCount(1)
+                .pSemaphores(stack.longs(this.tmSemaphore))
+                .pValues(stack.longs(submitId));
+        VK12.vkWaitSemaphores(device, vkSemaphoreWaitInfo, VUtil.UINT64_MAX);
     }
 
     public enum Family {
@@ -148,19 +195,33 @@ public abstract class Queue {
                 Initializer.LOGGER.warn("Using compute queue as present fallback");
             }
 
+            // In case there's no dedicated transfer queue, we need choose another one
+            // preferably a different one from the already selected queues
             if (indices.transferFamily == -1) {
-                // Some driversmay not have a transfer-only queue (for example iGPUs, when there's usually no need for DMA)
-                int fallback = findFirstQueueIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT);
-                if(fallback == -1) {
-                    // the Adreno driver takes this further: it straight up has no queues with the transfer bit.
-                    // Rely on a compute or graphics queue in this case.
-                    Initializer.LOGGER.warn("No transfer queues found, will try compute-graphics queue");
-                    fallback = findFirstQueueIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+
+                int transferIndex = -1;
+                for (int i = 0; i < queueFamilies.capacity(); i++) {
+                    int queueFlags = queueFamilies.get(i).queueFlags();
+
+                    if ((queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) {
+                        if (transferIndex == -1)
+                            transferIndex = i;
+
+                        if ((queueFlags & (VK_QUEUE_GRAPHICS_BIT)) == 0) {
+                            indices.transferFamily = i;
+
+                            if (i != indices.computeFamily)
+                                break;
+
+                            transferIndex = i;
+                        }
+                    }
                 }
-                if(fallback == -1)
-                    throw new RuntimeException("Failed to a suitable transfer queue fallback");
-                else
-                    indices.transferFamily = fallback;
+
+                if (transferIndex == -1)
+                    throw new RuntimeException("Failed to find queue family with transfer support");
+
+                indices.transferFamily = transferIndex;
             }
 
             if (indices.computeFamily == -1) {

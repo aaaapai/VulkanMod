@@ -4,8 +4,8 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
-import net.vulkanmod.vulkan.memory.Buffer;
-import net.vulkanmod.vulkan.memory.StagingBuffer;
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
+import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
 import net.vulkanmod.vulkan.queue.CommandPool;
 import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.queue.TransferQueue;
@@ -107,7 +107,7 @@ public class UploadManager {
     public void syncUploads() {
         submitUploads();
 
-        Synchronization.INSTANCE.waitFences();
+        Synchronization.INSTANCE.recycleCmdBuffers();
     }
 
     private void beginCommands() {

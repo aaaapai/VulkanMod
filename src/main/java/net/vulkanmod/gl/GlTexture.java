@@ -21,6 +21,7 @@ public class GlTexture {
     private static final Int2ReferenceOpenHashMap<GlTexture> map = new Int2ReferenceOpenHashMap<>();
     private static int boundTextureId = 0;
     private static GlTexture boundTexture;
+    private static GlTexture defaultTexture;
     private static int activeTexture = 0;
 
     private static int unpackRowLength;
@@ -39,11 +40,26 @@ public class GlTexture {
         return id;
     }
 
+    // Default texture can vary depending on graphic drivers,
+    // but it's usually a square that is either white or black
+    private static GlTexture getDefaultTexture() {
+        if (GlTexture.defaultTexture != null)
+            return GlTexture.defaultTexture;
+        GlTexture defaultTexture = new GlTexture(0);
+        defaultTexture.vulkanImage = VulkanImage.createWhiteTexture();
+        GlTexture.defaultTexture = defaultTexture;
+        return defaultTexture;
+    }
+
     public static void bindTexture(int id) {
         boundTextureId = id;
-        boundTexture = map.get(id);
+        if (id == 0) {
+            boundTexture = getDefaultTexture();
+        } else {
+            boundTexture = map.get(id);
+        }
 
-        if (id <= 0)
+        if (id < 0)
             return;
 
         if (boundTexture == null)
@@ -187,6 +203,28 @@ public class GlTexture {
         }
 
         //TODO
+    }
+
+    public static int getTexParameteri(int target, int pName) {
+        if (target != GL11.GL_TEXTURE_2D)
+            throw new UnsupportedOperationException("target != GL_TEXTURE_2D not supported");
+
+        if (boundTexture == null)
+            return -1;
+
+        return switch (pName) {
+            case GL11.GL_TEXTURE_INTERNAL_FORMAT -> GlUtil.getGlFormat(boundTexture.vulkanImage.format);
+            case GL11.GL_TEXTURE_WIDTH -> boundTexture.vulkanImage.width;
+            case GL11.GL_TEXTURE_HEIGHT -> boundTexture.vulkanImage.height;
+
+            case GL30.GL_TEXTURE_MAX_LEVEL -> boundTexture.maxLevel;
+            case GL30.GL_TEXTURE_MAX_LOD -> boundTexture.maxLod;
+
+            case GL11.GL_TEXTURE_MAG_FILTER -> boundTexture.magFilter;
+            case GL11.GL_TEXTURE_MIN_FILTER -> boundTexture.minFilter;
+
+            default -> -1;
+        };
     }
 
     public static int getTexLevelParameter(int target, int level, int pName) {
