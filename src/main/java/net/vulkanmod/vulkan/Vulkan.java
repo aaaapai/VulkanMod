@@ -318,7 +318,7 @@ public class Vulkan {
         if (CHECKS) {
             check(surface, 1);
         }
-        return nglfwCreateWindowSurface(instance.address(), window, memAddressSafe(allocator), memAddress(surface));
+        return glfwCreateWindowSurface(instance.address(), window, memAddressSafe(allocator), memAddress(surface));
     }
 
     private static void createSurface(long handle) {
