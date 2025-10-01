@@ -313,35 +313,20 @@ public class Vulkan {
         }
     }
 
-    @NativeType("VkResult")
-    private static int CreateWindowSurface(VkInstance instance, @NativeType("GLFWwindow *") long window, @Nullable @NativeType("VkAllocationCallbacks const *") VkAllocationCallbacks allocator, @NativeType("VkSurfaceKHR *") LongBuffer surface) {
-        if (CHECKS) {
-            check(surface, 1);
-        }
-        return glfwCreateWindowSurface(instance.address(), window, memAddressSafe(allocator), memAddress(surface));
-    }
-
     private static void createSurface(long handle) {
         window = handle;
 
-        try {
+        try (MemoryStack stack = stackPush()) {
 
-            try (MemoryStack stack = stackPush()) {
-                LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
-                try {
-                    int result = CreateWindowSurface(instance, window, null, pSurface);
-                    checkResult(result,
-                            "Failed to create window surface");
+            LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
 
-                } catch (Throwable e) {
-                    Initializer.LOGGER.error("Error to check the windows surface.",e);
-                }
-                surface = pSurface.get(0);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            glfwCreateWindowSurface(instance, window, null, pSurface);
+
+            surface = pSurface.get(0);
         }
     }
+
+    
 
     private static void createVma() {
         try (MemoryStack stack = stackPush()) {
