@@ -1,9 +1,7 @@
 package net.vulkanmod.vulkan.shader;
 
-package net.vulkanmod.vulkan.shader;
-
 import net.vulkanmod.vulkan.device.DeviceManager;
-import net.vulkanmod.vulkan.memory.Buffer;
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -15,6 +13,9 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRRayTracingPipeline.*;
 import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK11.*;
+import static org.lwjgl.vulkan.KHRBufferDeviceAddress.*;
+import static org.lwjgl.vulkan.VK12.*;
 
 public class RayTracingPipeline extends Pipeline {
 
@@ -26,6 +27,7 @@ public class RayTracingPipeline extends Pipeline {
 
     private Buffer shaderBindingTable;
     private long sbtBufferAddress;
+    private int sbtStride;
 
     RayTracingPipeline(Builder builder) {
         super(builder.shaderPath);
@@ -166,7 +168,7 @@ public class RayTracingPipeline extends Pipeline {
         vkDestroyDescriptorSetLayout(DeviceManager.vkDevice, descriptorSetLayout, null);
         vkDestroyPipelineLayout(DeviceManager.vkDevice, pipelineLayout, null);
 
-        this.shaderBindingTable.free();
+        this.shaderBindingTable.scheduleFree();
 
         PIPELINES.remove(this);
         //Renderer.getInstance().removeUsedPipeline(this);
