@@ -96,7 +96,10 @@ public class SPIRVUtils {
         VERTEX_SHADER(shaderc_glsl_vertex_shader),
         GEOMETRY_SHADER(shaderc_glsl_geometry_shader),
         FRAGMENT_SHADER(shaderc_glsl_fragment_shader),
-        COMPUTE_SHADER(shaderc_glsl_compute_shader);
+        COMPUTE_SHADER(shaderc_glsl_compute_shader),
+        RAYGEN_SHADER(shaderc_glsl_raygen_shader),
+        MISS_SHADER(shaderc_glsl_miss_shader),
+        CLOSEST_HIT_SHADER(shaderc_glsl_closesthit_shader);
 
         private final int kind;
 
