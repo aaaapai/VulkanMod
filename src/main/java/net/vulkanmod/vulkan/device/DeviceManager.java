@@ -171,6 +171,21 @@ public abstract class DeviceManager {
             deviceVulkan11Features.sType$Default();
             deviceVulkan11Features.shaderDrawParameters(device.isDrawIndirectSupported());
 
+            VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = VkPhysicalDeviceBufferDeviceAddressFeatures.calloc(stack);
+            bufferDeviceAddressFeatures.sType$Default();
+            bufferDeviceAddressFeatures.bufferDeviceAddress(true);
+            deviceVulkan11Features.pNext(bufferDeviceAddressFeatures.address());
+
+            VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = VkPhysicalDeviceAccelerationStructureFeaturesKHR.calloc(stack);
+            accelerationStructureFeatures.sType$Default();
+            accelerationStructureFeatures.accelerationStructure(true);
+            bufferDeviceAddressFeatures.pNext(accelerationStructureFeatures.address());
+
+            VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = VkPhysicalDeviceRayTracingPipelineFeaturesKHR.calloc(stack);
+            rayTracingPipelineFeatures.sType$Default();
+            rayTracingPipelineFeatures.rayTracingPipeline(true);
+            accelerationStructureFeatures.pNext(rayTracingPipelineFeatures.address());
+
             VkPhysicalDeviceFeatures2 deviceFeatures = VkPhysicalDeviceFeatures2.calloc(stack);
             deviceFeatures.sType$Default();
             deviceFeatures.features().samplerAnisotropy(device.availableFeatures.features().samplerAnisotropy());
@@ -196,7 +211,7 @@ public abstract class DeviceManager {
                 dynamicRenderingFeaturesKHR.sType$Default();
                 dynamicRenderingFeaturesKHR.dynamicRendering(true);
 
-                deviceVulkan11Features.pNext(dynamicRenderingFeaturesKHR.address());
+                rayTracingPipelineFeatures.pNext(dynamicRenderingFeaturesKHR.address());
 
 //                //Vulkan 1.3 dynamic rendering
 //                VkPhysicalDeviceVulkan13Features deviceVulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack);

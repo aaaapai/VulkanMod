@@ -21,6 +21,8 @@ import net.vulkanmod.vulkan.pass.DefaultMainPass;
 import net.vulkanmod.vulkan.pass.MainPass;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
+import net.vulkanmod.vulkan.shader.RayTracingPipeline;
+import org.lwjgl.vulkan.KHRRayTracingPipeline;
 import net.vulkanmod.vulkan.shader.PipelineState;
 import net.vulkanmod.vulkan.shader.Uniforms;
 import net.vulkanmod.vulkan.shader.layout.PushConstants;
@@ -301,6 +303,10 @@ public class Renderer {
         Profiler p = Profiler.getMainProfiler();
         p.push("End_rendering");
 
+        if (Initializer.CONFIG.enableRayTracing) {
+            doRayTracing();
+        }
+
         mainPass.end(currentCmdBuffer);
 
         waitFences();
@@ -540,6 +546,57 @@ public class Renderer {
         }
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, handle);
+        boundPipelineHandle = handle;
+        boundPipeline = pipeline;
+        addUsedPipeline(pipeline);
+    }
+
+    private void doRayTracing() {
+        RayTracingPipeline pipeline = PipelineManager.getRayTracingPipeline();
+        bindRayTracingPipeline(pipeline);
+
+        uploadAndBindUBOs(pipeline);
+
+        try (MemoryStack stack = stackPush()) {
+            VkStridedDeviceAddressRegionKHR raygenShaderSbtEntry = VkStridedDeviceAddressRegionKHR.calloc(stack);
+            raygenShaderSbtEntry.deviceAddress(pipeline.getSbtBufferAddress());
+            raygenShaderSbtEntry.stride(pipeline.getSbtStride());
+            raygenShaderSbtEntry.size(pipeline.getSbtStride());
+
+            VkStridedDeviceAddressRegionKHR missShaderSbtEntry = VkStridedDeviceAddressRegionKHR.calloc(stack);
+            missShaderSbtEntry.deviceAddress(pipeline.getSbtBufferAddress() + pipeline.getSbtStride());
+            missShaderSbtEntry.stride(pipeline.getSbtStride());
+            missShaderSbtEntry.size(pipeline.getSbtStride());
+
+            VkStridedDeviceAddressRegionKHR hitShaderSbtEntry = VkStridedDeviceAddressRegionKHR.calloc(stack);
+            hitShaderSbtEntry.deviceAddress(pipeline.getSbtBufferAddress() + 2 * pipeline.getSbtStride());
+            hitShaderSbtEntry.stride(pipeline.getSbtStride());
+            hitShaderSbtEntry.size(pipeline.getSbtStride());
+
+            VkStridedDeviceAddressRegionKHR callableShaderSbtEntry = VkStridedDeviceAddressRegionKHR.calloc(stack);
+
+            KHRRayTracingPipeline.vkCmdTraceRaysKHR(
+                    currentCmdBuffer,
+                    raygenShaderSbtEntry,
+                    missShaderSbtEntry,
+                    hitShaderSbtEntry,
+                    callableShaderSbtEntry,
+                    swapChain.getWidth(),
+                    swapChain.getHeight(),
+                    1);
+        }
+    }
+
+    public void bindRayTracingPipeline(RayTracingPipeline pipeline) {
+        VkCommandBuffer commandBuffer = currentCmdBuffer;
+
+        final long handle = pipeline.getHandle();
+
+        if (boundPipelineHandle == handle) {
+            return;
+        }
+
+        vkCmdBindPipeline(commandBuffer, KHRRayTracingPipeline.VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, handle);
         boundPipelineHandle = handle;
         boundPipeline = pipeline;
         addUsedPipeline(pipeline);

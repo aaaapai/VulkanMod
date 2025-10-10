@@ -8,8 +8,18 @@ import net.vulkanmod.render.chunk.build.thread.ThreadBuilderPack;
 import net.vulkanmod.render.shader.ShaderLoadUtil;
 import net.vulkanmod.render.vertex.CustomVertexFormat;
 import net.vulkanmod.render.vertex.TerrainRenderType;
+import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.RenderType;
+import net.vulkanmod.render.chunk.build.thread.ThreadBuilderPack;
+import net.vulkanmod.render.shader.ShaderLoadUtil;
+import net.vulkanmod.render.vertex.CustomVertexFormat;
+import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
+import net.vulkanmod.vulkan.shader.RayTracingPipeline;
+import net.vulkanmod.vulkan.shader.SPIRVUtils;
 
 import java.util.function.Function;
 
@@ -23,6 +33,8 @@ public abstract class PipelineManager {
     static GraphicsPipeline
             terrainShader, terrainShaderEarlyZ,
             fastBlitPipeline, cloudsPipeline;
+
+    static RayTracingPipeline rayTracingPipeline;
 
     private static Function<TerrainRenderType, GraphicsPipeline> shaderGetter;
 
@@ -43,6 +55,7 @@ public abstract class PipelineManager {
         terrainShader = createPipeline("terrain", terrainVertexFormat);
         fastBlitPipeline = createPipeline("blit", CustomVertexFormat.NONE);
         cloudsPipeline = createPipeline("clouds", DefaultVertexFormat.POSITION_COLOR);
+        rayTracingPipeline = createRayTracingPipeline("raytracing");
     }
 
     private static GraphicsPipeline createPipeline(String configName, VertexFormat vertexFormat) {
@@ -54,6 +67,19 @@ public abstract class PipelineManager {
         ShaderLoadUtil.loadShaders(pipelineBuilder, config, configName, "basic");
 
         return pipelineBuilder.createGraphicsPipeline();
+    }
+
+    private static RayTracingPipeline createRayTracingPipeline(String configName) {
+        RayTracingPipeline.Builder pipelineBuilder = new RayTracingPipeline.Builder(configName);
+
+        JsonObject config = ShaderLoadUtil.getJsonConfig("raytracing", configName);
+        pipelineBuilder.parseBindings(config);
+
+        ShaderLoadUtil.loadShader(pipelineBuilder, configName, "raytracing", SPIRVUtils.ShaderKind.RAYGEN_SHADER);
+        ShaderLoadUtil.loadShader(pipelineBuilder, configName, "raytracing", SPIRVUtils.ShaderKind.MISS_SHADER);
+        ShaderLoadUtil.loadShader(pipelineBuilder, configName, "raytracing", SPIRVUtils.ShaderKind.CLOSEST_HIT_SHADER);
+
+        return pipelineBuilder.createRayTracingPipeline();
     }
 
     public static GraphicsPipeline getTerrainShader(TerrainRenderType renderType) {
@@ -80,10 +106,15 @@ public abstract class PipelineManager {
         return cloudsPipeline;
     }
 
+    public static RayTracingPipeline getRayTracingPipeline() {
+        return rayTracingPipeline;
+    }
+
     public static void destroyPipelines() {
         terrainShaderEarlyZ.cleanUp();
         terrainShader.cleanUp();
         fastBlitPipeline.cleanUp();
         cloudsPipeline.cleanUp();
+        rayTracingPipeline.cleanUp();
     }
 }
