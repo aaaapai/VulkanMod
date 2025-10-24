@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.9.2'
+        id 'fabric-loom' version '1.11.8'
 	id 'maven-publish'
 }
 
@@ -34,7 +34,7 @@ dependencies {
 	includeModule("fabric-rendering-v1")
 	includeModule("fabric-renderer-api-v1")
 	includeModule("fabric-rendering-fluids-v1")
-	includeModule("fabric-rendering-data-attachment-v1")
+        includeModule("fabric-data-attachment-api-v1")
 	includeModule("fabric-block-view-api-v2")
 }
 
