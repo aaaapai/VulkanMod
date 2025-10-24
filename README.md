@@ -75,3 +75,8 @@ This is a fabric mod that introduces a brand new **Vulkan** based voxel renderin
 - This mod is still in development, please report issues in the [issue tab](https://github.com/xCollateral/VulkanMod/issues) with logs attached!
 - This mode isn't just "minecraft on vulkan" (e.g: [zink](https://docs.mesa3d.org/drivers/zink.html) ), it is a full rewrite of the minecraft renderer.
 
+## Development
+
+- Run `./gradlew genSource` after updating mappings to refresh the decompiled Minecraft sources used by the mixins. The build script uses [Fabric Loom](https://github.com/FabricMC/fabric-loom) with Mojang mappings, so the access widener stays in the `named` namespace even though the source names now match Mojang's.
+- If the command emits a very large log, redirect the output to a file (for example `./gradlew genSource > genSource.log`) so you can inspect the results after the task completes.
+

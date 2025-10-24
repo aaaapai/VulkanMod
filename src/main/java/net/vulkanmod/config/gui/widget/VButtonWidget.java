@@ -1,6 +1,5 @@
 package net.vulkanmod.config.gui.widget;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
@@ -8,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.vulkan.VRenderSystem;
 
 import java.util.function.Consumer;
 
@@ -28,7 +28,7 @@ public class VButtonWidget extends VAbstractWidget {
         Minecraft minecraftClient = Minecraft.getInstance();
         Font textRenderer = minecraftClient.font;
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, this.alpha);
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, this.alpha);
 
         RenderSystem.enableBlend();
 

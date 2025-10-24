@@ -1,6 +1,5 @@
 package net.vulkanmod.config.gui.widget;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -19,6 +18,7 @@ import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.config.option.CyclingOption;
 import net.vulkanmod.config.option.Option;
 import net.vulkanmod.render.util.MathUtil;
+import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 
 import java.util.Objects;
@@ -70,7 +70,7 @@ public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
         Minecraft minecraftClient = Minecraft.getInstance();
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         int i = this.getYImage(this.isHovered());
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();

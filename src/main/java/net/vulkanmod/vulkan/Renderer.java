@@ -1,6 +1,8 @@
 package net.vulkanmod.vulkan;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
@@ -204,6 +206,14 @@ public class Renderer {
         p.pop();
         p.round();
         p.push("Frame_ops");
+
+        Minecraft minecraft = Minecraft.getInstance();
+        float frameTime = minecraft.getFrameTime();
+        if (minecraft.levelRenderer() != null) {
+            VRenderSystem.setShaderGameTime(minecraft.levelRenderer().ticks + frameTime);
+        } else {
+            VRenderSystem.setShaderGameTime(frameTime);
+        }
 
         // runTick might be called recursively,
         // this check forces sync to avoid upload corruption
@@ -549,6 +559,11 @@ public class Renderer {
         boundPipelineHandle = handle;
         boundPipeline = pipeline;
         addUsedPipeline(pipeline);
+    }
+
+    public void bindGraphicsPipeline(RenderPipeline pipeline, VertexFormat vertexFormat) {
+        GraphicsPipeline graphicsPipeline = PipelineManager.getPipeline(pipeline, vertexFormat);
+        bindGraphicsPipeline(graphicsPipeline);
     }
 
     private void doRayTracing() {

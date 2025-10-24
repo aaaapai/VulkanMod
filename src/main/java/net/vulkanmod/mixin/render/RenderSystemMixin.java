@@ -1,193 +1,150 @@
 package net.vulkanmod.mixin.render;
 
+import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexSorting;
+import net.minecraft.resources.ResourceLocation;
 import net.vulkanmod.vulkan.VRenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
+import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static com.mojang.blaze3d.systems.RenderSystem.*;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.util.function.BiFunction;
 
 @Mixin(RenderSystem.class)
 public abstract class RenderSystemMixin {
 
-    @Shadow private static Matrix4f projectionMatrix;
-    @Shadow private static Matrix4f savedProjectionMatrix;
     @Shadow @Final private static Matrix4fStack modelViewStack;
-    @Shadow private static Matrix4f modelViewMatrix;
     @Shadow private static Matrix4f textureMatrix;
-
-    @Shadow @Final private static float[] shaderColor;
-    @Shadow @Final private static Vector3f[] shaderLightDirections;
-    @Shadow @Final private static float[] shaderFogColor;
-
     @Shadow private static @Nullable Thread renderThread;
-
-    @Shadow public static VertexSorting vertexSorting;
-    @Shadow private static VertexSorting savedVertexSorting;
+    @Shadow @Nullable private static GpuBufferSlice shaderFog;
+    @Shadow @Nullable private static GpuBufferSlice shaderLightDirections;
+    @Shadow @Nullable private static GpuBufferSlice projectionMatrixBuffer;
+    @Shadow private static ProjectionType projectionType;
+    @Shadow private static ProjectionType savedProjectionType;
+    @Shadow @Nullable private static GpuBufferSlice savedProjectionMatrixBuffer;
 
     @Shadow
-    public static void assertOnRenderThread() {}
+    public static void assertOnRenderThread() { }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void initRenderer(int debugVerbosity, boolean debugSync) {
+    @Inject(method = "initRenderer(JIZLjava/util/function/BiFunction;Z)V", at = @At("TAIL"))
+    private static void hookInitRenderer(long window, int debugVerbosity, boolean debugSync,
+                                         BiFunction<ResourceLocation, com.mojang.blaze3d.shaders.ShaderType, String> shaderSourceGetter,
+                                         boolean enableDebugLabels, CallbackInfo ci) {
+        VRenderSystem.setWindow(window);
         VRenderSystem.initRenderer();
 
-        renderThread.setPriority(Thread.NORM_PRIORITY + 2);
+        if (renderThread != null) {
+            renderThread.setPriority(Thread.NORM_PRIORITY + 2);
+        }
     }
 
-    /**
-     * @author
-     */
     @Overwrite(remap = false)
-    public static void setupDefaultState(int x, int y, int width, int height) { }
+    public static void setupDefaultState() { }
 
-    /**
-     * @author
-     */
     @Overwrite(remap = false)
     public static int maxSupportedTextureSize() {
         return VRenderSystem.maxSupportedTextureSize();
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void setShaderLights(Vector3f dir0, Vector3f dir1) {
-        shaderLightDirections[0] = dir0;
-        shaderLightDirections[1] = dir1;
-
-        VRenderSystem.lightDirection0.buffer.putFloat(0, dir0.x());
-        VRenderSystem.lightDirection0.buffer.putFloat(4, dir0.y());
-        VRenderSystem.lightDirection0.buffer.putFloat(8, dir0.z());
-
-        VRenderSystem.lightDirection1.buffer.putFloat(0, dir1.x());
-        VRenderSystem.lightDirection1.buffer.putFloat(4, dir1.y());
-        VRenderSystem.lightDirection1.buffer.putFloat(8, dir1.z());
+    @Inject(method = "setProjectionMatrix", at = @At("TAIL"))
+    private static void captureProjection(GpuBufferSlice buffer, ProjectionType type, CallbackInfo ci) {
+        updateProjection(buffer);
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    private static void _setShaderColor(float r, float g, float b, float a) {
-        shaderColor[0] = r;
-        shaderColor[1] = g;
-        shaderColor[2] = b;
-        shaderColor[3] = a;
-
-        VRenderSystem.setShaderColor(r, g, b, a);
+    @Inject(method = "restoreProjectionMatrix", at = @At("TAIL"))
+    private static void captureRestoredProjection(CallbackInfo ci) {
+        if (projectionMatrixBuffer != null) {
+            updateProjection(projectionMatrixBuffer);
+        }
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void setShaderFogColor(float f, float g, float h, float i) {
-        shaderFogColor[0] = f;
-        shaderFogColor[1] = g;
-        shaderFogColor[2] = h;
-        shaderFogColor[3] = i;
-
-        VRenderSystem.setShaderFogColor(f, g, h, i);
+    @Inject(method = "setShaderFog", at = @At("TAIL"))
+    private static void captureFog(GpuBufferSlice buffer, CallbackInfo ci) {
+        shaderFog = buffer;
+        if (buffer != null) {
+            updateFog(buffer);
+        }
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void setProjectionMatrix(Matrix4f projectionMatrix, VertexSorting vertexSorting) {
-        Matrix4f matrix4f = new Matrix4f(projectionMatrix);
-        if (!isOnRenderThread()) {
-            recordRenderCall(() -> {
-                RenderSystemMixin.projectionMatrix = matrix4f;
-                RenderSystem.vertexSorting = vertexSorting;
+    @Inject(method = "setShaderLights", at = @At("TAIL"))
+    private static void captureLights(GpuBufferSlice buffer, CallbackInfo ci) {
+        shaderLightDirections = buffer;
+        if (buffer != null) {
+            updateLights(buffer);
+        }
+    }
 
-                VRenderSystem.applyProjectionMatrix(matrix4f);
+    @Inject(method = "setTextureMatrix", at = @At("TAIL"))
+    private static void propagateTextureMatrix(Matrix4f matrix, CallbackInfo ci) {
+        VRenderSystem.setTextureMatrix(matrix);
+    }
+
+    @Inject(method = "resetTextureMatrix", at = @At("TAIL"))
+    private static void propagateTextureReset(CallbackInfo ci) {
+        VRenderSystem.setTextureMatrix(textureMatrix);
+    }
+
+    private static void updateProjection(GpuBufferSlice slice) {
+        try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
+            FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
+            FloatBuffer copy = MemoryUtil.memAllocFloat(16);
+            try {
+                for (int i = 0; i < 16; i++) {
+                    copy.put(i, buffer.get(i));
+                }
+                copy.position(0);
+                Matrix4f matrix = new Matrix4f();
+                matrix.set(copy);
+                VRenderSystem.applyProjectionMatrix(matrix);
                 VRenderSystem.calculateMVP();
-            });
-        } else {
-            RenderSystemMixin.projectionMatrix = matrix4f;
-            RenderSystem.vertexSorting = vertexSorting;
-
-            VRenderSystem.applyProjectionMatrix(matrix4f);
-            VRenderSystem.calculateMVP();
-        }
-
-    }
-
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void setTextureMatrix(Matrix4f matrix4f) {
-        Matrix4f matrix4f2 = new Matrix4f(matrix4f);
-        if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> {
-                textureMatrix = matrix4f2;
-                VRenderSystem.setTextureMatrix(matrix4f);
-            });
-        } else {
-            textureMatrix = matrix4f2;
-            VRenderSystem.setTextureMatrix(matrix4f);
+            } finally {
+                MemoryUtil.memFree(copy);
+            }
         }
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void resetTextureMatrix() {
-        if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> textureMatrix.identity());
-        } else {
-            textureMatrix.identity();
-            VRenderSystem.setTextureMatrix(textureMatrix);
+    private static void updateLights(GpuBufferSlice slice) {
+        try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
+            FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
+            float lx0 = buffer.get(0);
+            float ly0 = buffer.get(1);
+            float lz0 = buffer.get(2);
+            float lx1 = buffer.get(4);
+            float ly1 = buffer.get(5);
+            float lz1 = buffer.get(6);
+            VRenderSystem.setShaderLights(lx0, ly0, lz0, lx1, ly1, lz1);
         }
     }
 
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    public static void applyModelViewMatrix() {
-        Matrix4f matrix4f = new Matrix4f(modelViewStack);
-        if (!isOnRenderThread()) {
-            recordRenderCall(() -> {
-                modelViewMatrix = matrix4f;
-                //Vulkan
-                VRenderSystem.applyModelViewMatrix(matrix4f);
-                VRenderSystem.calculateMVP();
-            });
-        } else {
-            modelViewMatrix = matrix4f;
-
-            VRenderSystem.applyModelViewMatrix(matrix4f);
-            VRenderSystem.calculateMVP();
+    private static void updateFog(GpuBufferSlice slice) {
+        try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
+            FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
+            float r = buffer.get(0);
+            float g = buffer.get(1);
+            float b = buffer.get(2);
+            float a = buffer.get(3);
+            float environmentalStart = buffer.get(4);
+            float renderStart = buffer.get(5);
+            float environmentalEnd = buffer.get(6);
+            float renderEnd = buffer.get(7);
+            float skyEnd = buffer.get(8);
+            float cloudEnd = buffer.get(9);
+            VRenderSystem.setShaderFogColor(r, g, b, a);
+            VRenderSystem.setFogParameters(environmentalStart, renderStart, environmentalEnd, renderEnd, skyEnd, cloudEnd);
+            VRenderSystem.setFogShapeIndex(0);
         }
-
     }
-
-    /**
-     * @author
-     */
-    @Overwrite(remap = false)
-    private static void _restoreProjectionMatrix() {
-        projectionMatrix = savedProjectionMatrix;
-        vertexSorting = savedVertexSorting;
-
-        VRenderSystem.applyProjectionMatrix(projectionMatrix);
-        VRenderSystem.calculateMVP();
-    }
-
 }
+
