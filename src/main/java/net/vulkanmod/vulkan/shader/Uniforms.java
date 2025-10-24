@@ -28,14 +28,14 @@ public class Uniforms {
 
         //Vec1i
         vec1i_uniformMap.put("EndPortalLayers", () -> 15);
-        vec1i_uniformMap.put("FogShape", () -> RenderSystem.getShaderFogShape().getIndex());
+        vec1i_uniformMap.put("FogShape", VRenderSystem::getFogShapeIndex);
 
         //Vec1
-        vec1f_uniformMap.put("FogStart", RenderSystem::getShaderFogStart);
-        vec1f_uniformMap.put("FogEnd", RenderSystem::getShaderFogEnd);
+        vec1f_uniformMap.put("FogStart", VRenderSystem::getFogStart);
+        vec1f_uniformMap.put("FogEnd", VRenderSystem::getFogEnd);
         vec1f_uniformMap.put("LineWidth", RenderSystem::getShaderLineWidth);
-        vec1f_uniformMap.put("GameTime", RenderSystem::getShaderGameTime);
-        vec1f_uniformMap.put("GlintAlpha", RenderSystem::getShaderGlintAlpha);
+        vec1f_uniformMap.put("GameTime", VRenderSystem::getShaderGameTime);
+        vec1f_uniformMap.put("GlintAlpha", VRenderSystem::getGlintAlpha);
         vec1f_uniformMap.put("AlphaCutout", () -> VRenderSystem.alphaCutout);
 
         //Vec2

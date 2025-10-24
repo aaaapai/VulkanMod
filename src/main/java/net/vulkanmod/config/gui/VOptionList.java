@@ -8,6 +8,7 @@ import net.minecraft.util.Mth;
 import net.vulkanmod.config.gui.widget.OptionWidget;
 import net.vulkanmod.config.gui.widget.VAbstractWidget;
 import net.vulkanmod.config.option.Option;
+import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,7 +204,7 @@ public class VOptionList extends GuiElement {
     }
 
     public void renderWidget(int mouseX, int mouseY) {
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         GuiRenderer.enableScissor(x, y, width, height);
 
         this.renderList(mouseX, mouseY);

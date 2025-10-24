@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.config.option.CyclingOption;
+import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import org.joml.Matrix4f;
 
@@ -32,7 +33,7 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
     }
 
     public void renderControls(double mouseX, double mouseY) {
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         this.renderBars();
 
@@ -127,7 +128,7 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
             Tesselator tesselator = Tesselator.getInstance();
             BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION);
 
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
             float f = this.isHovered(mouseX, mouseY) && this.active ? 5.0f : 4.5f;
 
@@ -137,11 +138,11 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
             RenderSystem.enableBlend();
 
             if(this.isHovered(mouseX, mouseY) && this.active)
-                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             else if(this.active)
-                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.8f);
+                VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.8f);
             else
-                RenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 0.8f);
+                VRenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 0.8f);
 
             float h = f;
             float w = f - 1.0f;
@@ -159,7 +160,7 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
 
             BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
 
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
         }
 

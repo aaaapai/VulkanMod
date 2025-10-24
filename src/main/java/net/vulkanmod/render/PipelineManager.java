@@ -1,17 +1,11 @@
 package net.vulkanmod.render;
 
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
-import net.vulkanmod.render.chunk.build.thread.ThreadBuilderPack;
-import net.vulkanmod.render.shader.ShaderLoadUtil;
-import net.vulkanmod.render.vertex.CustomVertexFormat;
-import net.vulkanmod.render.vertex.TerrainRenderType;
-import com.google.gson.JsonObject;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.vulkanmod.render.chunk.build.thread.ThreadBuilderPack;
 import net.vulkanmod.render.shader.ShaderLoadUtil;
 import net.vulkanmod.render.vertex.CustomVertexFormat;
@@ -21,6 +15,8 @@ import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.RayTracingPipeline;
 import net.vulkanmod.vulkan.shader.SPIRVUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 public abstract class PipelineManager {
@@ -37,6 +33,8 @@ public abstract class PipelineManager {
     static RayTracingPipeline rayTracingPipeline;
 
     private static Function<TerrainRenderType, GraphicsPipeline> shaderGetter;
+
+    private static final Map<ResourceLocation, GraphicsPipeline> dynamicPipelines = new HashMap<>();
 
     public static void init() {
         setTerrainVertexFormat(CustomVertexFormat.COMPRESSED_TERRAIN);
@@ -62,6 +60,10 @@ public abstract class PipelineManager {
         Pipeline.Builder pipelineBuilder = new Pipeline.Builder(vertexFormat, configName);
 
         JsonObject config = ShaderLoadUtil.getJsonConfig("basic", configName);
+        if (config == null) {
+            return null;
+        }
+
         pipelineBuilder.parseBindings(config);
 
         ShaderLoadUtil.loadShaders(pipelineBuilder, config, configName, "basic");
@@ -116,5 +118,29 @@ public abstract class PipelineManager {
         fastBlitPipeline.cleanUp();
         cloudsPipeline.cleanUp();
         rayTracingPipeline.cleanUp();
+        dynamicPipelines.values().forEach(GraphicsPipeline::cleanUp);
+        dynamicPipelines.clear();
+    }
+
+    public static GraphicsPipeline getPipeline(RenderPipeline pipeline, VertexFormat fallbackFormat) {
+        ResourceLocation location = pipeline.getLocation();
+        GraphicsPipeline cached = dynamicPipelines.get(location);
+        if (cached != null) {
+            return cached;
+        }
+
+        String configName = location.getPath();
+        VertexFormat vertexFormat = pipeline.getVertexFormat();
+        if (vertexFormat == null) {
+            vertexFormat = fallbackFormat != null ? fallbackFormat : terrainVertexFormat;
+        }
+
+        GraphicsPipeline graphicsPipeline = createPipeline(configName, vertexFormat);
+        if (graphicsPipeline == null) {
+            return terrainShader;
+        }
+
+        dynamicPipelines.put(location, graphicsPipeline);
+        return graphicsPipeline;
     }
 }

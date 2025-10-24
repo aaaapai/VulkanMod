@@ -1,11 +1,14 @@
 package net.vulkanmod.vulkan.util;
 
+import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.vulkanmod.interfaces.ShaderMixed;
 import net.vulkanmod.render.PipelineManager;
+import net.vulkanmod.render.util.MatrixUniformBuffer;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
@@ -16,6 +19,8 @@ import org.lwjgl.vulkan.VK11;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 public class DrawUtil {
+
+    private static final MatrixUniformBuffer PROJECTION_BUFFER = new MatrixUniformBuffer("Vulkan Fullscreen Projection");
 
     public static void blitToScreen() {
 //        defualtBlit();
@@ -40,11 +45,13 @@ public class DrawUtil {
 
     public static void defualtBlit() {
         Matrix4f matrix4f = new Matrix4f().setOrtho(0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 1.0F);
-        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
+        GpuBufferSlice slice = PROJECTION_BUFFER.upload(matrix4f);
+        RenderSystem.setProjectionMatrix(slice, ProjectionType.ORTHOGRAPHIC);
         Matrix4fStack posestack = RenderSystem.getModelViewStack();
         posestack.pushMatrix();
         posestack.identity();
-        RenderSystem.applyModelViewMatrix();
+        VRenderSystem.applyModelViewMatrix(new Matrix4f(posestack));
+        VRenderSystem.calculateMVP();
         posestack.popMatrix();
 
         ShaderInstance shaderInstance = Minecraft.getInstance().gameRenderer.blitShader;

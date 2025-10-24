@@ -51,6 +51,18 @@ public abstract class VRenderSystem {
     public static MappedBuffer shaderColor = new MappedBuffer(4 * 4);
     public static MappedBuffer shaderFogColor = new MappedBuffer(4 * 4);
 
+    private static final float[] shaderColorArray = new float[]{1.0f, 1.0f, 1.0f, 1.0f};
+    private static final float[] shaderFogColorArray = new float[]{0.0f, 0.0f, 0.0f, 1.0f};
+    private static float fogEnvironmentalStart;
+    private static float fogRenderStart;
+    private static float fogEnvironmentalEnd;
+    private static float fogRenderEnd;
+    private static float fogSkyEnd;
+    private static float fogCloudEnd;
+    private static int fogShapeIndex;
+    private static float shaderGameTime;
+    private static float glintAlpha = 1.0f;
+
     public static MappedBuffer screenSize = new MappedBuffer(2 * 4);
 
     public static float alphaCutout = 0.0f;
@@ -137,10 +149,77 @@ public abstract class VRenderSystem {
 
     public static void setShaderColor(float f1, float f2, float f3, float f4) {
         ColorUtil.setRGBA_Buffer(shaderColor, f1, f2, f3, f4);
+        shaderColorArray[0] = f1;
+        shaderColorArray[1] = f2;
+        shaderColorArray[2] = f3;
+        shaderColorArray[3] = f4;
     }
 
     public static void setShaderFogColor(float f1, float f2, float f3, float f4) {
         ColorUtil.setRGBA_Buffer(shaderFogColor, f1, f2, f3, f4);
+        shaderFogColorArray[0] = f1;
+        shaderFogColorArray[1] = f2;
+        shaderFogColorArray[2] = f3;
+        shaderFogColorArray[3] = f4;
+    }
+
+    public static void setShaderLights(float lx0, float ly0, float lz0, float lx1, float ly1, float lz1) {
+        lightDirection0.buffer.putFloat(0, lx0);
+        lightDirection0.buffer.putFloat(4, ly0);
+        lightDirection0.buffer.putFloat(8, lz0);
+
+        lightDirection1.buffer.putFloat(0, lx1);
+        lightDirection1.buffer.putFloat(4, ly1);
+        lightDirection1.buffer.putFloat(8, lz1);
+    }
+
+    public static void setFogParameters(float environmentalStart, float renderStart, float environmentalEnd, float renderEnd, float skyEnd, float cloudEnd) {
+        fogEnvironmentalStart = environmentalStart;
+        fogRenderStart = renderStart;
+        fogEnvironmentalEnd = environmentalEnd;
+        fogRenderEnd = renderEnd;
+        fogSkyEnd = skyEnd;
+        fogCloudEnd = cloudEnd;
+    }
+
+    public static void setFogShapeIndex(int shapeIndex) {
+        fogShapeIndex = shapeIndex;
+    }
+
+    public static void setShaderGameTime(float gameTime) {
+        shaderGameTime = gameTime;
+    }
+
+    public static void setGlintAlpha(float alpha) {
+        glintAlpha = alpha;
+    }
+
+    public static float[] getShaderColorArray() {
+        return shaderColorArray;
+    }
+
+    public static float[] getShaderFogColorArray() {
+        return shaderFogColorArray;
+    }
+
+    public static float getFogStart() {
+        return fogRenderStart;
+    }
+
+    public static float getFogEnd() {
+        return fogRenderEnd;
+    }
+
+    public static int getFogShapeIndex() {
+        return fogShapeIndex;
+    }
+
+    public static float getShaderGameTime() {
+        return shaderGameTime;
+    }
+
+    public static float getGlintAlpha() {
+        return glintAlpha;
     }
 
     public static MappedBuffer getShaderColor() {

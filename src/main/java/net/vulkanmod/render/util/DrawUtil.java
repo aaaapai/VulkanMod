@@ -1,5 +1,7 @@
 package net.vulkanmod.render.util;
 
+import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.vulkanmod.vulkan.Renderer;
@@ -7,10 +9,13 @@ import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
 import net.vulkanmod.vulkan.texture.VulkanImage;
+import net.vulkanmod.vulkan.VRenderSystem;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 public class DrawUtil {
+
+    private static final MatrixUniformBuffer PROJECTION_BUFFER = new MatrixUniformBuffer("Vulkan UI Projection");
 
     public static void blitQuad() {
         blitQuad(0.0f, 1.0f, 1.0f, 0.0f);
@@ -52,11 +57,13 @@ public class DrawUtil {
         VTextureSelector.bindTexture(attachment);
 
         Matrix4f matrix4f = new Matrix4f().setOrtho(0.0F, 1.0F, 0.0F, 1.0F, 0.0F, 1.0F, true);
-        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.DISTANCE_TO_ORIGIN);
+        GpuBufferSlice projectionSlice = PROJECTION_BUFFER.upload(matrix4f);
+        RenderSystem.setProjectionMatrix(projectionSlice, ProjectionType.ORTHOGRAPHIC);
         Matrix4fStack posestack = RenderSystem.getModelViewStack();
         posestack.pushMatrix();
         posestack.identity();
-        RenderSystem.applyModelViewMatrix();
+        VRenderSystem.applyModelViewMatrix(new Matrix4f(posestack));
+        VRenderSystem.calculateMVP();
         posestack.popMatrix();
 
         Renderer.getInstance().uploadAndBindUBOs(pipeline);

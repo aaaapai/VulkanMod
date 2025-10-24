@@ -131,7 +131,7 @@ public class CloudRenderer {
         VRenderSystem.setModelOffset(-xTranslation, 0, -zTranslation);
 
         Vec3 cloudColor = level.getCloudColor(partialTicks);
-        RenderSystem.setShaderColor((float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 0.8f);
+        VRenderSystem.setShaderColor((float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 0.8f);
 
         GraphicsPipeline pipeline = PipelineManager.getCloudsPipeline();
         RenderSystem.enableBlend();
@@ -156,7 +156,7 @@ public class CloudRenderer {
         this.cloudBuffer.drawWithShader(poseStack.last().pose(), projection, pipeline);
 
         RenderSystem.enableCull();
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         VRenderSystem.setModelOffset(0.0f, 0.0f, 0.0f);
 
         poseStack.popPose();

@@ -183,27 +183,27 @@ public class ShaderInstanceM implements ShaderMixed {
         }
 
         if (this.COLOR_MODULATOR != null) {
-            this.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
+            this.COLOR_MODULATOR.set(VRenderSystem.getShaderColorArray());
         }
 
         if (this.GLINT_ALPHA != null) {
-            this.GLINT_ALPHA.set(RenderSystem.getShaderGlintAlpha());
+            this.GLINT_ALPHA.set(VRenderSystem.getGlintAlpha());
         }
 
         if (this.FOG_START != null) {
-            this.FOG_START.set(RenderSystem.getShaderFogStart());
+            this.FOG_START.set(VRenderSystem.getFogStart());
         }
 
         if (this.FOG_END != null) {
-            this.FOG_END.set(RenderSystem.getShaderFogEnd());
+            this.FOG_END.set(VRenderSystem.getFogEnd());
         }
 
         if (this.FOG_COLOR != null) {
-            this.FOG_COLOR.set(RenderSystem.getShaderFogColor());
+            this.FOG_COLOR.set(VRenderSystem.getShaderFogColorArray());
         }
 
         if (this.FOG_SHAPE != null) {
-            this.FOG_SHAPE.set(RenderSystem.getShaderFogShape().getIndex());
+            this.FOG_SHAPE.set(VRenderSystem.getFogShapeIndex());
         }
 
         if (this.TEXTURE_MATRIX != null) {
@@ -211,7 +211,7 @@ public class ShaderInstanceM implements ShaderMixed {
         }
 
         if (this.GAME_TIME != null) {
-            this.GAME_TIME.set(RenderSystem.getShaderGameTime());
+            this.GAME_TIME.set(VRenderSystem.getShaderGameTime());
         }
 
         if (this.SCREEN_SIZE != null) {
