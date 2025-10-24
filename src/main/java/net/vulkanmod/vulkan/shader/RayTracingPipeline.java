@@ -1,23 +1,25 @@
 package net.vulkanmod.vulkan.shader;
 
 import net.vulkanmod.vulkan.device.DeviceManager;
-import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.KHRBufferDeviceAddress.*;
 import static org.lwjgl.vulkan.KHRRayTracingPipeline.*;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK11.*;
-import static org.lwjgl.vulkan.KHRBufferDeviceAddress.*;
 import static org.lwjgl.vulkan.VK12.*;
 
 public class RayTracingPipeline extends Pipeline {
+
+    private static final int VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR = 0x00000400;
 
     private long pipelineHandle;
 
@@ -119,30 +121,49 @@ public class RayTracingPipeline extends Pipeline {
     }
 
     private void createShaderBindingTable() {
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingProperties = VkPhysicalDeviceRayTracingPipelinePropertiesKHR.create();
-        rayTracingProperties.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
-        VkPhysicalDeviceProperties2 deviceProps2 = VkPhysicalDeviceProperties2.create();
-        deviceProps2.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2);
-        deviceProps2.pNext(rayTracingProperties.address());
-        vkGetPhysicalDeviceProperties2(DeviceManager.physicalDevice, deviceProps2);
+        try (MemoryStack stack = stackPush()) {
+            VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingProperties = VkPhysicalDeviceRayTracingPipelinePropertiesKHR.calloc(stack);
+            rayTracingProperties.sType$Default();
 
-        int handleSize = rayTracingProperties.shaderGroupHandleSize();
-        int handleAlignment = rayTracingProperties.shaderGroupBaseAlignment();
-        int sbtSize = 3 * handleAlignment;
-        this.sbtStride = handleAlignment;
+            VkPhysicalDeviceProperties2 deviceProps2 = VkPhysicalDeviceProperties2.calloc(stack);
+            deviceProps2.sType$Default();
+            deviceProps2.pNext(rayTracingProperties.address());
+            vkGetPhysicalDeviceProperties2(DeviceManager.physicalDevice, deviceProps2);
 
-        ByteBuffer sbtBuffer = ByteBuffer.allocateDirect(sbtSize);
-        if (vkGetRayTracingShaderGroupHandlesKHR(DeviceManager.vkDevice, pipelineHandle, 0, 3, sbtBuffer) != VK_SUCCESS) {
-            throw new RuntimeException("Failed to get ray tracing shader group handles");
+            int groupCount = 3;
+            int handleSize = rayTracingProperties.shaderGroupHandleSize();
+            int handleAlignment = Math.max(1, rayTracingProperties.shaderGroupHandleAlignment());
+            int baseAlignment = Math.max(1, rayTracingProperties.shaderGroupBaseAlignment());
+
+            int alignedHandleSize = alignUp(handleSize, handleAlignment);
+            this.sbtStride = alignUp(alignedHandleSize, baseAlignment);
+            int sbtSize = this.sbtStride * groupCount;
+
+            ByteBuffer handles = MemoryUtil.memAlloc(handleSize * groupCount);
+            if (vkGetRayTracingShaderGroupHandlesKHR(DeviceManager.vkDevice, pipelineHandle, 0, groupCount, handles) != VK_SUCCESS) {
+                MemoryUtil.memFree(handles);
+                throw new RuntimeException("Failed to get ray tracing shader group handles");
+            }
+
+            ByteBuffer sbtData = MemoryUtil.memAlloc(sbtSize);
+            MemoryUtil.memSet(MemoryUtil.memAddress(sbtData), (byte) 0, sbtSize);
+            for (int i = 0; i < groupCount; i++) {
+                long src = MemoryUtil.memAddress(handles) + (long) i * handleSize;
+                long dst = MemoryUtil.memAddress(sbtData) + (long) i * this.sbtStride;
+                MemoryUtil.memCopy(src, dst, handleSize);
+            }
+            MemoryUtil.memFree(handles);
+
+            this.shaderBindingTable = new Buffer(VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, MemoryTypes.HOST_MEM);
+            this.shaderBindingTable.createBuffer(sbtSize);
+            this.shaderBindingTable.copyBuffer(sbtData, sbtSize);
+            MemoryUtil.memFree(sbtData);
+
+            VkBufferDeviceAddressInfo bufferDeviceAddressInfo = VkBufferDeviceAddressInfo.calloc(stack);
+            bufferDeviceAddressInfo.sType$Default();
+            bufferDeviceAddressInfo.buffer(this.shaderBindingTable.getId());
+            this.sbtBufferAddress = vkGetBufferDeviceAddress(DeviceManager.vkDevice, bufferDeviceAddressInfo);
         }
-
-        this.shaderBindingTable = new Buffer(sbtSize, MemoryTypes.HOST_MEM);
-        this.shaderBindingTable.copyBuffer(sbtBuffer, sbtSize);
-
-        VkBufferDeviceAddressInfo bufferDeviceAddressInfo = VkBufferDeviceAddressInfo.create();
-        bufferDeviceAddressInfo.sType(VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO);
-        bufferDeviceAddressInfo.buffer(this.shaderBindingTable.getId());
-        this.sbtBufferAddress = vkGetBufferDeviceAddress(DeviceManager.vkDevice, bufferDeviceAddressInfo);
     }
 
     public long getHandle() {
@@ -199,5 +220,10 @@ public class RayTracingPipeline extends Pipeline {
         public RayTracingPipeline createRayTracingPipeline() {
             return new RayTracingPipeline(this);
         }
+    }
+
+    private static int alignUp(int value, int alignment) {
+        long aligned = ((long) value + alignment - 1L) / alignment * alignment;
+        return (int) aligned;
     }
 }
