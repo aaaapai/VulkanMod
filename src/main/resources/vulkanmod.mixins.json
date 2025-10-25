@@ -38,7 +38,6 @@
     "render.clouds.LevelRendererM",
     "render.color.BlockColorsM",
     "render.entity.EntityRendererM",
-    "render.entity.model.ModelPartCubeM",
     "render.frame.MinecraftMixin",
     "render.frame.RenderSystemMixin",
     "render.particle.SingleQuadParticleM",
