@@ -1,10 +1,10 @@
 package net.vulkanmod.vulkan.memory.buffer;
 
-import net.vulkanmod.vulkan.device.DeviceManager;
-import net.vulkanmod.vulkan.memory.MemoryType;
-
 import static net.vulkanmod.vulkan.util.VUtil.align;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+import net.vulkanmod.vulkan.device.DeviceManager;
+import net.vulkanmod.vulkan.memory.MemoryType;
 
 public class UniformBuffer extends Buffer {
     private final static int MIN_OFFSET_ALIGNMENT = (int) DeviceManager.deviceProperties.limits().minUniformBufferOffsetAlignment();

@@ -16,9 +16,9 @@
 
 package net.vulkanmod.render.chunk.build.pipeline.helper;
 
-import net.vulkanmod.render.quad.MutableQuadView;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
+import net.vulkanmod.render.quad.MutableQuadView;
 
 /**
  * Handles most texture-baking use cases for model loaders and model libraries

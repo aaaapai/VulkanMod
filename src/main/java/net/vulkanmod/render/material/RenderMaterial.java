@@ -1,8 +1,8 @@
 package net.vulkanmod.render.material;
 
-import net.vulkanmod.util.TriState;
-
 import java.util.Objects;
+
+import net.vulkanmod.util.TriState;
 
 /**
  * Immutable material descriptor used by the new rendering path.

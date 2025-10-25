@@ -1,5 +1,6 @@
 package net.vulkanmod.mixin.window;
 
+import com.mojang.blaze3d.TracyFrameCapture;
 import com.mojang.blaze3d.platform.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.vulkanmod.Initializer;
@@ -12,6 +13,7 @@ import net.vulkanmod.config.video.WindowMode;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.Vulkan;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GLCapabilities;
 import org.slf4j.Logger;
@@ -28,11 +30,11 @@ import static org.lwjgl.glfw.GLFW.*;
 
 @Mixin(Window.class)
 public abstract class WindowMixin {
-    @Final @Shadow private long window;
+    @Final @Shadow private long handle;
 
     @Shadow private boolean vsync;
 
-    @Shadow protected abstract void updateFullscreen(boolean bl);
+    @Shadow protected abstract void updateFullscreen(boolean bl, @Nullable TracyFrameCapture tracyFrameCapture);
 
     @Shadow private boolean fullscreen;
 
@@ -54,27 +56,7 @@ public abstract class WindowMixin {
 
     @Shadow public abstract int getHeight();
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwWindowHint(II)V"))
-    private void redirect(int hint, int value) { }
-
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwMakeContextCurrent(J)V"))
-    private void redirect2(long window) { }
-
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL;createCapabilities()Lorg/lwjgl/opengl/GLCapabilities;"))
-    private GLCapabilities redirect2() {
-        return null;
-    }
-
-    // Vulkan device not initialized yet
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;maxSupportedTextureSize()I"))
-    private int redirect3() {
-        return 0;
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwSetWindowSizeLimits(JIIII)V"))
-    private void redirect4(long window, int minwidth, int minheight, int maxwidth, int maxheight) { }
-
-    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwCreateWindow(IILjava/lang/CharSequence;JJ)J"))
+    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwCreateWindow(IILjava/lang/CharSequence;JJ)J"), remap = false)
     private void vulkanHint(WindowEventHandler windowEventHandler, ScreenManager screenManager, DisplayData displayData, String string, String string2, CallbackInfo ci) {
         GLFW.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -85,7 +67,7 @@ public abstract class WindowMixin {
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
     private void getHandle(WindowEventHandler windowEventHandler, ScreenManager screenManager, DisplayData displayData, String string, String string2, CallbackInfo ci) {
-        VRenderSystem.setWindow(this.window);
+        VRenderSystem.setWindow(this.handle);
     }
 
     /**
@@ -110,12 +92,12 @@ public abstract class WindowMixin {
      * @author
      */
     @Overwrite
-    public void updateDisplay() {
-        RenderSystem.flipFrame(this.window);
+    public void updateDisplay(@Nullable TracyFrameCapture tracyFrameCapture) {
+        RenderSystem.flipFrame((Window) (Object) this, tracyFrameCapture);
 
         if (Options.fullscreenDirty) {
             Options.fullscreenDirty = false;
-            this.updateFullscreen(this.vsync);
+            this.updateFullscreen(this.vsync, tracyFrameCapture);
         }
     }
 
@@ -159,7 +141,7 @@ public abstract class WindowMixin {
                 this.y = 0;
                 this.width = videoMode.width;
                 this.height = videoMode.height;
-                GLFW.glfwSetWindowMonitor(this.window, monitor, this.x, this.y, this.width, this.height, videoMode.refreshRate);
+                GLFW.glfwSetWindowMonitor(this.handle, monitor, this.x, this.y, this.width, this.height, videoMode.refreshRate);
 
                 this.wasOnFullscreen = true;
             }
@@ -177,8 +159,8 @@ public abstract class WindowMixin {
             int width = videoMode.width;
             int height = videoMode.height;
 
-            GLFW.glfwSetWindowAttrib(this.window, GLFW_DECORATED, GLFW_FALSE);
-            GLFW.glfwSetWindowMonitor(this.window, 0L, 0, 0, width, height, -1);
+            GLFW.glfwSetWindowAttrib(this.handle, GLFW_DECORATED, GLFW_FALSE);
+            GLFW.glfwSetWindowMonitor(this.handle, 0L, 0, 0, width, height, -1);
 
             this.width = width;
             this.height = height;
@@ -189,8 +171,8 @@ public abstract class WindowMixin {
             this.width = this.windowedWidth;
             this.height = this.windowedHeight;
 
-            GLFW.glfwSetWindowMonitor(this.window, 0L, this.x, this.y, this.width, this.height, -1);
-            GLFW.glfwSetWindowAttrib(this.window, GLFW_DECORATED, GLFW_TRUE);
+            GLFW.glfwSetWindowMonitor(this.handle, 0L, this.x, this.y, this.width, this.height, -1);
+            GLFW.glfwSetWindowAttrib(this.handle, GLFW_DECORATED, GLFW_TRUE);
 
             this.wasOnFullscreen = false;
         }
@@ -202,7 +184,7 @@ public abstract class WindowMixin {
      */
     @Overwrite
     private void onFramebufferResize(long window, int width, int height) {
-        if (window == this.window) {
+        if (window == this.handle) {
             int prevWidth = this.getWidth();
             int prevHeight = this.getHeight();
 

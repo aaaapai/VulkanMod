@@ -1,12 +1,13 @@
 package net.vulkanmod.config.option;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import net.minecraft.network.chat.Component;
 import net.vulkanmod.config.gui.widget.CyclingOptionWidget;
 import net.vulkanmod.config.gui.widget.OptionWidget;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class CyclingOption<E> extends Option<E> {
     private E[] values;

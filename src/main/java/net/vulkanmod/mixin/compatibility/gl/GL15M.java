@@ -1,14 +1,15 @@
 package net.vulkanmod.mixin.compatibility.gl;
 
-import net.vulkanmod.gl.VkGlBuffer;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.system.NativeType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import net.vulkanmod.gl.VkGlBuffer;
 
 @Mixin(GL15.class)
 public class GL15M {

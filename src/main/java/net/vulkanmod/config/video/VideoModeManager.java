@@ -1,13 +1,14 @@
 package net.vulkanmod.config.video;
 
-import net.vulkanmod.Initializer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.glfw.GLFW.*;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWVidMode;
+
+import net.vulkanmod.Initializer;
 
 public abstract class VideoModeManager {
     private static VideoModeSet.VideoMode osVideoMode;

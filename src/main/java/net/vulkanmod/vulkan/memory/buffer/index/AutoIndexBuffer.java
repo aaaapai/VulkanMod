@@ -1,13 +1,14 @@
 package net.vulkanmod.vulkan.memory.buffer.index;
 
-import net.vulkanmod.Initializer;
-import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
-import net.vulkanmod.vulkan.memory.MemoryTypes;
-import org.lwjgl.system.MemoryUtil;
-
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+
+import org.lwjgl.system.MemoryUtil;
+
+import net.vulkanmod.Initializer;
+import net.vulkanmod.vulkan.memory.MemoryTypes;
+import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 
 public class AutoIndexBuffer {
     public static final int U16_MAX_VERTEX_COUNT = 65536;

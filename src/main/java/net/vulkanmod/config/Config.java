@@ -1,16 +1,17 @@
 package net.vulkanmod.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import net.vulkanmod.config.video.VideoModeManager;
-import net.vulkanmod.config.video.VideoModeSet;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import net.vulkanmod.config.video.VideoModeManager;
+import net.vulkanmod.config.video.VideoModeSet;
 
 public class Config {
     public VideoModeSet.VideoMode videoMode = VideoModeManager.getFirstAvailable().getVideoMode();

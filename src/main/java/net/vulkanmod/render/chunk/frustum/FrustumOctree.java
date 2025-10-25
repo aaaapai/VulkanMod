@@ -1,11 +1,12 @@
 package net.vulkanmod.render.chunk.frustum;
 
-import net.vulkanmod.render.chunk.ChunkArea;
-import org.joml.FrustumIntersection;
+import static net.vulkanmod.render.chunk.ChunkAreaManager.AREA_SH_XZ;
 
 import java.util.Arrays;
 
-import static net.vulkanmod.render.chunk.ChunkAreaManager.AREA_SH_XZ;
+import org.joml.FrustumIntersection;
+
+import net.vulkanmod.render.chunk.ChunkArea;
 
 public class FrustumOctree {
     static final int LEVELS = 2;

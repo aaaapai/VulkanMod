@@ -1,16 +1,17 @@
 package net.vulkanmod.vulkan.util;
 
-import net.vulkanmod.vulkan.memory.buffer.Buffer;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import sun.misc.Unsafe;
+import static org.lwjgl.system.MemoryStack.stackGet;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
-import static org.lwjgl.system.MemoryStack.stackGet;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
+import sun.misc.Unsafe;
 
 public class VUtil {
     public static final boolean CHECKS = true;

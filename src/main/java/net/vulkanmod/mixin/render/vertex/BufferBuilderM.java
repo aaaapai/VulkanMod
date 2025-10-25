@@ -1,6 +1,20 @@
 package net.vulkanmod.mixin.render.vertex;
 
-import com.mojang.blaze3d.vertex.*;
+import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryUtil;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
+
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.vulkanmod.interfaces.ExtendedVertexBuilder;
@@ -8,9 +22,6 @@ import net.vulkanmod.mixin.matrix.PoseAccessor;
 import net.vulkanmod.render.util.MathUtil;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
 import net.vulkanmod.vulkan.util.ColorUtil;
-import org.joml.Matrix4f;
-import org.lwjgl.system.MemoryUtil;
-import org.spongepowered.asm.mixin.*;
 
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderM

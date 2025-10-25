@@ -1,12 +1,14 @@
 package net.vulkanmod.render.vertex;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.vulkanmod.Initializer;
-import net.vulkanmod.render.vertex.format.I32_SNorm;
+import java.nio.ByteBuffer;
+
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
 
-import java.nio.ByteBuffer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import net.vulkanmod.Initializer;
+import net.vulkanmod.render.vertex.format.I32_SNorm;
 
 public class TerrainBufferBuilder implements VertexConsumer {
     private static final Logger LOGGER = Initializer.LOGGER;

@@ -1,14 +1,17 @@
 package net.vulkanmod.vulkan;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.vulkanmod.vulkan.queue.CommandPool;
-import net.vulkanmod.vulkan.util.VUtil;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.VkDevice;
+import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK10.vkGetFenceStatus;
+import static org.lwjgl.vulkan.VK10.vkWaitForFences;
 
 import java.nio.LongBuffer;
 
-import static org.lwjgl.vulkan.VK10.*;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.VkDevice;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.vulkanmod.vulkan.queue.CommandPool;
+import net.vulkanmod.vulkan.util.VUtil;
 
 public class Synchronization {
     private static final int ALLOCATION_SIZE = 50;

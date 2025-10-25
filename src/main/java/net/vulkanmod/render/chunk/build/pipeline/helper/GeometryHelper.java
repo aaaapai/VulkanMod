@@ -19,6 +19,7 @@ package net.vulkanmod.render.chunk.build.pipeline.helper;
 import static net.minecraft.util.Mth.equal;
 
 import org.joml.Vector3f;
+
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;

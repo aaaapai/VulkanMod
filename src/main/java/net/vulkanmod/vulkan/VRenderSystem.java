@@ -1,5 +1,18 @@
 package net.vulkanmod.vulkan;
 
+import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
+import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_LINE;
+import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_POINT;
+import static org.lwjgl.vulkan.VK10.VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+import static org.lwjgl.vulkan.VK10.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
+import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
+
 import com.mojang.blaze3d.platform.Window;
 
 import net.minecraft.client.Minecraft;
@@ -8,14 +21,6 @@ import net.vulkanmod.vulkan.shader.PipelineState;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import net.vulkanmod.vulkan.util.MappedBuffer;
 import net.vulkanmod.vulkan.util.VUtil;
-import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryUtil;
-
-import static org.lwjgl.vulkan.VK10.*;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 
 public abstract class VRenderSystem {
     private static final float DEFAULT_DEPTH_VALUE = 1.0f;

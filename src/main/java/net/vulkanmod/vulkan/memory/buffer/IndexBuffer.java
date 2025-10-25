@@ -1,8 +1,10 @@
 package net.vulkanmod.vulkan.memory.buffer;
 
-import net.vulkanmod.vulkan.memory.MemoryType;
+import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT16;
+import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT32;
 
-import static org.lwjgl.vulkan.VK10.*;
+import net.vulkanmod.vulkan.memory.MemoryType;
 
 public class IndexBuffer extends Buffer {
 

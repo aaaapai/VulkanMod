@@ -1,5 +1,7 @@
 package net.vulkanmod.render.chunk.build.biome;
 
+import org.joml.Vector3f;
+
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.LinearCongruentialGenerator;
 import net.minecraft.util.Mth;
@@ -8,7 +10,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.vulkanmod.render.chunk.build.RenderRegion;
-import org.joml.Vector3f;
 
 public class BiomeData {
     private static final int ZOOM_LENGTH = 4;

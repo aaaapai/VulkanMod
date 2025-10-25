@@ -1,7 +1,14 @@
 package net.vulkanmod.config.option;
 
+import java.util.stream.IntStream;
+
 import com.mojang.blaze3d.platform.Window;
-import net.minecraft.client.*;
+
+import net.minecraft.client.AttackIndicatorStatus;
+import net.minecraft.client.CloudStatus;
+import net.minecraft.client.GraphicsStatus;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.PrioritizeChunkUpdates;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ParticleStatus;
 import net.vulkanmod.Initializer;
@@ -15,8 +22,6 @@ import net.vulkanmod.render.chunk.build.light.LightMode;
 import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.device.DeviceManager;
-
-import java.util.stream.IntStream;
 
 public abstract class Options {
     public static boolean fullscreenDirty = false;

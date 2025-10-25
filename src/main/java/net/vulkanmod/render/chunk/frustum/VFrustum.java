@@ -1,9 +1,10 @@
 package net.vulkanmod.render.chunk.frustum;
 
-import net.minecraft.world.phys.AABB;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+
+import net.minecraft.world.phys.AABB;
 
 public class VFrustum {
     private Vector4f viewVector = new Vector4f();

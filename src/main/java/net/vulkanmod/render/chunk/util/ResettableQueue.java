@@ -1,9 +1,9 @@
 package net.vulkanmod.render.chunk.util;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Iterator;
 import java.util.function.Consumer;
+
+import org.jetbrains.annotations.NotNull;
 
 public class ResettableQueue<T> implements Iterable<T> {
     T[] queue;

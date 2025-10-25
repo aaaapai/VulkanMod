@@ -1,9 +1,10 @@
 package net.vulkanmod.render.util;
 
-import net.vulkanmod.render.vertex.format.I32_SNorm;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+
+import net.vulkanmod.render.vertex.format.I32_SNorm;
 
 public class MathUtil {
 

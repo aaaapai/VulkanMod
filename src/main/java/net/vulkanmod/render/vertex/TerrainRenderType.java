@@ -1,13 +1,13 @@
 package net.vulkanmod.render.vertex;
 
+import java.util.EnumSet;
+import java.util.function.Function;
+
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.interfaces.ExtendedRenderType;
 import net.vulkanmod.vulkan.VRenderSystem;
-
-import java.util.EnumSet;
-import java.util.function.Function;
 
 public enum TerrainRenderType {
     SOLID(0.0f),

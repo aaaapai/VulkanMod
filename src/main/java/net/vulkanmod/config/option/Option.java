@@ -1,11 +1,11 @@
 package net.vulkanmod.config.option;
 
-import net.minecraft.network.chat.Component;
-import net.vulkanmod.config.gui.widget.OptionWidget;
-
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import net.minecraft.network.chat.Component;
+import net.vulkanmod.config.gui.widget.OptionWidget;
 
 public abstract class Option<T> {
     protected final Component name;

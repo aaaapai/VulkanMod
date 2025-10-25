@@ -1,5 +1,12 @@
 package net.vulkanmod.render.chunk.build;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,12 +25,6 @@ import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.vulkanmod.render.chunk.build.biome.BiomeData;
 import net.vulkanmod.render.chunk.build.color.TintCache;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.function.Function;
 
 public class RenderRegion implements BlockAndTintGetter {
     public static final int WIDTH = 3;

@@ -1,11 +1,12 @@
 package net.vulkanmod.render.texture;
 
-import net.vulkanmod.vulkan.texture.VulkanImage;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
-import java.util.HashSet;
-import java.util.Set;
+import net.vulkanmod.vulkan.texture.VulkanImage;
 
 public abstract class SpriteUpdateUtil {
 

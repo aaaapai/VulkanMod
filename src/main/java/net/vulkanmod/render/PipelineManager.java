@@ -1,9 +1,14 @@
 package net.vulkanmod.render;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.vulkanmod.render.chunk.build.thread.ThreadBuilderPack;
@@ -14,10 +19,6 @@ import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.RayTracingPipeline;
 import net.vulkanmod.vulkan.shader.SPIRVUtils;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 public abstract class PipelineManager {
     public static VertexFormat terrainVertexFormat;

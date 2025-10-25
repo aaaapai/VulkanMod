@@ -1,19 +1,7 @@
 package net.vulkanmod.mixin.render;
 
-import com.mojang.blaze3d.opengl.GlDevice;
-import com.mojang.blaze3d.opengl.GlProgram;
-import com.mojang.blaze3d.opengl.GlRenderPipeline;
-import com.mojang.blaze3d.opengl.GlShaderModule;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
-import com.mojang.blaze3d.shaders.ShaderType;
-import net.minecraft.resources.ResourceLocation;
-import net.vulkanmod.gl.VkGlProgram;
-import net.vulkanmod.interfaces.GlShaderModuleExt;
-import net.vulkanmod.mixin.render.GlProgramInvoker;
-import net.vulkanmod.mixin.render.accessor.ShaderCompilationKeyAccessor;
-import net.vulkanmod.render.pipeline.VulkanPipelineCompiler;
-import net.vulkanmod.vulkan.shader.GraphicsPipeline;
+import java.util.function.BiFunction;
+
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,7 +11,20 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.function.BiFunction;
+import com.mojang.blaze3d.opengl.GlDevice;
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.GlRenderPipeline;
+import com.mojang.blaze3d.opengl.GlShaderModule;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
+import com.mojang.blaze3d.shaders.ShaderType;
+
+import net.minecraft.resources.ResourceLocation;
+import net.vulkanmod.gl.VkGlProgram;
+import net.vulkanmod.interfaces.GlShaderModuleExt;
+import net.vulkanmod.mixin.render.accessor.ShaderCompilationKeyAccessor;
+import net.vulkanmod.render.pipeline.VulkanPipelineCompiler;
+import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 
 @Mixin(value = GlDevice.class, remap = false)
 public abstract class GlDeviceMixin {

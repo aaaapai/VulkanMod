@@ -1,13 +1,14 @@
 package net.vulkanmod.render.chunk;
 
+import java.util.Arrays;
+
+import org.joml.FrustumIntersection;
+import org.joml.Vector3i;
+
 import net.minecraft.core.BlockPos;
 import net.vulkanmod.render.chunk.buffer.DrawBuffers;
 import net.vulkanmod.render.chunk.frustum.VFrustum;
 import net.vulkanmod.render.chunk.util.StaticQueue;
-import org.joml.FrustumIntersection;
-import org.joml.Vector3i;
-
-import java.util.Arrays;
 
 public class ChunkArea {
     public final int index;

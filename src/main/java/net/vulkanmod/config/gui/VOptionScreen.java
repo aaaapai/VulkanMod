@@ -1,6 +1,10 @@
 package net.vulkanmod.config.gui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.collect.Lists;
+
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -15,11 +19,8 @@ import net.vulkanmod.config.gui.widget.VAbstractWidget;
 import net.vulkanmod.config.gui.widget.VButtonWidget;
 import net.vulkanmod.config.option.OptionPage;
 import net.vulkanmod.config.option.Options;
-import net.vulkanmod.vulkan.util.ColorUtil;
 import net.vulkanmod.vulkan.VRenderSystem;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.vulkanmod.vulkan.util.ColorUtil;
 
 public class VOptionScreen extends Screen {
     public final static int RED = ColorUtil.ARGB.pack(0.3f, 0.0f, 0.0f, 0.8f);

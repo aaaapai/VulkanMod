@@ -1,9 +1,9 @@
 package net.vulkanmod.vulkan.memory.buffer;
 
+import java.nio.ByteBuffer;
+
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.MemoryType;
-
-import java.nio.ByteBuffer;
 
 public class Buffer {
     public final MemoryType type;

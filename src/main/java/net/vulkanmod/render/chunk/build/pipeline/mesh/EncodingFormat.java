@@ -16,9 +16,12 @@
 
 package net.vulkanmod.render.chunk.build.pipeline.mesh;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.vulkanmod.render.chunk.build.pipeline.helper.GeometryHelper;
@@ -26,7 +29,6 @@ import net.vulkanmod.render.material.RenderMaterial;
 import net.vulkanmod.render.material.RenderMaterialRegistry;
 import net.vulkanmod.render.model.ModelHelper;
 import net.vulkanmod.render.quad.QuadView;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Holds all the array offsets and bit-wise encoders/decoders for

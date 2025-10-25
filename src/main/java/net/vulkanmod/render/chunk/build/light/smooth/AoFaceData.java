@@ -1,11 +1,15 @@
 package net.vulkanmod.render.chunk.build.light.smooth;
 
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.getLightmap;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackAO;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackEM;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackFO;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackOP;
+
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
-import net.vulkanmod.render.chunk.util.SimpleDirection;
 import net.vulkanmod.render.chunk.build.light.data.LightDataAccess;
-
-import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.*;
+import net.vulkanmod.render.chunk.util.SimpleDirection;
 
 class AoFaceData {
     public final int[] lm = new int[4];

@@ -1,9 +1,10 @@
 package net.vulkanmod.mixin.chunk;
 
-import net.minecraft.client.renderer.SectionBufferBuilderPool;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+
+import net.minecraft.client.renderer.SectionBufferBuilderPool;
 
 @Mixin(SectionBufferBuilderPool.class)
 public class SectionBufferBuilderPoolM {

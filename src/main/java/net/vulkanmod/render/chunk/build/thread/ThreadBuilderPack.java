@@ -1,12 +1,12 @@
 package net.vulkanmod.render.chunk.build.thread;
 
-import net.vulkanmod.render.vertex.TerrainBuilder;
-import net.vulkanmod.render.vertex.TerrainRenderType;
-
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import net.vulkanmod.render.vertex.TerrainBuilder;
+import net.vulkanmod.render.vertex.TerrainRenderType;
 
 public class ThreadBuilderPack {
     private static Function<TerrainRenderType, TerrainBuilder> terrainBuilderConstructor;

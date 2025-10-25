@@ -53,11 +53,6 @@ public abstract class RenderSystemMixin {
     @Overwrite(remap = false)
     public static void setupDefaultState() { }
 
-    @Overwrite(remap = false)
-    public static int maxSupportedTextureSize() {
-        return VRenderSystem.maxSupportedTextureSize();
-    }
-
     @Inject(method = "setProjectionMatrix", at = @At("TAIL"))
     private static void captureProjection(GpuBufferSlice buffer, ProjectionType type, CallbackInfo ci) {
         updateProjection(buffer);

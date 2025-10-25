@@ -1,9 +1,10 @@
 package net.vulkanmod.render.chunk.buffer;
 
+import org.lwjgl.system.MemoryUtil;
+
 import net.vulkanmod.render.chunk.ChunkAreaManager;
 import net.vulkanmod.render.chunk.cull.QuadFacing;
 import net.vulkanmod.render.vertex.TerrainRenderType;
-import org.lwjgl.system.MemoryUtil;
 
 public abstract class DrawParametersBuffer {
     static final long INDEX_COUNT_OFFSET = 0;

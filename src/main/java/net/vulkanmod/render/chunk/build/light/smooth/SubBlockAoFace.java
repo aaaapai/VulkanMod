@@ -1,10 +1,13 @@
 package net.vulkanmod.render.chunk.build.light.smooth;
 
-import net.minecraft.core.BlockPos;
-import net.vulkanmod.render.chunk.util.SimpleDirection;
-import net.vulkanmod.render.chunk.build.light.data.LightDataAccess;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.getLightmap;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackCO;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackEM;
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackFO;
 
-import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.*;
+import net.minecraft.core.BlockPos;
+import net.vulkanmod.render.chunk.build.light.data.LightDataAccess;
+import net.vulkanmod.render.chunk.util.SimpleDirection;
 
 public class SubBlockAoFace extends AoFaceData {
 

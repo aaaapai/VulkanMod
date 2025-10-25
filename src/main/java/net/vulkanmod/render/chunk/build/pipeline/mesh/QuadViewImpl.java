@@ -32,18 +32,19 @@ import static net.vulkanmod.render.chunk.build.pipeline.mesh.EncodingFormat.VERT
 import static net.vulkanmod.render.chunk.build.pipeline.mesh.EncodingFormat.VERTEX_Y;
 import static net.vulkanmod.render.chunk.build.pipeline.mesh.EncodingFormat.VERTEX_Z;
 
-import net.vulkanmod.render.chunk.cull.QuadFacing;
-import net.vulkanmod.render.model.quad.ModelQuadFlags;
-import net.vulkanmod.render.model.quad.ModelQuadView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+
+import net.minecraft.core.Direction;
 import net.vulkanmod.render.chunk.build.pipeline.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.pipeline.helper.GeometryHelper;
 import net.vulkanmod.render.chunk.build.pipeline.helper.NormalHelper;
-import net.minecraft.core.Direction;
+import net.vulkanmod.render.chunk.cull.QuadFacing;
 import net.vulkanmod.render.material.RenderMaterial;
+import net.vulkanmod.render.model.quad.ModelQuadFlags;
+import net.vulkanmod.render.model.quad.ModelQuadView;
 import net.vulkanmod.render.quad.QuadView;
 
 /**

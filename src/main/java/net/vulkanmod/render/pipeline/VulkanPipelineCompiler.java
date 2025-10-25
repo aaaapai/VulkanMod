@@ -1,12 +1,13 @@
 package net.vulkanmod.render.pipeline;
 
+import java.util.Collections;
+
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.converter.GlslConverter;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
-
-import java.util.Collections;
 
 public final class VulkanPipelineCompiler {
     private VulkanPipelineCompiler() {

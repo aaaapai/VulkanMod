@@ -16,13 +16,14 @@
 
 package net.vulkanmod.render.chunk.build.pipeline.helper;
 
-import net.vulkanmod.render.model.quad.ModelQuadView;
-import net.vulkanmod.render.vertex.format.I32_SNorm;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
-import net.vulkanmod.render.quad.QuadView;
+
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.vulkanmod.render.model.quad.ModelQuadView;
+import net.vulkanmod.render.quad.QuadView;
+import net.vulkanmod.render.vertex.format.I32_SNorm;
 
 /**
  * Static routines of general utility for renderer implementations.

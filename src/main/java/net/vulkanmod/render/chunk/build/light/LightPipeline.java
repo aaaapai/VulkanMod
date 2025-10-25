@@ -2,8 +2,8 @@ package net.vulkanmod.render.chunk.build.light;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.vulkanmod.render.model.quad.ModelQuadView;
 import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
+import net.vulkanmod.render.model.quad.ModelQuadView;
 
 /**
  * Light pipelines allow model quads for any location in the world to be lit using various backends, including fluids

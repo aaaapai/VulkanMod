@@ -1,8 +1,8 @@
 package net.vulkanmod.config.video;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
 import java.util.List;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class VideoModeSet {
     public final int width;

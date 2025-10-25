@@ -1,7 +1,8 @@
 package net.vulkanmod.render.model;
 
-import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.core.Direction;
 
 /**
  * Simple helper mirroring the handful of face-index utilities that were

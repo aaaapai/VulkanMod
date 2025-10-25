@@ -1,9 +1,9 @@
 package net.vulkanmod.render.chunk.util;
 
-import net.vulkanmod.render.chunk.ChunkArea;
-
 import java.util.Arrays;
 import java.util.Iterator;
+
+import net.vulkanmod.render.chunk.ChunkArea;
 
 public record AreaSetQueue(int size, int[] set, StaticQueue<ChunkArea> queue) {
 

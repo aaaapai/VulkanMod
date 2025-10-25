@@ -1,13 +1,13 @@
 package net.vulkanmod.vulkan.util;
 
-import com.mojang.blaze3d.vertex.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.vulkan.VK11;
+import org.lwjgl.vulkan.VkCommandBuffer;
+
 import net.vulkanmod.render.PipelineManager;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.vulkan.VK11;
-import org.lwjgl.vulkan.VkCommandBuffer;
 
 public class DrawUtil {
 
