@@ -110,7 +110,7 @@ public class CloudRenderer {
                 return;
             }
 
-            this.cloudBuffer = new VBO(VertexBuffer.Usage.STATIC);
+            this.cloudBuffer = new VBO();
             this.cloudBuffer.upload(cloudsMesh);
         }
 

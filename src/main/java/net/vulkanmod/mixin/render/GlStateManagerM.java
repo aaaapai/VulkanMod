@@ -1,6 +1,6 @@
 package net.vulkanmod.mixin.render;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.vulkanmod.gl.*;
 import net.vulkanmod.vulkan.Renderer;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-@Mixin(GlStateManager.class)
+@Mixin(value = GlStateManager.class, remap = false)
 public class GlStateManagerM {
 
     /**

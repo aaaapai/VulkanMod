@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.function.BiFunction;
 
-@Mixin(RenderSystem.class)
+@Mixin(value = RenderSystem.class, remap = false)
 public abstract class RenderSystemMixin {
 
     @Shadow @Final private static Matrix4fStack modelViewStack;
@@ -147,4 +147,3 @@ public abstract class RenderSystemMixin {
         }
     }
 }
-

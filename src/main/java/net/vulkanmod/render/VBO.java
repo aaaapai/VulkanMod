@@ -30,8 +30,12 @@ public class VBO {
     private int indexCount;
     private int vertexCount;
 
-    public VBO(com.mojang.blaze3d.vertex.VertexBuffer.Usage usage) {
-       this.memoryType = usage == com.mojang.blaze3d.vertex.VertexBuffer.Usage.STATIC ? MemoryTypes.GPU_MEM : MemoryTypes.HOST_MEM;
+    public VBO() {
+        this(MemoryTypes.GPU_MEM);
+    }
+
+    public VBO(MemoryType memoryType) {
+        this.memoryType = memoryType;
     }
 
     public void upload(MeshData meshData) {

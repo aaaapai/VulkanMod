@@ -7,7 +7,7 @@ import net.vulkanmod.vulkan.device.Device;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(GlUtil.class)
+@Mixin(value = GlUtil.class, remap = false)
 public class GlDebugInfoM {
 
     /**
