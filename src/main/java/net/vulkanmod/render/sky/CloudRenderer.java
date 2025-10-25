@@ -1,16 +1,15 @@
 package net.vulkanmod.render.sky;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.ARGB;
 import net.vulkanmod.render.PipelineManager;
 import net.vulkanmod.render.VBO;
 import net.vulkanmod.vulkan.VRenderSystem;
@@ -18,6 +17,7 @@ import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import org.apache.commons.lang3.Validate;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 
@@ -130,32 +130,35 @@ public class CloudRenderer {
 
         VRenderSystem.setModelOffset(-xTranslation, 0, -zTranslation);
 
-        Vec3 cloudColor = level.getCloudColor(partialTicks);
-        VRenderSystem.setShaderColor((float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 0.8f);
+        int cloudColor = level.getCloudColor(partialTicks);
+        float r = ARGB.red(cloudColor) / 255.0F;
+        float g = ARGB.green(cloudColor) / 255.0F;
+        float b = ARGB.blue(cloudColor) / 255.0F;
+        VRenderSystem.setShaderColor(r, g, b, 0.8f);
 
         GraphicsPipeline pipeline = PipelineManager.getCloudsPipeline();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
+        VRenderSystem.enableBlend();
+        VRenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        VRenderSystem.enableDepthTest();
 
         boolean fastClouds = this.prevCloudsType == CloudStatus.FAST;
         boolean insideClouds = yState == Y_INSIDE_CLOUDS;
         boolean disableCull = insideClouds || (fastClouds && centerY <= 0.0f);
 
         if (disableCull) {
-            RenderSystem.disableCull();
+            VRenderSystem.disableCull();
         }
 
         if (!fastClouds) {
-            RenderSystem.colorMask(false, false, false, false);
+            VRenderSystem.colorMask(false, false, false, false);
             this.cloudBuffer.drawWithShader(poseStack.last().pose(), projection, pipeline);
 
-            RenderSystem.colorMask(true, true, true, true);
+            VRenderSystem.colorMask(true, true, true, true);
         }
 
         this.cloudBuffer.drawWithShader(poseStack.last().pose(), projection, pipeline);
 
-        RenderSystem.enableCull();
+        VRenderSystem.enableCull();
         VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         VRenderSystem.setModelOffset(0.0f, 0.0f, 0.0f);
 

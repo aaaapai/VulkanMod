@@ -1,6 +1,5 @@
 package net.vulkanmod.render.chunk.build;
 
-import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,7 +25,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 
-public class RenderRegion implements BlockAndTintGetter, RenderAttachedBlockView {
+public class RenderRegion implements BlockAndTintGetter {
     public static final int WIDTH = 3;
     public static final int SIZE = WIDTH * WIDTH * WIDTH;
 
@@ -194,11 +193,16 @@ public class RenderRegion implements BlockAndTintGetter, RenderAttachedBlockView
     }
 
     public int getMinBuildHeight() {
-        return this.level.getMinBuildHeight();
+        return this.level.getMinY();
     }
 
     public int getHeight() {
         return this.level.getHeight();
+    }
+
+    @Override
+    public int getMinY() {
+        return this.level.getMinY();
     }
 
     public int getSectionIdx(int secX, int secY, int secZ) {

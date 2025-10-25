@@ -1,7 +1,8 @@
 package net.vulkanmod.vulkan.texture;
 
+import com.mojang.blaze3d.opengl.GlTextureView;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.gl.VkGlTexture;
 import net.vulkanmod.vulkan.shader.Pipeline;
@@ -70,19 +71,30 @@ public abstract class VTextureSelector {
     public static void bindShaderTextures(Pipeline pipeline) {
         var imageDescriptors = pipeline.getImageDescriptors();
 
-        for (ImageDescriptor state : imageDescriptors) {
-            final int shaderTexture = RenderSystem.getShaderTexture(state.imageIdx);
+        for (ImageDescriptor descriptor : imageDescriptors) {
+            VulkanImage image = resolveImage(RenderSystem.getShaderTexture(descriptor.imageIdx));
 
-            VkGlTexture texture = VkGlTexture.getTexture(shaderTexture);
-
-            if (texture != null && texture.getVulkanImage() != null) {
-                VTextureSelector.bindTexture(state.imageIdx, texture.getVulkanImage());
-            }
-            else {
-                 texture = VkGlTexture.getTexture(MissingTextureAtlasSprite.getTexture().getId());
-                VTextureSelector.bindTexture(state.imageIdx, texture.getVulkanImage());
+            if (image != null) {
+                VTextureSelector.bindTexture(descriptor.imageIdx, image);
+            } else {
+                VTextureSelector.bindTexture(descriptor.imageIdx, whiteTexture);
             }
         }
+    }
+
+    private static VulkanImage resolveImage(GpuTextureView view) {
+        if (view == null) {
+            return null;
+        }
+
+        if (view instanceof GlTextureView glView) {
+            VkGlTexture texture = VkGlTexture.getTexture(glView.texture().glId());
+            if (texture != null) {
+                return texture.getVulkanImage();
+            }
+        }
+
+        return null;
     }
 
     public static VulkanImage getImage(int i) {

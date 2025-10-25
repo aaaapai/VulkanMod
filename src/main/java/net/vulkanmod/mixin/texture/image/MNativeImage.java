@@ -1,7 +1,6 @@
 package net.vulkanmod.mixin.texture.image;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.texture.ImageUtil;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
@@ -64,8 +63,6 @@ public abstract class MNativeImage {
      */
     @Overwrite
     private void _upload(int level, int xOffset, int yOffset, int unpackSkipPixels, int unpackSkipRows, int widthIn, int heightIn, boolean blur, boolean clamp, boolean mipmap, boolean autoClose) {
-        RenderSystem.assertOnRenderThreadOrInit();
-
         VTextureSelector.uploadSubTexture(level, widthIn, heightIn, xOffset, yOffset, unpackSkipRows, unpackSkipPixels, this.getWidth(), this.buffer);
         VTextureSelector.getBoundTexture().updateTextureSampler(blur, clamp, mipmap);
 
@@ -79,8 +76,6 @@ public abstract class MNativeImage {
      */
     @Overwrite
     public void downloadTexture(int level, boolean removeAlpha) {
-        RenderSystem.assertOnRenderThread();
-
         ImageUtil.downloadTexture(VTextureSelector.getBoundTexture(0), this.pixels);
 
         if (removeAlpha && this.format.hasAlpha()) {

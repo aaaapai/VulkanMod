@@ -1,6 +1,7 @@
 package net.vulkanmod.render.chunk.build.task;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.core.BlockPos;
@@ -104,7 +105,7 @@ public class BuildTask extends ChunkTask {
                     blockPos.set(section.xOffset() + x, section.yOffset() + y, section.zOffset() + z);
 
                     BlockState blockState = this.region.getBlockState(blockPos);
-                    if (blockState.isSolidRender(this.region, blockPos)) {
+                    if (blockState.isSolidRender()) {
                         visGraph.setOpaque(blockPos);
                     }
 
@@ -181,13 +182,13 @@ public class BuildTask extends ChunkTask {
     }
 
     private <E extends BlockEntity> void handleBlockEntity(CompileResult compileResult, E blockEntity) {
-        BlockEntityRenderer<E> blockEntityRenderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
-        if (blockEntityRenderer != null) {
+        BlockEntityRenderDispatcher dispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+        BlockEntityRenderer<E, ?> renderer = dispatcher.getRenderer(blockEntity);
+        if (renderer != null) {
             compileResult.blockEntities.add(blockEntity);
-            if (blockEntityRenderer.shouldRenderOffScreen(blockEntity)) {
+            if (renderer.shouldRenderOffScreen()) {
                 compileResult.globalBlockEntities.add(blockEntity);
             }
         }
-
     }
 }

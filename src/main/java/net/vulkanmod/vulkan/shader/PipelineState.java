@@ -1,10 +1,11 @@
 package net.vulkanmod.vulkan.shader;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.opengl.GlConst;
+import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.blaze3d.platform.SourceFactor;
+import java.util.Objects;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
-
-import java.util.Objects;
 
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -129,19 +130,21 @@ public class PipelineState {
             this.blendOp = blendOp;
         }
 
-        public void setBlendFunction(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
-            this.srcRgbFactor = glToVulkanBlendFactor(sourceFactor.value);
-            this.srcAlphaFactor = glToVulkanBlendFactor(sourceFactor.value);
-            this.dstRgbFactor = glToVulkanBlendFactor(destFactor.value);
-            this.dstAlphaFactor = glToVulkanBlendFactor(destFactor.value);
+        public void setBlendFunction(SourceFactor sourceFactor, DestFactor destFactor) {
+            int src = GlConst.toGl(sourceFactor);
+            int dst = GlConst.toGl(destFactor);
+            this.srcRgbFactor = glToVulkanBlendFactor(src);
+            this.srcAlphaFactor = glToVulkanBlendFactor(src);
+            this.dstRgbFactor = glToVulkanBlendFactor(dst);
+            this.dstAlphaFactor = glToVulkanBlendFactor(dst);
         }
 
-        public void setBlendFuncSeparate(GlStateManager.SourceFactor srcRgb, GlStateManager.DestFactor dstRgb,
-                                         GlStateManager.SourceFactor srcAlpha, GlStateManager.DestFactor dstAlpha) {
-            this.srcRgbFactor = glToVulkanBlendFactor(srcRgb.value);
-            this.srcAlphaFactor = glToVulkanBlendFactor(srcAlpha.value);
-            this.dstRgbFactor = glToVulkanBlendFactor(dstRgb.value);
-            this.dstAlphaFactor = glToVulkanBlendFactor(dstAlpha.value);
+        public void setBlendFuncSeparate(SourceFactor srcRgb, DestFactor dstRgb,
+                                         SourceFactor srcAlpha, DestFactor dstAlpha) {
+            this.srcRgbFactor = glToVulkanBlendFactor(GlConst.toGl(srcRgb));
+            this.srcAlphaFactor = glToVulkanBlendFactor(GlConst.toGl(srcAlpha));
+            this.dstRgbFactor = glToVulkanBlendFactor(GlConst.toGl(dstRgb));
+            this.dstAlphaFactor = glToVulkanBlendFactor(GlConst.toGl(dstAlpha));
         }
 
         /* gl to Vulkan conversion */

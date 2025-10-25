@@ -43,8 +43,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.mojang.blaze3d.platform.GlConst.GL_COLOR_BUFFER_BIT;
-import static com.mojang.blaze3d.platform.GlConst.GL_DEPTH_BUFFER_BIT;
+import static com.mojang.blaze3d.opengl.GlConst.GL_COLOR_BUFFER_BIT;
+import static com.mojang.blaze3d.opengl.GlConst.GL_DEPTH_BUFFER_BIT;
 import static net.vulkanmod.vulkan.Vulkan.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;

@@ -1,6 +1,5 @@
 package net.vulkanmod.mixin.texture;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.vulkanmod.gl.VkGlTexture;
 import net.vulkanmod.vulkan.texture.VulkanImage;
@@ -21,11 +20,7 @@ public abstract class MAbstractTexture {
      */
     @Overwrite
     public void bind() {
-        if (!RenderSystem.isOnRenderThreadOrInit()) {
-            RenderSystem.recordRenderCall(this::bindTexture);
-        } else {
-            this.bindTexture();
-        }
+        this.bindTexture();
     }
 
     /**

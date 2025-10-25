@@ -183,20 +183,20 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements Mutabl
 
 	@Override
 	public final MutableQuadViewImpl fromVanilla(BakedQuad quad, RenderMaterial material, @Nullable Direction cullFace) {
-		fromVanilla(quad.getVertices(), 0);
-		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
-		nominalFace(quad.getDirection());
-		colorIndex(quad.getTintIndex());
+        fromVanilla(quad.vertices(), 0);
+        data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
+        nominalFace(quad.direction());
+        colorIndex(quad.tintIndex());
 
-		if (!quad.isShade()) {
-			material = RenderMaterialRegistry.disableDiffuse(material, true);
-		}
+        if (!quad.shade()) {
+            material = RenderMaterialRegistry.disableDiffuse(material, true);
+        }
 
 		material(material);
 		tag(0);
 
 		// Copy data from BakedQuad instead of calculating properties
-		ModelQuadView quadView = (ModelQuadView) quad;
+		ModelQuadView quadView = (ModelQuadView) (Object) quad;
 		int normal = quadView.getNormal();
 		data[baseIndex + HEADER_FACE_NORMAL] = normal;
 		NormalHelper.unpackNormalTo(normal, faceNormal);

@@ -1,29 +1,17 @@
 package net.vulkanmod.vulkan.util;
 
-import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
-import net.vulkanmod.interfaces.ShaderMixed;
 import net.vulkanmod.render.PipelineManager;
-import net.vulkanmod.render.util.MatrixUniformBuffer;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.vulkan.VK11;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 public class DrawUtil {
 
-    private static final MatrixUniformBuffer PROJECTION_BUFFER = new MatrixUniformBuffer("Vulkan Fullscreen Projection");
-
     public static void blitToScreen() {
-//        defualtBlit();
         fastBlit();
     }
 
@@ -41,37 +29,5 @@ public class DrawUtil {
         VK11.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
         VRenderSystem.enableCull();
-    }
-
-    public static void defualtBlit() {
-        Matrix4f matrix4f = new Matrix4f().setOrtho(0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 1.0F);
-        GpuBufferSlice slice = PROJECTION_BUFFER.upload(matrix4f);
-        RenderSystem.setProjectionMatrix(slice, ProjectionType.ORTHOGRAPHIC);
-        Matrix4fStack posestack = RenderSystem.getModelViewStack();
-        posestack.pushMatrix();
-        posestack.identity();
-        VRenderSystem.applyModelViewMatrix(new Matrix4f(posestack));
-        VRenderSystem.calculateMVP();
-        posestack.popMatrix();
-
-        ShaderInstance shaderInstance = Minecraft.getInstance().gameRenderer.blitShader;
-//        RenderSystem.setShader(() -> shaderInstance);
-
-        Tesselator tesselator = RenderSystem.renderThreadTesselator();
-        BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.addVertex(-1.0f, -1.0f, 0.0f).setUv(0.0F, 1.0F);
-        bufferBuilder.addVertex(1.0f, -1.0f, 0.0f).setUv(1.0F, 1.0F);
-        bufferBuilder.addVertex(1.0f, 1.0f, 0.0f).setUv(1.0F, 0.0F);
-        bufferBuilder.addVertex(-1.0f, 1.0f, 0.0f).setUv(0.0F, 0.0F);
-        var meshData = bufferBuilder.buildOrThrow();
-
-        MeshData.DrawState parameters = meshData.drawState();
-
-        Renderer renderer = Renderer.getInstance();
-
-        GraphicsPipeline pipeline = ((ShaderMixed)(shaderInstance)).getPipeline();
-        renderer.bindGraphicsPipeline(pipeline);
-        renderer.uploadAndBindUBOs(pipeline);
-        Renderer.getDrawer().draw(meshData.vertexBuffer(), parameters.mode(), parameters.format(), parameters.vertexCount());
     }
 }

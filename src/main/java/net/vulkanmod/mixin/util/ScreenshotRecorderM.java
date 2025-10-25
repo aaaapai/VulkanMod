@@ -20,7 +20,8 @@ public class ScreenshotRecorderM {
         int height = target.height;
 
         NativeImage nativeimage = new NativeImage(width, height, false);
-        VkGlTexture.bindTexture(target.getColorTextureId());
+        VkGlTexture texture = Renderer.getInstance().getMainPass().getColorAttachment();
+        VkGlTexture.bindTexture(texture != null ? texture.id : 0);
 
         // Need to submit and wait cmds if screenshot was requested
         // before the end of the frame

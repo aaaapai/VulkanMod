@@ -1,8 +1,6 @@
 package net.vulkanmod.render.chunk;
 
-import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.vulkanmod.render.chunk.buffer.AreaBuffer;
@@ -360,15 +358,8 @@ public class RenderSection {
         Set<BlockEntity> sectionSet = compileStatus.globalBlockEntities;
 
         if (sectionSet.size() != fullSet.size() || !sectionSet.containsAll(fullSet)) {
-            Set<BlockEntity> toRemove = Sets.newHashSet(sectionSet);
-            Set<BlockEntity> toAdd = Sets.newHashSet(fullSet);
-            toAdd.removeAll(sectionSet);
-            toRemove.removeAll(fullSet);
-
             sectionSet.clear();
             sectionSet.addAll(fullSet);
-
-            Minecraft.getInstance().levelRenderer.updateGlobalBlockEntities(toRemove, toAdd);
         }
     }
 

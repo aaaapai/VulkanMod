@@ -30,6 +30,13 @@ public abstract class SingleQuadParticleM extends Particle {
     @Unique private final Quaternionf quaternionf = new Quaternionf();
     @Unique private final Vector3f vector3f = new Vector3f();
 
+    @Shadow protected float rCol;
+    @Shadow protected float gCol;
+    @Shadow protected float bCol;
+    @Shadow protected float alpha;
+    @Shadow protected float roll;
+    @Shadow protected float oRoll;
+
     @Shadow protected abstract float getU0();
     @Shadow protected abstract float getU1();
     @Shadow protected abstract float getV0();
@@ -111,8 +118,12 @@ public abstract class SingleQuadParticleM extends Particle {
         return section != null && section.getLastFrame() != worldRenderer.getLastFrame();
     }
 
-    @Override
-    public ParticleRenderType getRenderType() {
-        return null;
+    /**
+     * @author
+     * @reason Prevent vanilla from queuing the default quad renderer – Vulkan handles rendering directly in {@link #render}.
+     */
+    @Overwrite
+    public ParticleRenderType getGroup() {
+        return ParticleRenderType.NO_RENDER;
     }
 }

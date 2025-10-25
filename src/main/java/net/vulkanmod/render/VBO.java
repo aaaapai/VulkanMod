@@ -5,8 +5,6 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.memory.*;
@@ -18,6 +16,7 @@ import net.vulkanmod.vulkan.texture.VTextureSelector;
 import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 @Environment(EnvType.CLIENT)
 public class VBO {
@@ -111,33 +110,12 @@ public class VBO {
         }
     }
 
-    public void drawWithShader(Matrix4f modelView, Matrix4f projection, ShaderInstance shaderInstance) {
-        if (this.indexCount != 0) {
-            RenderSystem.assertOnRenderThread();
-
-            RenderSystem.setShader(() -> shaderInstance);
-
-            VRenderSystem.applyMVP(modelView, projection);
-            VRenderSystem.setPrimitiveTopologyGL(this.mode.asGLMode);
-
-            shaderInstance.setDefaultUniforms(VertexFormat.Mode.QUADS, modelView, projection, Minecraft.getInstance().getWindow());
-            shaderInstance.apply();
-
-            if (this.indexBuffer != null) {
-                Renderer.getDrawer().drawIndexed(this.vertexBuffer, this.indexBuffer, this.indexCount);
-            }
-            else {
-                Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
-            }
-
-            // Reset MVP to previous state
-            VRenderSystem.applyMVP(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix());
-        }
-    }
-
     public void drawWithShader(Matrix4f modelView, Matrix4f projection, GraphicsPipeline pipeline) {
         if (this.indexCount != 0) {
             RenderSystem.assertOnRenderThread();
+
+            Matrix4f previousModelView = snapshotMatrix(VRenderSystem.getModelViewMatrix().buffer);
+            Matrix4f previousProjection = snapshotMatrix(VRenderSystem.getProjectionMatrix().buffer);
 
             VRenderSystem.applyMVP(modelView, projection);
             VRenderSystem.setPrimitiveTopologyGL(this.mode.asGLMode);
@@ -154,9 +132,14 @@ public class VBO {
                 Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
             }
 
-            // Reset MVP to previous state
-            VRenderSystem.applyMVP(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix());
+            VRenderSystem.applyMVP(previousModelView, previousProjection);
         }
+    }
+
+    private static Matrix4f snapshotMatrix(ByteBuffer buffer) {
+        FloatBuffer floatBuffer = buffer.asFloatBuffer().duplicate();
+        floatBuffer.rewind();
+        return new Matrix4f(floatBuffer);
     }
 
     public void draw() {

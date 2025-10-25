@@ -1,7 +1,6 @@
 package net.vulkanmod.config.gui;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -231,7 +230,7 @@ public class VOptionScreen extends Screen {
             this.renderPanorama(guiGraphics, f);
         }
 
-        this.renderBlurredBackground(f);
+        this.renderBlurredBackground(guiGraphics);
         this.renderMenuBackground(guiGraphics);
 
     }
@@ -241,9 +240,8 @@ public class VOptionScreen extends Screen {
         this.renderBackground(guiGraphics, 0, 0, delta);
 
         GuiRenderer.guiGraphics = guiGraphics;
-        GuiRenderer.setPoseStack(guiGraphics.pose());
 
-        RenderSystem.enableBlend();
+        VRenderSystem.enableBlend();
 
         int size = minecraft.font.lineHeight * 4;
 

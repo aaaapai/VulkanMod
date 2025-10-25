@@ -61,7 +61,7 @@ public enum TerrainRenderType {
             case SOLID -> RenderType.solid();
             case CUTOUT -> RenderType.cutout();
             case CUTOUT_MIPPED -> RenderType.cutoutMipped();
-            case TRANSLUCENT -> RenderType.translucent();
+            case TRANSLUCENT -> RenderType.translucentMovingBlock();
             case TRIPWIRE -> RenderType.tripwire();
         };
     }

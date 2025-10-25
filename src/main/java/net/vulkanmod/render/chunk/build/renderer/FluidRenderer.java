@@ -164,14 +164,14 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
             seHeight = 1.0F;
             swHeight = 1.0F;
         } else {
-            float s = this.getHeight(region, fluid, mBlockPos.set(blockPos).offset(Direction.NORTH.getNormal()), northState);
-            float t = this.getHeight(region, fluid, mBlockPos.set(blockPos).offset(Direction.SOUTH.getNormal()), southState);
-            float u = this.getHeight(region, fluid, mBlockPos.set(blockPos).offset(Direction.EAST.getNormal()), eastState);
-            float v = this.getHeight(region, fluid, mBlockPos.set(blockPos).offset(Direction.WEST.getNormal()), westState);
-            neHeight = this.calculateAverageHeight(region, fluid, height, s, u, mBlockPos.set(blockPos).offset(Direction.NORTH.getNormal()).offset(Direction.EAST.getNormal()));
-            nwHeight = this.calculateAverageHeight(region, fluid, height, s, v, mBlockPos.set(blockPos).offset(Direction.NORTH.getNormal()).offset(Direction.WEST.getNormal()));
-            seHeight = this.calculateAverageHeight(region, fluid, height, t, u, mBlockPos.set(blockPos).offset(Direction.SOUTH.getNormal()).offset(Direction.EAST.getNormal()));
-            swHeight = this.calculateAverageHeight(region, fluid, height, t, v, mBlockPos.set(blockPos).offset(Direction.SOUTH.getNormal()).offset(Direction.WEST.getNormal()));
+            float s = this.getHeight(region, fluid, mBlockPos.set(blockPos).move(Direction.NORTH), northState);
+            float t = this.getHeight(region, fluid, mBlockPos.set(blockPos).move(Direction.SOUTH), southState);
+            float u = this.getHeight(region, fluid, mBlockPos.set(blockPos).move(Direction.EAST), eastState);
+            float v = this.getHeight(region, fluid, mBlockPos.set(blockPos).move(Direction.WEST), westState);
+            neHeight = this.calculateAverageHeight(region, fluid, height, s, u, mBlockPos.set(blockPos).move(Direction.NORTH).move(Direction.EAST));
+            nwHeight = this.calculateAverageHeight(region, fluid, height, s, v, mBlockPos.set(blockPos).move(Direction.NORTH).move(Direction.WEST));
+            seHeight = this.calculateAverageHeight(region, fluid, height, t, u, mBlockPos.set(blockPos).move(Direction.SOUTH).move(Direction.EAST));
+            swHeight = this.calculateAverageHeight(region, fluid, height, t, v, mBlockPos.set(blockPos).move(Direction.SOUTH).move(Direction.WEST));
         }
 
         float x0 = (posX & 15);

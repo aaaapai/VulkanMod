@@ -1,15 +1,14 @@
 package net.vulkanmod.config.gui;
 
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
+import net.vulkanmod.vulkan.Renderer;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -19,18 +18,18 @@ public abstract class GuiRenderer {
     public static Minecraft minecraft;
     public static Font font;
     public static GuiGraphics guiGraphics;
-    public static PoseStack pose;
-    public static BufferBuilder bufferBuilder;
-
-    private static boolean batching = false;
-    private static boolean drawing = false;
+    public static Matrix4f poseMatrix = new Matrix4f();
 
     public static void setPoseStack(PoseStack poseStack) {
-        pose = poseStack;
+        poseMatrix = new Matrix4f(poseStack.last().pose());
+    }
+
+    public static void setPoseStack(Matrix4f matrix) {
+        poseMatrix = new Matrix4f(matrix);
     }
 
     public static void disableScissor() {
-        RenderSystem.disableScissor();
+        Renderer.resetScissor();
     }
 
     public static void enableScissor(int x, int y, int width, int height) {
@@ -41,7 +40,7 @@ public abstract class GuiRenderer {
         int yScaled = (int) (wHeight - (y + height) * scale);
         int widthScaled = (int) (width * scale);
         int heightScaled = (int) (height * scale);
-        RenderSystem.enableScissor(xScaled, yScaled, Math.max(0, widthScaled), Math.max(0, heightScaled));
+        Renderer.setScissor(xScaled, yScaled, Math.max(0, widthScaled), Math.max(0, heightScaled));
     }
 
     public static void fillBox(float x0, float y0, float width, float height, int color) {
@@ -53,23 +52,7 @@ public abstract class GuiRenderer {
     }
 
     public static void fill(float x0, float y0, float x1, float y1, float z, int color) {
-        Matrix4f matrix4f = pose.last().pose();
-
-        float a = (float) FastColor.ARGB32.alpha(color) / 255.0F;
-        float r = (float) FastColor.ARGB32.red(color) / 255.0F;
-        float g = (float) FastColor.ARGB32.green(color) / 255.0F;
-        float b = (float) FastColor.ARGB32.blue(color) / 255.0F;
-
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-
-        setupBufferBuilder();
-
-        bufferBuilder.addVertex(matrix4f, x0, y0, z).setColor(r, g, b, a);
-        bufferBuilder.addVertex(matrix4f, x0, y1, z).setColor(r, g, b, a);
-        bufferBuilder.addVertex(matrix4f, x1, y1, z).setColor(r, g, b, a);
-        bufferBuilder.addVertex(matrix4f, x1, y0, z).setColor(r, g, b, a);
-
-        submitIfNeeded();
+        guiGraphics.fill((int)x0, (int)y0, (int)x1, (int)y1, color);
     }
 
     public static void fillGradient(float x0, float y0, float x1, float y1, int color1, int color2) {
@@ -77,25 +60,7 @@ public abstract class GuiRenderer {
     }
 
     public static void fillGradient(float x0, float y0, float x1, float y1, float z, int color1, int color2) {
-        float a1 = (float) FastColor.ARGB32.alpha(color1) / 255.0F;
-        float r1 = (float) FastColor.ARGB32.red(color1) / 255.0F;
-        float g1 = (float) FastColor.ARGB32.green(color1) / 255.0F;
-        float b1 = (float) FastColor.ARGB32.blue(color1) / 255.0F;
-        float a2 = (float) FastColor.ARGB32.alpha(color2) / 255.0F;
-        float r2 = (float) FastColor.ARGB32.red(color2) / 255.0F;
-        float g2 = (float) FastColor.ARGB32.green(color2) / 255.0F;
-        float b2 = (float) FastColor.ARGB32.blue(color2) / 255.0F;
-
-        Matrix4f matrix4f = pose.last().pose();
-
-        setupBufferBuilder();
-
-        bufferBuilder.addVertex(matrix4f, x0, y0, z).setColor(r1, g1, b1, a1);
-        bufferBuilder.addVertex(matrix4f, x0, y1, z).setColor(r2, g2, b2, a2);
-        bufferBuilder.addVertex(matrix4f, x1, y1, z).setColor(r2, g2, b2, a2);
-        bufferBuilder.addVertex(matrix4f, x1, y0, z).setColor(r1, g1, b1, a1);
-
-        submitIfNeeded();
+        guiGraphics.fillGradient((int)x0, (int)y0, (int)x1, (int)y1, color1, color2);
     }
 
     public static void renderBoxBorder(float x0, float y0, float width, float height, float borderWidth, int color) {
@@ -143,42 +108,12 @@ public abstract class GuiRenderer {
     }
 
     public static void beginBatch() {
-        batching = true;
     }
 
     public static void endBatch() {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        MeshData meshData = bufferBuilder.build();
-
-        if (meshData != null) {
-            BufferUploader.drawWithShader(meshData);
-            meshData.close();
-        }
-
-        batching = false;
-        drawing = false;
     }
 
     public static void flush() {
         guiGraphics.flush();
-
-        if (batching) {
-            endBatch();
-        }
-    }
-
-    private static void setupBufferBuilder() {
-        if (!batching || !drawing) {
-            bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            drawing = true;
-        }
-    }
-
-    private static void submitIfNeeded() {
-        if (!batching) {
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
-            drawing = false;
-        }
     }
 }
