@@ -84,13 +84,9 @@ public abstract class LightDataAccess {
 
         boolean em = state.emissiveRendering(region, pos);
 
-        boolean op;
-        if (this.subBlockLighting)
-            op = state.canOcclude();
-        else
-            op = state.isViewBlocking(region, pos) && state.getLightBlock(region, pos) != 0;
+        boolean op = this.subBlockLighting ? state.canOcclude() : (state.isSolidRender() && state.getLightBlock() != 0);
 
-        boolean fo = state.isSolidRender(region, pos);
+        boolean fo = state.isSolidRender();
         boolean fc = state.isCollisionShapeFullBlock(region, pos);
 
         int lu = state.getLightEmission();
@@ -108,7 +104,7 @@ public abstract class LightDataAccess {
                 sl = region.getBrightness(LightLayer.SKY, pos);
             }
             else {
-                int light = LevelRenderer.getLightColor(region, state, pos);
+                int light = LevelRenderer.getLightColor(region, pos);
                 bl = LightTexture.block(light);
                 sl = LightTexture.sky(light);
             }

@@ -34,4 +34,5 @@ run/
 
 # minecraft
 
-net/
+net/minecraft/
+!net/vulkanmod/

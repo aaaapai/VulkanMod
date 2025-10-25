@@ -112,14 +112,14 @@ public class BlockRenderer {
         this.random.setSeed(this.seed);
         this.useAO = Minecraft.useAmbientOcclusion() && blockState.getLightEmission() == 0;
 
-        TerrainRenderType baseType = TerrainRenderType.get(ItemBlockRenderTypes.getChunkRenderType(blockState));
+        TerrainRenderType baseType = TerrainRenderType.fromChunkLayer(ItemBlockRenderTypes.getChunkRenderType(blockState));
         baseType = TerrainRenderType.getRemapped(baseType);
         this.renderType = baseType;
         this.terrainBuilder = this.resources.builderPack.builder(baseType);
         this.terrainBuilder.setBlockAttributes(blockState);
 
         BlockAndTintGetter region = this.renderRegion;
-        Vec3 offset = blockState.getOffset(region, blockPos);
+        Vec3 offset = blockState.getOffset(blockPos);
         pos.add((float) offset.x, (float) offset.y, (float) offset.z);
 
         BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
@@ -282,12 +282,12 @@ public class BlockRenderer {
         }
 
         if (adjacent.canOcclude()) {
-            var shape = state.getFaceOcclusionShape(getter, this.blockPos, face);
+            var shape = state.getFaceOcclusionShape(face);
             if (shape.isEmpty()) {
                 return true;
             }
 
-            var adjShape = adjacent.getFaceOcclusionShape(getter, adjPos, face.getOpposite());
+            var adjShape = adjacent.getFaceOcclusionShape(face.getOpposite());
             if (adjShape.isEmpty()) {
                 return true;
             }

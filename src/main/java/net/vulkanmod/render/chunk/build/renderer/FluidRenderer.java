@@ -60,7 +60,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
     public void renderLiquid(BlockState blockState, FluidState fluidState, BlockPos blockPos) {
         FluidRenderHandler handler = FluidRenderHandlerRegistry.INSTANCE.get(fluidState.getType());
 
-        TerrainRenderType renderType = TerrainRenderType.get(ItemBlockRenderTypes.getRenderLayer(fluidState));
+        TerrainRenderType renderType = TerrainRenderType.fromChunkLayer(ItemBlockRenderTypes.getRenderLayer(fluidState));
         renderType = TerrainRenderType.getRemapped(renderType);
         TerrainBufferBuilder bufferBuilder = this.resources.builderPack.builder(renderType).getBufferBuilder(QuadFacing.UNDEFINED.ordinal());
 
@@ -77,7 +77,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
         mBlockPos.set(blockPos).move(Direction.DOWN);
 
         if (blockState.canOcclude()) {
-            VoxelShape occlusionShape = blockState.getOcclusionShape(blockGetter, mBlockPos);
+            VoxelShape occlusionShape = blockState.getOcclusionShape();
 
             if (occlusionShape == Shapes.block()) {
                 return direction != Direction.UP;

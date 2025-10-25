@@ -1,6 +1,7 @@
 package net.vulkanmod.render.vertex;
 
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.interfaces.ExtendedRenderType;
 import net.vulkanmod.vulkan.VRenderSystem;
@@ -53,6 +54,16 @@ public enum TerrainRenderType {
             case "translucent" -> TerrainRenderType.TRANSLUCENT;
             case "tripwire" -> TerrainRenderType.TRIPWIRE;
             default -> null;
+        };
+    }
+
+    public static TerrainRenderType fromChunkLayer(ChunkSectionLayer layer) {
+        return switch (layer) {
+            case SOLID -> SOLID;
+            case CUTOUT -> CUTOUT;
+            case CUTOUT_MIPPED -> CUTOUT_MIPPED;
+            case TRANSLUCENT -> TRANSLUCENT;
+            case TRIPWIRE -> TRIPWIRE;
         };
     }
 
