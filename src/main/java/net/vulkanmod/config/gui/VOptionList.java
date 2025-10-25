@@ -1,9 +1,7 @@
 package net.vulkanmod.config.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import net.vulkanmod.config.gui.widget.OptionWidget;
 import net.vulkanmod.config.gui.widget.VAbstractWidget;
@@ -140,8 +138,8 @@ public class VOptionList extends GuiElement {
             return false;
         }
 
-        if (this.getFocused() != null) {
-            return this.getFocused().mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        if (this.focused != null) {
+            return this.focused.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
         }
 
         if (!this.scrolling) {
@@ -214,8 +212,7 @@ public class VOptionList extends GuiElement {
         // Scroll bar
         int maxScroll = this.getMaxScroll();
         if (maxScroll > 0) {
-            RenderSystem.enableBlend();
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            VRenderSystem.enableBlend();
 
             int height = this.getHeight();
             int totalLength = this.getTotalLength();

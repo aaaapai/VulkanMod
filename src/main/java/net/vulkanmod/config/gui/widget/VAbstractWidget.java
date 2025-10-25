@@ -55,7 +55,6 @@ public abstract class VAbstractWidget extends GuiElement {
         }
     }
 
-    @Override
     public boolean mouseClicked(double mX, double mY, int button) {
         if (this.active && this.visible) {
             if (this.isValidClickButton(button)) {
@@ -80,7 +79,6 @@ public abstract class VAbstractWidget extends GuiElement {
                 && mY < (double)(this.getY() + this.getHeight());
     }
 
-    @Override
     public boolean mouseReleased(double mX, double mY, int button) {
         if (this.isValidClickButton(button)) {
             this.onRelease(mX, mY);
@@ -94,7 +92,6 @@ public abstract class VAbstractWidget extends GuiElement {
         return button == 0;
     }
 
-    @Override
     public boolean mouseDragged(double mX, double mY, int button, double f, double g) {
         if (this.isValidClickButton(button)) {
             this.onDrag(mX, mY, f, g);

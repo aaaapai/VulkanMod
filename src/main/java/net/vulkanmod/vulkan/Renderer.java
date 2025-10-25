@@ -208,12 +208,9 @@ public class Renderer {
         p.push("Frame_ops");
 
         Minecraft minecraft = Minecraft.getInstance();
-        float frameTime = minecraft.getFrameTime();
-        if (minecraft.levelRenderer() != null) {
-            VRenderSystem.setShaderGameTime(minecraft.levelRenderer().ticks + frameTime);
-        } else {
-            VRenderSystem.setShaderGameTime(frameTime);
-        }
+        float frameTime = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float baseTime = minecraft.level != null ? (float)minecraft.level.getGameTime() : 0.0f;
+        VRenderSystem.setShaderGameTime(baseTime + frameTime);
 
         // runTick might be called recursively,
         // this check forces sync to avoid upload corruption

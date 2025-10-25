@@ -69,7 +69,6 @@ public class RangeOptionWidget extends OptionWidget<RangeOption> {
         this.setValueFromMouse(mouseX);
     }
 
-    @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean isLeft = keyCode == GLFW.GLFW_KEY_LEFT;
         boolean isRight = keyCode == GLFW.GLFW_KEY_RIGHT;

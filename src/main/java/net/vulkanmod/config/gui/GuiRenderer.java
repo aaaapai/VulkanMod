@@ -114,6 +114,5 @@ public abstract class GuiRenderer {
     }
 
     public static void flush() {
-        guiGraphics.flush();
     }
 }

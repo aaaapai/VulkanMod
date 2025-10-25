@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -58,11 +57,12 @@ public class CloudRenderer {
     }
 
     public void renderClouds(ClientLevel level, PoseStack poseStack, Matrix4f modelView, Matrix4f projection, float ticks, float partialTicks, double camX, double camY, double camZ) {
-        float cloudHeight = level.effects().getCloudHeight();
-
-        if (Float.isNaN(cloudHeight)) {
+        var cloudHeightOpt = level.dimensionType().cloudHeight();
+        if (cloudHeightOpt.isEmpty()) {
             return;
         }
+
+        float cloudHeight = cloudHeightOpt.get() + 0.33F;
 
         Minecraft minecraft = Minecraft.getInstance();
 
@@ -117,8 +117,6 @@ public class CloudRenderer {
         if (this.cloudBuffer == null) {
             return;
         }
-
-        FogRenderer.levelFogColor();
 
         float xTranslation = (float) (centerX - (centerCellX * CELL_WIDTH));
         float yTranslation = (float) (centerY);
@@ -288,7 +286,7 @@ public class CloudRenderer {
                 int height = image.getHeight();
                 Validate.isTrue(width == height, "Image width and height must be the same");
 
-                int[] pixels = image.getPixelsRGBA();
+                int[] pixels = image.getPixels();
 
                 return new CloudGrid(pixels, width);
             }

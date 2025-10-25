@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import net.vulkanmod.render.quad.QuadView;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 
 /**
@@ -107,8 +106,7 @@ public abstract class NormalHelper {
 		final Direction nominalFace = q.nominalFace();
 
 		if (nominalFace != null && GeometryHelper.isQuadParallelToFace(nominalFace, q)) {
-			Vec3i vec = nominalFace.getNormal();
-			saveTo.set(vec.getX(), vec.getY(), vec.getZ());
+			saveTo.set(nominalFace.getStepX(), nominalFace.getStepY(), nominalFace.getStepZ());
 			return;
 		}
 
@@ -184,9 +182,7 @@ public abstract class NormalHelper {
 	}
 
 	public static int packedNormalFromDirection(Direction direction) {
-		Vec3i normal = direction.getNormal();
-
-		return I32_SNorm.packNormal(normal.getX(), normal.getY(), normal.getZ());
+		return I32_SNorm.packNormal(direction.getStepX(), direction.getStepY(), direction.getStepZ());
 	}
 
 	public static void unpackNormalTo(int packedNormal, Vector3f normal) {

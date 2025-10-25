@@ -2,7 +2,7 @@ package net.vulkanmod.mixin.render.vertex;
 
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.core.Vec3i;
+import net.minecraft.core.Direction;
 import net.vulkanmod.interfaces.ExtendedVertexBuilder;
 import net.vulkanmod.mixin.matrix.PoseAccessor;
 import net.vulkanmod.render.util.MathUtil;
@@ -163,11 +163,14 @@ public abstract class BufferBuilderM
     @Unique
     private void putQuadData(PoseStack.Pose matrixEntry, BakedQuad quad, float[] brightness, float red, float green, float blue, float alpha, int[] lights, int overlay, boolean useQuadColorData) {
         int[] quadData = quad.vertices();
-        Vec3i vec3i = quad.direction().getNormal();
+        Direction direction = quad.direction();
+        int normalX = direction.getStepX();
+        int normalY = direction.getStepY();
+        int normalZ = direction.getStepZ();
         Matrix4f matrix4f = matrixEntry.pose();
 
         boolean trustedNormals = ((PoseAccessor)(Object)matrixEntry).trustedNormals();
-        int normal = MathUtil.packTransformedNorm(matrixEntry.normal(), trustedNormals, vec3i.getX(), vec3i.getY(), vec3i.getZ());
+        int normal = MathUtil.packTransformedNorm(matrixEntry.normal(), trustedNormals, normalX, normalY, normalZ);
 
         for (int k = 0; k < 4; ++k) {
             float r, g, b;

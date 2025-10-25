@@ -14,6 +14,7 @@ import net.vulkanmod.vulkan.memory.buffer.index.AutoIndexBuffer;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -118,7 +119,7 @@ public class VBO {
             Matrix4f previousProjection = snapshotMatrix(VRenderSystem.getProjectionMatrix().buffer);
 
             VRenderSystem.applyMVP(modelView, projection);
-            VRenderSystem.setPrimitiveTopologyGL(this.mode.asGLMode);
+            VRenderSystem.setPrimitiveTopologyGL(toGlMode(this.mode));
 
             Renderer renderer = Renderer.getInstance();
             renderer.bindGraphicsPipeline(pipeline);
@@ -167,6 +168,17 @@ public class VBO {
 
         this.vertexCount = 0;
         this.indexCount = 0;
+    }
+
+    private static int toGlMode(VertexFormat.Mode mode) {
+        return switch (mode) {
+            case LINES, DEBUG_LINES -> GL11.GL_LINES;
+            case LINE_STRIP, DEBUG_LINE_STRIP -> GL11.GL_LINE_STRIP;
+            case TRIANGLES -> GL11.GL_TRIANGLES;
+            case TRIANGLE_STRIP -> GL11.GL_TRIANGLE_STRIP;
+            case TRIANGLE_FAN -> GL11.GL_TRIANGLE_FAN;
+            case QUADS -> GL11.GL_QUADS;
+        };
     }
 
 }

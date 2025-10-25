@@ -23,7 +23,7 @@ public class DrawUtil {
 
     public static void drawTexQuad(BufferBuilder builder, float x0, float y0, float x1, float y1, float z,
                                    float u0, float v0, float u1, float v1) {
-        Tesselator tesselator = RenderSystem.renderThreadTesselator();
+        Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         bufferBuilder.addVertex(x0, y0, z).setUv(0.0F, 1.0F);
         bufferBuilder.addVertex(x1, y0, z).setUv(1.0F, 1.0F);
@@ -37,7 +37,7 @@ public class DrawUtil {
     }
 
     public static void blitQuad(float x0, float y0, float x1, float y1) {
-        Tesselator tesselator = RenderSystem.renderThreadTesselator();
+        Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         bufferBuilder.addVertex(x0, y0, 0.0f).setUv(0.0F, 1.0F);
         bufferBuilder.addVertex(x1, y0, 0.0f).setUv(1.0F, 1.0F);

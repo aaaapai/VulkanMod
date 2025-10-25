@@ -222,8 +222,10 @@ public class BlockRenderer {
 
         TerrainBufferBuilder bufferBuilder = terrainBuilder.getBufferBuilder(quadFacing.ordinal());
 
-        Vec3i normal = quad.getFacingDirection().getNormal();
-        int packedNormal = I32_SNorm.packNormal(normal.getX(), normal.getY(), normal.getZ());
+        Direction facingDirection = quad.getFacingDirection();
+        int packedNormal = facingDirection != null
+                ? I32_SNorm.packNormal(facingDirection.getStepX(), facingDirection.getStepY(), facingDirection.getStepZ())
+                : quad.getNormal();
 
         float[] brightnessArr = quadLightData.br;
         int[] lights = quadLightData.lm;

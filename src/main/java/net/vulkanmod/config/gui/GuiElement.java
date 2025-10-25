@@ -7,6 +7,9 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GuiElement implements GuiEventListener, NarratableEntry {
@@ -83,49 +86,62 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
     }
 
     @Override
-    public void mouseMoved(double d, double e) {
-        GuiEventListener.super.mouseMoved(d, e);
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean bl) {
+        return this.mouseClicked(mouseButtonEvent.x(), mouseButtonEvent.y(), mouseButtonEvent.button());
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return false;
     }
 
     @Override
-    public boolean mouseClicked(double d, double e, int i) {
-        return GuiEventListener.super.mouseClicked(d, e, i);
+    public boolean mouseReleased(MouseButtonEvent mouseButtonEvent) {
+        return this.mouseReleased(mouseButtonEvent.x(), mouseButtonEvent.y(), mouseButtonEvent.button());
+    }
+
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return false;
     }
 
     @Override
-    public boolean mouseReleased(double d, double e, int i) {
-        return GuiEventListener.super.mouseReleased(d, e, i);
+    public boolean mouseDragged(MouseButtonEvent mouseButtonEvent, double dragX, double dragY) {
+        return this.mouseDragged(mouseButtonEvent.x(), mouseButtonEvent.y(), mouseButtonEvent.button(), dragX, dragY);
     }
 
-    @Override
-    public boolean mouseDragged(double d, double e, int i, double f, double g) {
-        return GuiEventListener.super.mouseDragged(d, e, i, f, g);
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return false;
     }
 
     @Override
     public boolean mouseScrolled(double d, double e, double f, double g) {
-        return GuiEventListener.super.mouseScrolled(d, e, f, g);
+        return false;
     }
 
     @Override
-    public boolean keyPressed(int i, int j, int k) {
-        return GuiEventListener.super.keyPressed(i, j, k);
+    public boolean keyPressed(KeyEvent keyEvent) {
+        return this.keyPressed(keyEvent.key(), keyEvent.scancode(), keyEvent.modifiers());
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return false;
     }
 
     @Override
-    public boolean keyReleased(int i, int j, int k) {
-        return GuiEventListener.super.keyReleased(i, j, k);
+    public boolean keyReleased(KeyEvent keyEvent) {
+        return this.keyReleased(keyEvent.key(), keyEvent.scancode(), keyEvent.modifiers());
+    }
+
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return false;
     }
 
     @Override
-    public boolean charTyped(char c, int i) {
-        return GuiEventListener.super.charTyped(c, i);
+    public boolean charTyped(CharacterEvent characterEvent) {
+        return this.charTyped((char)characterEvent.codepoint(), characterEvent.modifiers());
     }
 
-    @Nullable
-    @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent focusNavigationEvent) {
-        return GuiEventListener.super.nextFocusPath(focusNavigationEvent);
+    public boolean charTyped(char codePoint, int modifiers) {
+        return false;
     }
 
     @Override
@@ -134,11 +150,6 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
                 && mouseX <= (this.x + this.width) && mouseY <= (this.y + this.height);
     }
 
-    @Nullable
-    @Override
-    public ComponentPath getCurrentFocusPath() {
-        return GuiEventListener.super.getCurrentFocusPath();
-    }
 
     @Override
     public ScreenRectangle getRectangle() {

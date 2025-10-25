@@ -5,6 +5,7 @@ import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -15,6 +16,7 @@ import net.vulkanmod.config.gui.widget.VButtonWidget;
 import net.vulkanmod.config.option.OptionPage;
 import net.vulkanmod.config.option.Options;
 import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.vulkan.VRenderSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -194,11 +196,12 @@ public class VOptionScreen extends Screen {
         this.addWidget(this.supportButton);
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean canFocus) {
         for (GuiEventListener element : this.children()) {
-            if (element.mouseClicked(mouseX, mouseY, button)) {
+            if (element.mouseClicked(event, canFocus)) {
                 this.setFocused(element);
-                if (button == 0) {
+                if (event.button() == 0) {
                     this.setDragging(true);
                 }
 
@@ -211,11 +214,11 @@ public class VOptionScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
         this.setDragging(false);
         this.updateState();
-        return this.getChildAt(mouseX, mouseY)
-                .filter(guiEventListener -> guiEventListener.mouseReleased(mouseX, mouseY, button))
+        return this.getChildAt(event.x(), event.y())
+                .filter(guiEventListener -> guiEventListener.mouseReleased(event))
                 .isPresent();
     }
 
@@ -245,7 +248,7 @@ public class VOptionScreen extends Screen {
 
         int size = minecraft.font.lineHeight * 4;
 
-        guiGraphics.blit(ICON, 30, 4, 0f, 0f, size, size, size, size);
+        guiGraphics.blit(ICON, 30, 4, 0, 0, size, size, size, size);
 
         VOptionList currentList = this.optionPages.get(this.currentListIdx).getOptionList();
         currentList.updateState(mouseX, mouseY);

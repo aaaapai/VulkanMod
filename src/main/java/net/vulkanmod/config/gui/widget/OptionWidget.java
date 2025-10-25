@@ -6,7 +6,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
@@ -69,12 +68,10 @@ public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
     public void renderWidget(double mouseX, double mouseY) {
         Minecraft minecraftClient = Minecraft.getInstance();
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
         VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         int i = this.getYImage(this.isHovered());
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
+        VRenderSystem.enableBlend();
+        VRenderSystem.enableDepthTest();
 
         int xPadding = 0;
         int yPadding = 0;
@@ -90,7 +87,7 @@ public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
         Font textRenderer = minecraftClient.font;
         GuiRenderer.drawString(textRenderer, this.getName().getVisualOrderText(), this.x + 8, this.y + (this.height - 8) / 2, color);
 
-        RenderSystem.enableBlend();
+        VRenderSystem.enableBlend();
 
         this.renderControls(mouseX, mouseY);
     }

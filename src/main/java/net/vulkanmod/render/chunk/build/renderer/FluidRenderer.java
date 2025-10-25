@@ -74,7 +74,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
     }
 
     private boolean isFaceOccludedByState(BlockGetter blockGetter, float h, Direction direction, BlockPos blockPos, BlockState blockState) {
-        mBlockPos.set(blockPos).offset(Direction.DOWN.getNormal());
+        mBlockPos.set(blockPos).move(Direction.DOWN);
 
         if (blockState.canOcclude()) {
             VoxelShape occlusionShape = blockState.getOcclusionShape(blockGetter, mBlockPos);
@@ -86,7 +86,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
             }
 
             VoxelShape voxelShape = Shapes.box(0.0, 0.0, 0.0, 1.0, h, 1.0);
-            return Shapes.blockOccudes(voxelShape, occlusionShape, direction);
+            return Shapes.blockOccludes(voxelShape, occlusionShape, direction);
         } else {
             return false;
         }
@@ -422,7 +422,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
     private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState adjBlockState) {
         FluidState adjFluidState = adjBlockState.getFluidState();
         if (fluid.isSame(adjFluidState.getType())) {
-            BlockState blockState2 = blockAndTintGetter.getBlockState(blockPos.offset(Direction.UP.getNormal()));
+            BlockState blockState2 = blockAndTintGetter.getBlockState(blockPos.relative(Direction.UP));
             return fluid.isSame(blockState2.getFluidState().getType()) ? 1.0F : adjFluidState.getOwnHeight();
         } else {
             return !adjBlockState.isSolid() ? 0.0F : -1.0f;
