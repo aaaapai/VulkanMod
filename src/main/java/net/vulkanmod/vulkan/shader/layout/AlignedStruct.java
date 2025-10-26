@@ -13,8 +13,7 @@ public abstract class AlignedStruct {
     protected AlignedStruct(List<Uniform.Info> infoList, int size) {
         this.size = size;
 
-        if (infoList == null)
-            return;
+        if (infoList == null) return;
 
         for (Uniform.Info info : infoList) {
             Uniform uniform = Uniform.createField(info);

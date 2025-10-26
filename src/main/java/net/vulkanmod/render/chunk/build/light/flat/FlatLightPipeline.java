@@ -1,11 +1,5 @@
 package net.vulkanmod.render.chunk.build.light.flat;
 
-import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.getEmissiveLightmap;
-import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackEM;
-import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.unpackFC;
-
-import java.util.Arrays;
-
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +9,10 @@ import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
 import net.vulkanmod.render.chunk.util.SimpleDirection;
 import net.vulkanmod.render.model.quad.ModelQuadFlags;
 import net.vulkanmod.render.model.quad.ModelQuadView;
+
+import java.util.Arrays;
+
+import static net.vulkanmod.render.chunk.build.light.data.LightDataAccess.*;
 
 /**
  * A light pipeline which implements "classic-style" lighting through simply using the light value of the adjacent

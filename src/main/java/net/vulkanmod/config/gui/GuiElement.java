@@ -11,11 +11,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 
 public abstract class GuiElement implements GuiEventListener, NarratableEntry {
 
-    protected int width;
-    protected int height;
     public int x;
     public int y;
-
+    protected int width;
+    protected int height;
     protected boolean hovered;
     protected long hoverStartTime;
     protected int hoverTime;
@@ -75,8 +74,7 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
     public float getHoverMultiplier(float time) {
         if (this.hovered) {
             return Math.min(((this.hoverTime) / time), 1.0f);
-        }
-        else {
+        } else {
             int delta = (int) (Util.getMillis() - this.hoverStopTime);
             return Math.max(1.0f - (delta / time), 0.0f);
         }
@@ -134,7 +132,7 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
 
     @Override
     public boolean charTyped(CharacterEvent characterEvent) {
-        return this.charTyped((char)characterEvent.codepoint(), characterEvent.modifiers());
+        return this.charTyped((char) characterEvent.codepoint(), characterEvent.modifiers());
     }
 
     public boolean charTyped(char codePoint, int modifiers) {
@@ -154,13 +152,13 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
     }
 
     @Override
-    public void setFocused(boolean bl) {
-
+    public boolean isFocused() {
+        return false;
     }
 
     @Override
-    public boolean isFocused() {
-        return false;
+    public void setFocused(boolean bl) {
+
     }
 
     @Override

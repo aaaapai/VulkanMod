@@ -17,8 +17,8 @@ import java.nio.IntBuffer;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VkGlTexture {
-    private static int ID_COUNTER = 1;
     private static final Int2ReferenceOpenHashMap<VkGlTexture> map = new Int2ReferenceOpenHashMap<>();
+    private static int ID_COUNTER = 1;
     private static int boundTextureId = 0;
     private static VkGlTexture boundTexture;
     private static int activeTexture = 0;
@@ -26,6 +26,19 @@ public class VkGlTexture {
     private static int unpackRowLength;
     private static int unpackSkipRows;
     private static int unpackSkipPixels;
+    public final int id;
+    VulkanImage vulkanImage;
+    int width, height;
+    int vkFormat;
+    boolean needsUpdate = false;
+    int maxLevel = 0;
+    int maxLod = 0;
+    int minFilter, magFilter = GL11.GL_LINEAR;
+    boolean clamp = true;
+
+    public VkGlTexture(int id) {
+        this.id = id;
+    }
 
     public static void bindIdToImage(int id, VulkanImage vulkanImage) {
         VkGlTexture texture = map.get(id);
@@ -143,7 +156,7 @@ public class VkGlTexture {
         return src;
     }
 
-    public static void texSubImage2D(int target, int level, int xOffset, int yOffset, int width , int height, int format, int type, @Nullable ByteBuffer pixels) {
+    public static void texSubImage2D(int target, int level, int xOffset, int yOffset, int width, int height, int format, int type, @Nullable ByteBuffer pixels) {
         if (width == 0 || height == 0)
             return;
 
@@ -175,15 +188,18 @@ public class VkGlTexture {
         switch (pName) {
             case GL30.GL_TEXTURE_MAX_LEVEL -> boundTexture.setMaxLevel(param);
             case GL30.GL_TEXTURE_MAX_LOD -> boundTexture.setMaxLod(param);
-            case GL30.GL_TEXTURE_MIN_LOD -> {}
-            case GL30.GL_TEXTURE_LOD_BIAS -> {}
+            case GL30.GL_TEXTURE_MIN_LOD -> {
+            }
+            case GL30.GL_TEXTURE_LOD_BIAS -> {
+            }
 
             case GL11.GL_TEXTURE_MAG_FILTER -> boundTexture.setMagFilter(param);
             case GL11.GL_TEXTURE_MIN_FILTER -> boundTexture.setMinFilter(param);
 
             case GL11.GL_TEXTURE_WRAP_S, GL11.GL_TEXTURE_WRAP_T -> boundTexture.setClamp(param);
 
-            default -> {}
+            default -> {
+            }
         }
 
         //TODO
@@ -270,23 +286,6 @@ public class VkGlTexture {
         return boundTexture;
     }
 
-    public final int id;
-    VulkanImage vulkanImage;
-
-    int width, height;
-    int vkFormat;
-
-    boolean needsUpdate = false;
-    int maxLevel = 0;
-    int maxLod = 0;
-    int minFilter, magFilter = GL11.GL_LINEAR;
-
-    boolean clamp = true;
-
-    public VkGlTexture(int id) {
-        this.id = id;
-    }
-
     void updateParams(int level, int width, int height, int internalFormat, int type) {
         if (level > this.maxLevel) {
             this.maxLevel = level;
@@ -325,8 +324,7 @@ public class VkGlTexture {
                     vkFormat, width, height,
                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                     false, true);
-        }
-        else {
+        } else {
             this.vulkanImage = new VulkanImage.Builder(width, height)
                     .setName(String.format("GlTexture %d", this.id))
                     .setMipLevels(maxLevel + 1)
@@ -345,7 +343,8 @@ public class VkGlTexture {
         samplerFlags |= magFilter == GL11.GL_LINEAR ? SamplerManager.LINEAR_FILTERING_BIT : 0;
 
         samplerFlags |= switch (minFilter) {
-            case GL11.GL_LINEAR_MIPMAP_LINEAR -> SamplerManager.USE_MIPMAPS_BIT | SamplerManager.MIPMAP_LINEAR_FILTERING_BIT;
+            case GL11.GL_LINEAR_MIPMAP_LINEAR ->
+                    SamplerManager.USE_MIPMAPS_BIT | SamplerManager.MIPMAP_LINEAR_FILTERING_BIT;
             case GL11.GL_NEAREST_MIPMAP_NEAREST -> SamplerManager.USE_MIPMAPS_BIT;
             default -> 0;
         };

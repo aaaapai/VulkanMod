@@ -8,10 +8,9 @@ import java.util.function.Supplier;
 
 public class Uniform {
     protected Supplier<MappedBuffer> values;
-
-    Info info;
     protected long offset;
     protected int size;
+    Info info;
 
     Uniform(Info info) {
         this.info = info;
@@ -19,24 +18,6 @@ public class Uniform {
         this.size = info.size * 4;
 
         this.setupSupplier();
-    }
-
-    protected void setupSupplier() {
-        this.values = this.info.bufferSupplier;
-    }
-
-    public void setSupplier(Supplier<MappedBuffer> supplier) {
-        this.values = supplier;
-    }
-
-    public String getName() {
-        return this.info.name;
-    }
-
-    void update(long ptr) {
-        MappedBuffer src = values.get();
-
-        MemoryUtil.memCopy(src.ptr, ptr + this.offset, this.size);
     }
 
     public static Uniform createField(Info info) {
@@ -47,20 +28,6 @@ public class Uniform {
             case "int" -> new Vec1i(info);
             default -> throw new RuntimeException("not admitted type: " + info.type);
         };
-    }
-
-    public int getOffset() {
-        return info.offset;
-    }
-
-    public int getSize() { return info.size; }
-
-    public Info getInfo() {
-        return info;
-    }
-
-    public String toString() {
-        return String.format("%s: %s offset: %d", info.type, info.name, info.offset);
     }
 
     //TODO
@@ -95,6 +62,40 @@ public class Uniform {
         };
     }
 
+    protected void setupSupplier() {
+        this.values = this.info.bufferSupplier;
+    }
+
+    public void setSupplier(Supplier<MappedBuffer> supplier) {
+        this.values = supplier;
+    }
+
+    public String getName() {
+        return this.info.name;
+    }
+
+    void update(long ptr) {
+        MappedBuffer src = values.get();
+
+        MemoryUtil.memCopy(src.ptr, ptr + this.offset, this.size);
+    }
+
+    public int getOffset() {
+        return info.offset;
+    }
+
+    public int getSize() {
+        return info.size;
+    }
+
+    public Info getInfo() {
+        return info;
+    }
+
+    public String toString() {
+        return String.format("%s: %s offset: %d", info.type, info.name, info.offset);
+    }
+
     public static class Info {
         public final String type;
         public final String name;
@@ -113,7 +114,9 @@ public class Uniform {
             this.size = size;
         }
 
-        int getSizeBytes() { return 4 * this.size; }
+        int getSizeBytes() {
+            return 4 * this.size;
+        }
 
         int computeAlignmentOffset(int builderOffset) {
             return this.offset = builderOffset + ((align - (builderOffset % align)) % align);

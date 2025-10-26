@@ -24,15 +24,12 @@ import static org.lwjgl.util.shaderc.Shaderc.*;
 public class SPIRVUtils {
     private static final boolean DEBUG = false;
     private static final boolean OPTIMIZATIONS = true;
-
-    private static long compiler;
-    private static long options;
-
     //The dedicated Includer and Releaser Inner Classes used to Initialise #include Support for ShaderC
     private static final ShaderIncluder SHADER_INCLUDER = new ShaderIncluder();
     private static final ShaderReleaser SHADER_RELEASER = new ShaderReleaser();
     private static final long pUserData = 0;
-
+    private static long compiler;
+    private static long options;
     private static ObjectArrayList<String> includePaths;
 
     static {
@@ -55,8 +52,7 @@ public class SPIRVUtils {
         if (OPTIMIZATIONS)
             shaderc_compile_options_set_optimization_level(options, shaderc_optimization_level_performance);
 
-        if (DEBUG)
-            shaderc_compile_options_set_generate_debug_info(options);
+        if (DEBUG) shaderc_compile_options_set_generate_debug_info(options);
 
         shaderc_compile_options_set_target_env(options, shaderc_env_version_vulkan_1_2, VK12.VK_API_VERSION_1_2);
         shaderc_compile_options_set_include_callbacks(options, SHADER_INCLUDER, SHADER_RELEASER, pUserData);
@@ -68,8 +64,7 @@ public class SPIRVUtils {
     public static void addIncludePath(String path) {
         URL url = SPIRVUtils.class.getResource(path);
 
-        if (url != null)
-            includePaths.add(url.toExternalForm());
+        if (url != null) includePaths.add(url.toExternalForm());
     }
 
     public static SPIRV compileShader(String filename, String source, ShaderKind shaderKind) {
@@ -84,22 +79,14 @@ public class SPIRVUtils {
         }
 
         if (shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success) {
-            throw new RuntimeException(
-                    "Failed to compile shader " + filename + " into SPIR-V:\n" + shaderc_result_get_error_message(
-                            result));
+            throw new RuntimeException("Failed to compile shader " + filename + " into SPIR-V:\n" + shaderc_result_get_error_message(result));
         }
 
         return new SPIRV(result, shaderc_result_get_bytes(result));
     }
 
     public enum ShaderKind {
-        VERTEX_SHADER(shaderc_glsl_vertex_shader),
-        GEOMETRY_SHADER(shaderc_glsl_geometry_shader),
-        FRAGMENT_SHADER(shaderc_glsl_fragment_shader),
-        COMPUTE_SHADER(shaderc_glsl_compute_shader),
-        RAYGEN_SHADER(shaderc_glsl_raygen_shader),
-        MISS_SHADER(shaderc_glsl_miss_shader),
-        CLOSEST_HIT_SHADER(shaderc_glsl_closesthit_shader);
+        VERTEX_SHADER(shaderc_glsl_vertex_shader), GEOMETRY_SHADER(shaderc_glsl_geometry_shader), FRAGMENT_SHADER(shaderc_glsl_fragment_shader), COMPUTE_SHADER(shaderc_glsl_compute_shader), RAYGEN_SHADER(shaderc_glsl_raygen_shader), MISS_SHADER(shaderc_glsl_miss_shader), CLOSEST_HIT_SHADER(shaderc_glsl_closesthit_shader);
 
         private final int kind;
 
@@ -126,10 +113,7 @@ public class SPIRVUtils {
                     if (Files.exists(path)) {
                         byte[] bytes = Files.readAllBytes(path);
 
-                        return ShadercIncludeResult.malloc(stack)
-                                                   .source_name(stack.ASCII(requested))
-                                                   .content(stack.bytes(bytes))
-                                                   .user_data(user_data).address();
+                        return ShadercIncludeResult.malloc(stack).source_name(stack.ASCII(requested)).content(stack.bytes(bytes)).user_data(user_data).address();
                     }
                 }
             } catch (IOException | URISyntaxException e) {

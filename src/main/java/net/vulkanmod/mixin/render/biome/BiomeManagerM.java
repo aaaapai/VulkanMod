@@ -9,7 +9,9 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(BiomeManager.class)
 public class BiomeManagerM implements BiomeManagerExtended {
 
-    @Shadow @Final private long biomeZoomSeed;
+    @Shadow
+    @Final
+    private long biomeZoomSeed;
 
     @Override
     public long getBiomeZoomSeed() {

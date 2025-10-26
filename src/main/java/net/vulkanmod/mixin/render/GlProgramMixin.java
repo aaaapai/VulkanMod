@@ -1,16 +1,14 @@
 package net.vulkanmod.mixin.render;
 
-import java.util.List;
-import java.util.Map;
-
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.Uniform;
+import net.vulkanmod.gl.VkGlProgram;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.mojang.blaze3d.opengl.GlProgram;
-import com.mojang.blaze3d.opengl.Uniform;
-
-import net.vulkanmod.gl.VkGlProgram;
+import java.util.List;
+import java.util.Map;
 
 @Mixin(value = GlProgram.class, remap = false)
 public abstract class GlProgramMixin {

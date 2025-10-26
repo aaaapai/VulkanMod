@@ -1,9 +1,5 @@
 package net.vulkanmod.config.gui;
 
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.util.Mth;
@@ -12,6 +8,9 @@ import net.vulkanmod.config.gui.widget.VAbstractWidget;
 import net.vulkanmod.config.option.Option;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class VOptionList extends GuiElement {
     private final List<Entry> children = new ObjectArrayList<>();

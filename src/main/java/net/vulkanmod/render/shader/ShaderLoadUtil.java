@@ -1,5 +1,13 @@
 package net.vulkanmod.render.shader;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraft.resources.ResourceLocation;
+import net.vulkanmod.vulkan.shader.Pipeline;
+import net.vulkanmod.vulkan.shader.SPIRVUtils;
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,16 +18,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.apache.commons.io.IOUtils;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import net.minecraft.resources.ResourceLocation;
-import net.vulkanmod.vulkan.shader.Pipeline;
-import net.vulkanmod.vulkan.shader.SPIRVUtils;
 
 public abstract class ShaderLoadUtil {
 
@@ -167,7 +165,7 @@ public abstract class ShaderLoadUtil {
     public static String[] splitPath(String path) {
         int idx = path.lastIndexOf('/');
 
-        return new String[] {path.substring(0, idx), path.substring(idx + 1)};
+        return new String[]{path.substring(0, idx), path.substring(idx + 1)};
     }
 
     public static InputStream getInputStream(String path) {

@@ -1,11 +1,5 @@
 package net.vulkanmod.gl;
 
-import static org.lwjgl.vulkan.VK10.VK_ATTACHMENT_LOAD_OP_LOAD;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
@@ -13,13 +7,26 @@ import net.vulkanmod.vulkan.framebuffer.Framebuffer;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
 import net.vulkanmod.vulkan.texture.ImageUtil;
 import net.vulkanmod.vulkan.texture.VulkanImage;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
+
+import static org.lwjgl.vulkan.VK10.VK_ATTACHMENT_LOAD_OP_LOAD;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 public class VkGlFramebuffer {
-    private static int idCounter = 1;
-
     private static final Int2ReferenceOpenHashMap<VkGlFramebuffer> map = new Int2ReferenceOpenHashMap<>();
+    private static int idCounter = 1;
     private static VkGlFramebuffer boundFramebuffer;
     private static VkGlFramebuffer readFramebuffer;
+    public final int id;
+    Framebuffer framebuffer;
+    RenderPass renderPass;
+    VulkanImage colorAttachment;
+    VulkanImage depthAttachment;
+
+    VkGlFramebuffer(int i) {
+        this.id = i;
+    }
 
     public static void resetBoundFramebuffer() {
         boundFramebuffer = null;
@@ -139,17 +146,6 @@ public class VkGlFramebuffer {
         return map.get(id);
     }
 
-    public final int id;
-    Framebuffer framebuffer;
-    RenderPass renderPass;
-
-    VulkanImage colorAttachment;
-    VulkanImage depthAttachment;
-
-    VkGlFramebuffer(int i) {
-        this.id = i;
-    }
-
     boolean beginRendering() {
         return Renderer.getInstance().beginRendering(this.renderPass, this.framebuffer);
     }
@@ -159,7 +155,8 @@ public class VkGlFramebuffer {
             switch (attachment) {
                 case GL30.GL_COLOR_ATTACHMENT0 -> this.colorAttachment = null;
                 case GL30.GL_DEPTH_ATTACHMENT -> this.depthAttachment = null;
-                default -> {}
+                default -> {
+                }
             }
             return;
         }
@@ -221,16 +218,16 @@ public class VkGlFramebuffer {
         VulkanImage depthImage = this.depthAttachment;
 
         this.framebuffer = Framebuffer.builder(this.colorAttachment, depthImage)
-                                      .build();
+                .build();
         RenderPass.Builder builder = RenderPass.builder(this.framebuffer);
 
         builder.getColorAttachmentInfo()
-               .setLoadOp(VK_ATTACHMENT_LOAD_OP_LOAD)
-               .setFinalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                .setLoadOp(VK_ATTACHMENT_LOAD_OP_LOAD)
+                .setFinalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         if (hasDepthImage) {
             builder.getDepthAttachmentInfo()
-                   .setOps(VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+                    .setOps(VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
         }
 
         this.renderPass = builder.build();

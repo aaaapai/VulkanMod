@@ -9,21 +9,22 @@ import net.vulkanmod.render.chunk.cull.QuadFacing;
  */
 public class ModelQuad implements ModelQuadView {
     public static final int VERTEX_SIZE = 8;
+    private final int[] data = new int[4 * VERTEX_SIZE];
+    Direction direction;
+    TextureAtlasSprite sprite;
+    private int flags;
 
     public static int vertexOffset(int vertexIndex) {
         return vertexIndex * VERTEX_SIZE;
     }
 
-    private final int[] data = new int[4 * VERTEX_SIZE];
-
-    Direction direction;
-    TextureAtlasSprite sprite;
-
-    private int flags;
-    
     @Override
     public int getFlags() {
         return flags;
+    }
+
+    public void setFlags(int f) {
+        this.flags = f;
     }
 
     @Override
@@ -102,10 +103,6 @@ public class ModelQuad implements ModelQuadView {
     public float setV(int idx, float f) {
         return this.data[vertexOffset(idx) + 5] = Float.floatToRawIntBits(f);
 
-    }
-
-    public void setFlags(int f) {
-        this.flags = f;
     }
 
     public void setSprite(TextureAtlasSprite sprite) {

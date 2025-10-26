@@ -7,10 +7,9 @@ import java.util.Iterator;
 public class CircularIntList {
     private final int size;
     private final int[] list;
-    private int startIndex;
-
     private final OwnIterator iterator;
     private final RangeIterator rangeIterator;
+    private int startIndex;
 
     public CircularIntList(int size) {
         this.size = size;
@@ -28,11 +27,11 @@ public class CircularIntList {
         list[size + 1] = -1;
 
         int k = 1;
-        for(int i = startIndex; i < size; ++i) {
+        for (int i = startIndex; i < size; ++i) {
             list[k] = i;
             ++k;
         }
-        for(int i = 0; i < startIndex; ++i) {
+        for (int i = 0; i < startIndex; ++i) {
             list[k] = i;
             ++k;
         }
@@ -60,8 +59,8 @@ public class CircularIntList {
     }
 
     public class OwnIterator implements Iterator<Integer> {
-        private int currentIndex = 0;
         private final int maxIndex = size;
+        private int currentIndex = 0;
 
         @Override
         public boolean hasNext() {

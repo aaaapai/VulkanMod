@@ -3,7 +3,9 @@ package net.vulkanmod.render.chunk.buffer;
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.render.chunk.util.Util;
-import net.vulkanmod.vulkan.memory.*;
+import net.vulkanmod.vulkan.memory.MemoryManager;
+import net.vulkanmod.vulkan.memory.MemoryType;
+import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.VertexBuffer;
@@ -23,11 +25,9 @@ public class AreaBuffer {
     private final Int2ReferenceOpenHashMap<Segment> usedSegments = new Int2ReferenceOpenHashMap<>();
 
     Segment first, last;
-
-    private Buffer buffer;
-
     int size, used = 0;
     int segments = 0;
+    private Buffer buffer;
 
     public AreaBuffer(Usage usage, int elementCount, int elementSize) {
         this.usage = usage.usage;
@@ -140,8 +140,7 @@ public class AreaBuffer {
 
         if (last.isFree()) {
             last.size += increment;
-        }
-        else {
+        } else {
             int offset = last.offset + last.size;
             Segment segment = new Segment(offset, newSize - offset);
             segments++;
@@ -349,6 +348,17 @@ public class AreaBuffer {
         return used;
     }
 
+    public enum Usage {
+        VERTEX(0),
+        INDEX(1);
+
+        final int usage;
+
+        Usage(int i) {
+            usage = i;
+        }
+    }
+
     public static class Segment {
         int offset, size;
         boolean free = true;
@@ -382,17 +392,6 @@ public class AreaBuffer {
             s.prev = this;
         }
 
-    }
-
-    public enum Usage {
-        VERTEX(0),
-        INDEX(1);
-
-        final int usage;
-
-        Usage(int i) {
-            usage = i;
-        }
     }
 
 }

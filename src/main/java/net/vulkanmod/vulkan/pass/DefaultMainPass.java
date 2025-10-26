@@ -19,16 +19,10 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class DefaultMainPass implements MainPass {
 
-    public static DefaultMainPass create() {
-        return new DefaultMainPass();
-    }
-
-    private RenderTarget mainTarget;
     private final Framebuffer mainFramebuffer;
-
+    private RenderTarget mainTarget;
     private RenderPass mainRenderPass;
     private RenderPass auxRenderPass;
-
     private VkGlTexture[] colorAttachmentTextures;
 
     DefaultMainPass() {
@@ -37,6 +31,10 @@ public class DefaultMainPass implements MainPass {
 
         createRenderPasses();
         createSwapChainTextures();
+    }
+
+    public static DefaultMainPass create() {
+        return new DefaultMainPass();
     }
 
     private void createRenderPasses() {

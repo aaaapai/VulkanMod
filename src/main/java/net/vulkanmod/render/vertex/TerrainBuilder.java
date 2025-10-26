@@ -13,24 +13,16 @@ import java.nio.ByteBuffer;
 public class TerrainBuilder {
     private static final Logger LOGGER = Initializer.LOGGER;
     private static final MemoryUtil.MemoryAllocator ALLOCATOR = MemoryUtil.getAllocator(false);
-
-    protected long indexBufferPtr;
-
-    private int indexBufferCapacity;
-    protected long bufferPtr;
-
     private final VertexFormat format;
-
-    private boolean building;
-
     private final QuadSorter quadSorter = new QuadSorter();
-
+    private final TerrainBufferBuilder[] bufferBuilders;
+    protected long indexBufferPtr;
+    protected long bufferPtr;
+    protected VertexBuilder vertexBuilder;
+    private int indexBufferCapacity;
+    private boolean building;
     private boolean needsSorting;
     private boolean indexOnly;
-
-    protected VertexBuilder vertexBuilder;
-
-    private final TerrainBufferBuilder[] bufferBuilders;
 
     public TerrainBuilder(int size) {
         // TODO index buffer

@@ -1,13 +1,12 @@
 package net.vulkanmod.mixin.render;
 
 import net.minecraft.client.renderer.fog.FogRenderer;
+import net.vulkanmod.vulkan.VRenderSystem;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.vulkanmod.vulkan.VRenderSystem;
 
 import java.nio.ByteBuffer;
 

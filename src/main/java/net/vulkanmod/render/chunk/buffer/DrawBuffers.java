@@ -26,22 +26,19 @@ import static org.lwjgl.vulkan.VK10.*;
 public class DrawBuffers {
     public static final int VERTEX_SIZE = PipelineManager.terrainVertexFormat.getVertexSize();
     public static final int INDEX_SIZE = Short.BYTES;
-
+    // TODO: refactor
+    public static final float POS_OFFSET = PipelineManager.terrainVertexFormat == CustomVertexFormat.COMPRESSED_TERRAIN ? 4.0f : 0.0f;
     private static final int CMD_STRIDE = 32;
-
     private static final long cmdBufferPtr = MemoryUtil.nmemAlignedAlloc(CMD_STRIDE, (long) ChunkAreaManager.AREA_SIZE * QuadFacing.COUNT * CMD_STRIDE);
-
+    final int[] sectionIndices = new int[512];
+    final int[] masks = new int[512];
     private final int index;
     private final Vector3i origin;
     private final int minHeight;
-
-    private boolean allocated = false;
-    AreaBuffer indexBuffer;
     private final EnumMap<TerrainRenderType, AreaBuffer> vertexBuffers = new EnumMap<>(TerrainRenderType.class);
-
+    AreaBuffer indexBuffer;
     long drawParamsPtr;
-    final int[] sectionIndices = new int[512];
-    final int[] masks = new int[512];
+    private boolean allocated = false;
 
     //Need ugly minHeight Parameter to fix custom world heights (exceeding 384 Blocks in total)
     public DrawBuffers(int index, Vector3i origin, int minHeight) {
@@ -140,9 +137,6 @@ public class DrawBuffers {
         return yOffset1 << 16 | zOffset1 << 8 | xOffset1;
     }
 
-    // TODO: refactor
-    public static final float POS_OFFSET = PipelineManager.terrainVertexFormat == CustomVertexFormat.COMPRESSED_TERRAIN ? 4.0f : 0.0f;
-
     private void updateChunkAreaOrigin(VkCommandBuffer commandBuffer, Pipeline pipeline, double camX, double camY, double camZ, MemoryStack stack) {
         float xOffset = (float) ((this.origin.x) + POS_OFFSET - camX);
         float yOffset = (float) ((this.origin.y) + POS_OFFSET - camY);
@@ -218,8 +212,7 @@ public class DrawBuffers {
                 }
             }
 
-        }
-        else {
+        } else {
             for (var iterator = queue.iterator(isTranslucent); iterator.hasNext(); ) {
                 final RenderSection section = iterator.next();
 
@@ -317,8 +310,7 @@ public class DrawBuffers {
                 }
             }
 
-        }
-        else {
+        } else {
             final int facing = 6;
             final long facingOffset = facing * DrawParametersBuffer.STRIDE;
             drawParamsBasePtr += facingOffset;

@@ -14,7 +14,9 @@ import java.util.Set;
 @Mixin(TextureManager.class)
 public abstract class MTextureManager {
 
-    @Shadow @Final private Set<Tickable> tickableTextures;
+    @Shadow
+    @Final
+    private Set<Tickable> tickableTextures;
 
     /**
      * @author

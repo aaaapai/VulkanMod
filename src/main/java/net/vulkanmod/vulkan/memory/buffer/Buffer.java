@@ -1,9 +1,9 @@
 package net.vulkanmod.vulkan.memory.buffer;
 
-import java.nio.ByteBuffer;
-
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.MemoryType;
+
+import java.nio.ByteBuffer;
 
 public class Buffer {
     public final MemoryType type;
@@ -68,6 +68,10 @@ public class Buffer {
         return allocation;
     }
 
+    public void setAllocation(long allocation) {
+        this.allocation = allocation;
+    }
+
     public long getUsedBytes() {
         return usedBytes;
     }
@@ -80,24 +84,20 @@ public class Buffer {
         return id;
     }
 
-    public long getBufferSize() {
-        return bufferSize;
+    public void setId(long id) {
+        this.id = id;
     }
 
-    public long getDataPtr() {
-        return dataPtr;
+    public long getBufferSize() {
+        return bufferSize;
     }
 
     public void setBufferSize(long size) {
         this.bufferSize = size;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public void setAllocation(long allocation) {
-        this.allocation = allocation;
+    public long getDataPtr() {
+        return dataPtr;
     }
 
     public BufferInfo getBufferInfo() {

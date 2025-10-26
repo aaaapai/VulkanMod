@@ -1,5 +1,10 @@
 package net.vulkanmod.mixin.render.frame;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.textures.GpuTexture;
+import net.minecraft.client.Minecraft;
+import net.vulkanmod.vulkan.Renderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -7,17 +12,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.textures.GpuTexture;
-
-import net.minecraft.client.Minecraft;
-import net.vulkanmod.vulkan.Renderer;
-
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
 
-    @Shadow public boolean noRender;
+    @Shadow
+    public boolean noRender;
 
     @Inject(method = "runTick", at = @At(value = "HEAD"))
     private void preFrameOps(boolean bl, CallbackInfo ci) {
@@ -25,12 +24,12 @@ public class MinecraftMixin {
     }
 
     @Redirect(
-        method = "runTick",
-        at = @At(
-            value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearColorAndDepthTextures(Lcom/mojang/blaze3d/textures/GpuTexture;ILcom/mojang/blaze3d/textures/GpuTexture;D)V"
-        ),
-        remap = false
+            method = "runTick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearColorAndDepthTextures(Lcom/mojang/blaze3d/textures/GpuTexture;ILcom/mojang/blaze3d/textures/GpuTexture;D)V"
+            ),
+            remap = false
     )
     private void vulkanmod$skipMainTargetClear(CommandEncoder encoder, GpuTexture color, int level, GpuTexture depth, double depthValue) {
         Renderer.getInstance().beginFrame();

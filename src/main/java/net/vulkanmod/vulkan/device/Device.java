@@ -1,44 +1,33 @@
 package net.vulkanmod.vulkan.device;
 
-import static java.util.stream.Collectors.toSet;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WIN32;
-import static org.lwjgl.glfw.GLFW.glfwGetPlatform;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.VK10.VK_VERSION_MAJOR;
-import static org.lwjgl.vulkan.VK10.VK_VERSION_MINOR;
-import static org.lwjgl.vulkan.VK10.VK_VERSION_PATCH;
-import static org.lwjgl.vulkan.VK10.vkEnumerateDeviceExtensionProperties;
-import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceProperties;
-import static org.lwjgl.vulkan.VK11.vkEnumerateInstanceVersion;
-import static org.lwjgl.vulkan.VK11.vkGetPhysicalDeviceFeatures2;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkExtensionProperties;
-import org.lwjgl.vulkan.VkPhysicalDevice;
-import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
-import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
-import org.lwjgl.vulkan.VkPhysicalDeviceVulkan11Features;
+import static java.util.stream.Collectors.toSet;
+import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WIN32;
+import static org.lwjgl.glfw.GLFW.glfwGetPlatform;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK11.vkEnumerateInstanceVersion;
+import static org.lwjgl.vulkan.VK11.vkGetPhysicalDeviceFeatures2;
 
 public class Device {
-    final VkPhysicalDevice physicalDevice;
-    final VkPhysicalDeviceProperties properties;
-
-    private final int vendorId;
     public final String vendorIdString;
     public final String deviceName;
     public final String driverVersion;
     public final String vkVersion;
-
     public final VkPhysicalDeviceFeatures2 availableFeatures;
     public final VkPhysicalDeviceVulkan11Features availableFeatures11;
+    final VkPhysicalDevice physicalDevice;
+    final VkPhysicalDeviceProperties properties;
+    private final int vendorId;
 
 //    public final VkPhysicalDeviceVulkan13Features availableFeatures13;
 //    public final boolean vulkan13Support;
-
     private boolean drawIndirectSupported;
 
     public Device(VkPhysicalDevice device) {

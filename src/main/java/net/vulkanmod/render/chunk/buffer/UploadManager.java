@@ -1,18 +1,5 @@
 package net.vulkanmod.render.chunk.buffer;
 
-import static org.lwjgl.vulkan.VK10.VK_ACCESS_TRANSFER_READ_BIT;
-import static org.lwjgl.vulkan.VK10.VK_ACCESS_TRANSFER_WRITE_BIT;
-import static org.lwjgl.vulkan.VK10.VK_PIPELINE_STAGE_TRANSFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_WHOLE_SIZE;
-import static org.lwjgl.vulkan.VK10.vkCmdPipelineBarrier;
-
-import java.nio.ByteBuffer;
-
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkBufferMemoryBarrier;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkMemoryBarrier;
-
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.Vulkan;
@@ -22,18 +9,24 @@ import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
 import net.vulkanmod.vulkan.queue.CommandPool;
 import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.queue.TransferQueue;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkBufferMemoryBarrier;
+import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.VkMemoryBarrier;
+
+import java.nio.ByteBuffer;
+
+import static org.lwjgl.vulkan.VK10.*;
 
 public class UploadManager {
     public static UploadManager INSTANCE;
+    Queue queue = DeviceManager.getTransferQueue();
+    CommandPool.CommandBuffer commandBuffer;
+    LongOpenHashSet dstBuffers = new LongOpenHashSet();
 
     public static void createInstance() {
         INSTANCE = new UploadManager();
     }
-
-    Queue queue = DeviceManager.getTransferQueue();
-    CommandPool.CommandBuffer commandBuffer;
-
-    LongOpenHashSet dstBuffers = new LongOpenHashSet();
 
     public void submitUploads() {
         if (this.commandBuffer == null)

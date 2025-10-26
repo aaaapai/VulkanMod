@@ -9,8 +9,8 @@ import net.vulkanmod.vulkan.VRenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -131,9 +131,9 @@ public class GlStateManagerM {
      * @reason Forward viewport updates to Vulkan.
      */
     @Redirect(
-        method = "_viewport",
-        at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glViewport(IIII)V"),
-        remap = false
+            method = "_viewport",
+            at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glViewport(IIII)V"),
+            remap = false
     )
     private static void vulkanmod$setViewport(int x, int y, int width, int height) {
         Renderer.setViewport(x, y, width, height);

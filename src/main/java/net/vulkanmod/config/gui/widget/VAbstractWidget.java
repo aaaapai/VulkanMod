@@ -73,10 +73,10 @@ public abstract class VAbstractWidget extends GuiElement {
     protected boolean clicked(double mX, double mY) {
         return this.active
                 && this.visible
-                && mX >= (double)this.getX()
-                && mY >= (double)this.getY()
-                && mX < (double)(this.getX() + this.getWidth())
-                && mY < (double)(this.getY() + this.getHeight());
+                && mX >= (double) this.getX()
+                && mY >= (double) this.getY()
+                && mX < (double) (this.getX() + this.getWidth())
+                && mY < (double) (this.getY() + this.getHeight());
     }
 
     public boolean mouseReleased(double mX, double mY, int button) {

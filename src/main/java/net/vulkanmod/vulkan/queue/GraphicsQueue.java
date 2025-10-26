@@ -1,10 +1,9 @@
 package net.vulkanmod.vulkan.queue;
 
-import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
-
+import net.vulkanmod.vulkan.Synchronization;
 import org.lwjgl.system.MemoryStack;
 
-import net.vulkanmod.vulkan.Synchronization;
+import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 
 public class GraphicsQueue extends Queue {
     public static GraphicsQueue INSTANCE;

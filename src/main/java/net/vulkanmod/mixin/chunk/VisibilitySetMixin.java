@@ -1,16 +1,15 @@
 package net.vulkanmod.mixin.chunk;
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-
 import net.minecraft.client.renderer.chunk.VisibilitySet;
 import net.minecraft.core.Direction;
 import net.vulkanmod.interfaces.VisibilitySetExtended;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(VisibilitySet.class)
 public class VisibilitySetMixin implements VisibilitySetExtended {
 
-//    private int vis2 = 0;
+    //    private int vis2 = 0;
     private long vis = 0;
 
     /**
@@ -30,7 +29,7 @@ public class VisibilitySetMixin implements VisibilitySetExtended {
      */
     @Overwrite
     public void setAll(boolean bl) {
-        if(bl) this.vis = 0xFFFFFFFFFFFFFFFFL;
+        if (bl) this.vis = 0xFFFFFFFFFFFFFFFFL;
     }
 
     /**

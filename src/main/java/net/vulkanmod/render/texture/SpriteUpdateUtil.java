@@ -1,17 +1,16 @@
 package net.vulkanmod.render.texture;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import net.vulkanmod.vulkan.texture.VulkanImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
-import net.vulkanmod.vulkan.texture.VulkanImage;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class SpriteUpdateUtil {
 
-    private static boolean doUpload = true;
     private static final Set<VulkanImage> transitionedLayouts = new HashSet<>();
+    private static boolean doUpload = true;
 
     public static void setDoUpload(boolean b) {
         doUpload = b;

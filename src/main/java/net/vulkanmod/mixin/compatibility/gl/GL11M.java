@@ -1,8 +1,8 @@
 package net.vulkanmod.mixin.compatibility.gl;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-
+import net.vulkanmod.gl.VkGlTexture;
+import net.vulkanmod.vulkan.Renderer;
+import net.vulkanmod.vulkan.VRenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
@@ -10,9 +10,8 @@ import org.lwjgl.system.NativeType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-import net.vulkanmod.gl.VkGlTexture;
-import net.vulkanmod.vulkan.Renderer;
-import net.vulkanmod.vulkan.VRenderSystem;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
 @Mixin(GL11.class)
 public class GL11M {
@@ -305,7 +304,6 @@ public class GL11M {
     public static void glBlendFunc(@NativeType("GLenum") int sfactor, @NativeType("GLenum") int dfactor) {
         // TODO
     }
-
 
 
     /**

@@ -1,18 +1,7 @@
 package net.vulkanmod.render.chunk;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-
-import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.vertex.PoseStack;
-
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Camera;
@@ -46,15 +35,24 @@ import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.IndirectBuffer;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
+
+import java.util.*;
 
 public class WorldRenderer {
     private static WorldRenderer INSTANCE;
 
     private final Minecraft minecraft;
+    private final RenderBuffers renderBuffers;
+    private final Set<BlockEntity> globalBlockEntities = Sets.newHashSet();
+    private final TaskDispatcher taskDispatcher;
+    private final List<Runnable> onAllChangedCallbacks = new ObjectArrayList<>();
+    public RenderRegionBuilder renderRegionCache;
+    IndirectBuffer[] indirectBuffers;
     private ClientLevel level;
     private int renderDistance;
-    private final RenderBuffers renderBuffers;
-
     private Vec3 cameraPos;
     private int lastCameraSectionX;
     private int lastCameraSectionY;
@@ -64,25 +62,12 @@ public class WorldRenderer {
     private float lastCameraZ;
     private float lastCamRotX;
     private float lastCamRotY;
-
     private SectionGrid sectionGrid;
-
     private SectionGraph sectionGraph;
     private boolean graphNeedsUpdate;
-
-    private final Set<BlockEntity> globalBlockEntities = Sets.newHashSet();
-
-    private final TaskDispatcher taskDispatcher;
-
     private double xTransparentOld;
     private double yTransparentOld;
     private double zTransparentOld;
-
-    IndirectBuffer[] indirectBuffers;
-
-    public RenderRegionBuilder renderRegionCache;
-
-    private final List<Runnable> onAllChangedCallbacks = new ObjectArrayList<>();
 
     private WorldRenderer(RenderBuffers renderBuffers) {
         this.minecraft = Minecraft.getInstance();
@@ -97,17 +82,6 @@ public class WorldRenderer {
             if (this.indirectBuffers.length != Renderer.getFramesNum())
                 allocateIndirectBuffers();
         });
-    }
-
-    private void allocateIndirectBuffers() {
-        if (this.indirectBuffers != null)
-            Arrays.stream(this.indirectBuffers).forEach(Buffer::scheduleFree);
-
-        this.indirectBuffers = new IndirectBuffer[Renderer.getFramesNum()];
-
-        for (int i = 0; i < this.indirectBuffers.length; ++i) {
-            this.indirectBuffers[i] = new IndirectBuffer(1000000, MemoryTypes.HOST_MEM);
-        }
     }
 
     public static WorldRenderer init(RenderBuffers renderBuffers) {
@@ -125,8 +99,45 @@ public class WorldRenderer {
         return INSTANCE.level;
     }
 
+    public void setLevel(@Nullable ClientLevel level) {
+        this.lastCameraX = Float.MIN_VALUE;
+        this.lastCameraY = Float.MIN_VALUE;
+        this.lastCameraZ = Float.MIN_VALUE;
+        this.lastCameraSectionX = Integer.MIN_VALUE;
+        this.lastCameraSectionY = Integer.MIN_VALUE;
+        this.lastCameraSectionZ = Integer.MIN_VALUE;
+
+//        this.entityRenderDispatcher.setLevel(level);
+        this.level = level;
+        ChunkStatusMap.createInstance(renderDistance);
+        if (level != null) {
+            this.allChanged();
+        } else {
+            if (this.sectionGrid != null) {
+                this.sectionGrid.freeAllBuffers();
+                this.sectionGrid = null;
+            }
+
+            this.taskDispatcher.stopThreads();
+
+            this.graphNeedsUpdate = true;
+        }
+
+    }
+
     public static Vec3 getCameraPos() {
         return INSTANCE.cameraPos;
+    }
+
+    private void allocateIndirectBuffers() {
+        if (this.indirectBuffers != null)
+            Arrays.stream(this.indirectBuffers).forEach(Buffer::scheduleFree);
+
+        this.indirectBuffers = new IndirectBuffer[Renderer.getFramesNum()];
+
+        for (int i = 0; i < this.indirectBuffers.length; ++i) {
+            this.indirectBuffers[i] = new IndirectBuffer(1000000, MemoryTypes.HOST_MEM);
+        }
     }
 
     private void benchCallback() {
@@ -250,32 +261,6 @@ public class WorldRenderer {
             }
 
         }
-    }
-
-    public void setLevel(@Nullable ClientLevel level) {
-        this.lastCameraX = Float.MIN_VALUE;
-        this.lastCameraY = Float.MIN_VALUE;
-        this.lastCameraZ = Float.MIN_VALUE;
-        this.lastCameraSectionX = Integer.MIN_VALUE;
-        this.lastCameraSectionY = Integer.MIN_VALUE;
-        this.lastCameraSectionZ = Integer.MIN_VALUE;
-
-//        this.entityRenderDispatcher.setLevel(level);
-        this.level = level;
-        ChunkStatusMap.createInstance(renderDistance);
-        if (level != null) {
-            this.allChanged();
-        } else {
-            if (this.sectionGrid != null) {
-                this.sectionGrid.freeAllBuffers();
-                this.sectionGrid = null;
-            }
-
-            this.taskDispatcher.stopThreads();
-
-            this.graphNeedsUpdate = true;
-        }
-
     }
 
     public void addOnAllChangedCallback(Runnable runnable) {

@@ -22,8 +22,12 @@ public class VertexMultiConsumersM {
 
     @Mixin(targets = "com/mojang/blaze3d/vertex/VertexMultiConsumer$Double")
     public static class DoubleM implements ExtendedVertexBuilder {
-        @Shadow @Final private VertexConsumer first;
-        @Shadow @Final private VertexConsumer second;
+        @Shadow
+        @Final
+        private VertexConsumer first;
+        @Shadow
+        @Final
+        private VertexConsumer second;
 
         @Unique
         private ExtendedVertexBuilder firstExt;
@@ -58,7 +62,9 @@ public class VertexMultiConsumersM {
 
     @Mixin(targets = "com/mojang/blaze3d/vertex/VertexMultiConsumer$Multiple")
     public static class MultipleM implements ExtendedVertexBuilder {
-        @Shadow @Final private VertexConsumer[] delegates;
+        @Shadow
+        @Final
+        private VertexConsumer[] delegates;
 
         @Unique
         private boolean canUseFastVertex = false;
@@ -92,10 +98,18 @@ public class VertexMultiConsumersM {
 
     @Mixin(SheetedDecalTextureGenerator.class)
     public static abstract class SheetDecalM implements ExtendedVertexBuilder {
-        @Shadow @Final private VertexConsumer delegate;
-        @Shadow @Final private Matrix3f normalInversePose;
-        @Shadow @Final private Matrix4f cameraInversePose;
-        @Shadow @Final private float textureScale;
+        @Shadow
+        @Final
+        private VertexConsumer delegate;
+        @Shadow
+        @Final
+        private Matrix3f normalInversePose;
+        @Shadow
+        @Final
+        private Matrix4f cameraInversePose;
+        @Shadow
+        @Final
+        private float textureScale;
 
         @Unique
         private boolean canUseFastVertex = false;
@@ -120,7 +134,7 @@ public class VertexMultiConsumersM {
             float nz = I32_SNorm.unpackZ(packedNormal);
 
             normal.set(nx, ny, nz);
-            position.set(x, y , z, 1.0f);
+            position.set(x, y, z, 1.0f);
 
             this.normalInversePose.transform(normal);
             Direction direction = Direction.getApproximateNearest(normal.x(), normal.y(), normal.z());

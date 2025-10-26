@@ -42,94 +42,12 @@ public abstract class LightDataAccess {
     private static final int FC_OFFSET = 31;
 
     private static final float AO_INV = 1.0f / 2048.0f;
-
+    final boolean subBlockLighting;
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
     protected BlockAndTintGetter region;
 
-    final boolean subBlockLighting;
-
     protected LightDataAccess() {
         this.subBlockLighting = Initializer.CONFIG.ambientOcclusion == LightMode.SUB_BLOCK;
-    }
-
-    public int get(int x, int y, int z, SimpleDirection d1, SimpleDirection d2) {
-        return this.get(x + d1.getStepX() + d2.getStepX(),
-                        y + d1.getStepY() + d2.getStepY(),
-                        z + d1.getStepZ() + d2.getStepZ());
-    }
-
-    public int get(int x, int y, int z, SimpleDirection dir) {
-        return this.get(x + dir.getStepX(),
-                        y + dir.getStepY(),
-                        z + dir.getStepZ());
-    }
-
-    public int get(BlockPos pos, SimpleDirection dir) {
-        return this.get(pos.getX(), pos.getY(), pos.getZ(), dir);
-    }
-
-    public int get(BlockPos pos) {
-        return this.get(pos.getX(), pos.getY(), pos.getZ());
-    }
-
-    /**
-     * Returns the light data for the block at the given position. The property fields can then be accessed using
-     * the various unpack methods below.
-     */
-    public abstract int get(int x, int y, int z);
-
-    protected int compute(int x, int y, int z) {
-        BlockPos pos = this.pos.set(x, y, z);
-        BlockState state = region.getBlockState(pos);
-
-        boolean em = state.emissiveRendering(region, pos);
-
-        boolean op = this.subBlockLighting ? state.canOcclude() : (state.isSolidRender() && state.getLightBlock() != 0);
-
-        boolean fo = state.isSolidRender();
-        boolean fc = state.isCollisionShapeFullBlock(region, pos);
-
-        int lu = state.getLightEmission();
-
-        // OPTIMIZE: Do not calculate light data if the block is full and opaque and does not emit light.
-        int bl;
-        int sl;
-        if (fo && lu == 0) {
-            bl = 0;
-            sl = 0;
-        }
-        else {
-            if (em) {
-                bl = region.getBrightness(LightLayer.BLOCK, pos);
-                sl = region.getBrightness(LightLayer.SKY, pos);
-            }
-            else {
-                int light = LevelRenderer.getLightColor(region, pos);
-                bl = LightTexture.block(light);
-                sl = LightTexture.sky(light);
-            }
-        }
-
-        // FIX: Do not apply AO from blocks that emit light
-        float ao;
-        if (lu == 0) {
-            ao = state.getShadeBrightness(region, pos);
-        }
-        else {
-            ao = 1.0f;
-        }
-
-        boolean useAo = ao < 1.0f;
-
-        bl = Math.max(bl, lu);
-
-        int crs = (fo || fc) && lu == 0 && useAo ? 0xFF : 0;
-        if (!fo && op) {
-            VoxelShape shape = state.getShape(region, pos);
-            crs = ((VoxelShapeExtended) (shape)).getCornerOcclusion();
-        }
-
-        return packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packCO(crs) | packAO(ao) | packSL(sl) | packBL(bl);
     }
 
     public static int packBL(int blockLight) {
@@ -213,10 +131,86 @@ public abstract class LightDataAccess {
     public static int getEmissiveLightmap(int word) {
         if (unpackEM(word)) {
             return LightTexture.FULL_BRIGHT;
-        }
-        else {
+        } else {
             return getLightmap(word);
         }
+    }
+
+    public int get(int x, int y, int z, SimpleDirection d1, SimpleDirection d2) {
+        return this.get(x + d1.getStepX() + d2.getStepX(),
+                y + d1.getStepY() + d2.getStepY(),
+                z + d1.getStepZ() + d2.getStepZ());
+    }
+
+    public int get(int x, int y, int z, SimpleDirection dir) {
+        return this.get(x + dir.getStepX(),
+                y + dir.getStepY(),
+                z + dir.getStepZ());
+    }
+
+    public int get(BlockPos pos, SimpleDirection dir) {
+        return this.get(pos.getX(), pos.getY(), pos.getZ(), dir);
+    }
+
+    public int get(BlockPos pos) {
+        return this.get(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    /**
+     * Returns the light data for the block at the given position. The property fields can then be accessed using
+     * the various unpack methods below.
+     */
+    public abstract int get(int x, int y, int z);
+
+    protected int compute(int x, int y, int z) {
+        BlockPos pos = this.pos.set(x, y, z);
+        BlockState state = region.getBlockState(pos);
+
+        boolean em = state.emissiveRendering(region, pos);
+
+        boolean op = this.subBlockLighting ? state.canOcclude() : (state.isSolidRender() && state.getLightBlock() != 0);
+
+        boolean fo = state.isSolidRender();
+        boolean fc = state.isCollisionShapeFullBlock(region, pos);
+
+        int lu = state.getLightEmission();
+
+        // OPTIMIZE: Do not calculate light data if the block is full and opaque and does not emit light.
+        int bl;
+        int sl;
+        if (fo && lu == 0) {
+            bl = 0;
+            sl = 0;
+        } else {
+            if (em) {
+                bl = region.getBrightness(LightLayer.BLOCK, pos);
+                sl = region.getBrightness(LightLayer.SKY, pos);
+            } else {
+                int light = LevelRenderer.getLightColor(region, pos);
+                bl = LightTexture.block(light);
+                sl = LightTexture.sky(light);
+            }
+        }
+
+        // FIX: Do not apply AO from blocks that emit light
+        float ao;
+        if (lu == 0) {
+            ao = state.getShadeBrightness(region, pos);
+        } else {
+            ao = 1.0f;
+        }
+
+        boolean useAo = ao < 1.0f;
+
+        bl = Math.max(bl, lu);
+
+        int crs = (fo || fc) && lu == 0 && useAo ? 0xFF : 0;
+        if (!fo && op) {
+            VoxelShape shape = state.getShape(region, pos);
+            crs = ((VoxelShapeExtended) (shape)).getCornerOcclusion();
+        }
+
+        return packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packCO(crs) | packAO(ao) | packSL(sl) | packBL(bl);
     }
 
     public BlockAndTintGetter getRegion() {

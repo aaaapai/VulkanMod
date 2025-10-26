@@ -1,7 +1,8 @@
 package net.vulkanmod.vulkan;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.vulkanmod.vulkan.memory.*;
+import net.vulkanmod.vulkan.memory.MemoryManager;
+import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.UniformBuffer;
@@ -26,18 +27,15 @@ public class Drawer {
     private static final LongBuffer offsets = MemoryUtil.memAllocLong(1);
     private static final long pBuffers = MemoryUtil.memAddress0(buffers);
     private static final long pOffsets = MemoryUtil.memAddress0(offsets);
-
-    private int framesNum;
-    private VertexBuffer[] vertexBuffers;
-    private IndexBuffer[] indexBuffers;
-
     private final AutoIndexBuffer quadsIndexBuffer;
     private final AutoIndexBuffer quadsIntIndexBuffer;
     private final AutoIndexBuffer linesIndexBuffer;
     private final AutoIndexBuffer debugLineStripIndexBuffer;
     private final AutoIndexBuffer triangleFanIndexBuffer;
     private final AutoIndexBuffer triangleStripIndexBuffer;
-
+    private int framesNum;
+    private VertexBuffer[] vertexBuffers;
+    private IndexBuffer[] indexBuffers;
     private UniformBuffer[] uniformBuffers;
 
     private int currentFrame;
@@ -60,25 +58,19 @@ public class Drawer {
         this.framesNum = framesNum;
 
         if (this.vertexBuffers != null) {
-            Arrays.stream(this.vertexBuffers).iterator().forEachRemaining(
-                    Buffer::scheduleFree
-            );
+            Arrays.stream(this.vertexBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.vertexBuffers = new VertexBuffer[framesNum];
         Arrays.setAll(this.vertexBuffers, i -> new VertexBuffer(INITIAL_VB_SIZE, MemoryTypes.HOST_MEM));
 
         if (this.indexBuffers != null) {
-            Arrays.stream(this.indexBuffers).iterator().forEachRemaining(
-                    Buffer::scheduleFree
-            );
+            Arrays.stream(this.indexBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.indexBuffers = new IndexBuffer[framesNum];
         Arrays.setAll(this.indexBuffers, i -> new IndexBuffer(INITIAL_IB_SIZE, MemoryTypes.HOST_MEM));
 
         if (this.uniformBuffers != null) {
-            Arrays.stream(this.uniformBuffers).iterator().forEachRemaining(
-                    Buffer::scheduleFree
-            );
+            Arrays.stream(this.uniformBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.uniformBuffers = new UniformBuffer[framesNum];
         Arrays.setAll(this.uniformBuffers, i -> new UniformBuffer(INITIAL_UB_SIZE, MemoryTypes.HOST_MEM));
@@ -106,8 +98,7 @@ public class Drawer {
             int indexCount = vertexCount * 3 / 2;
 
             drawIndexed(vertexBuffer, indexBuffer, indexCount);
-        }
-        else {
+        } else {
             AutoIndexBuffer autoIndexBuffer = getAutoIndexBuffer(mode, vertexCount);
 
             if (autoIndexBuffer != null) {
@@ -115,15 +106,14 @@ public class Drawer {
                 autoIndexBuffer.checkCapacity(indexCount);
 
                 drawIndexed(vertexBuffer, autoIndexBuffer.getIndexBuffer(), indexCount);
-            }
-            else {
+            } else {
                 draw(vertexBuffer, vertexCount);
             }
         }
     }
 
     public void drawIndexed(Buffer vertexBuffer, IndexBuffer indexBuffer, int indexCount) {
-       drawIndexed(vertexBuffer, indexBuffer, indexCount, indexBuffer.indexType.value);
+        drawIndexed(vertexBuffer, indexBuffer, indexCount, indexBuffer.indexType.value);
     }
 
     public void drawIndexed(Buffer vertexBuffer, Buffer indexBuffer, int indexCount, int indexType) {
@@ -201,14 +191,13 @@ public class Drawer {
             case QUADS -> {
                 int indexCount = vertexCount * 3 / 2;
 
-                yield indexCount > AutoIndexBuffer.U16_MAX_VERTEX_COUNT
-                        ? this.quadsIntIndexBuffer : this.quadsIndexBuffer;
+                yield indexCount > AutoIndexBuffer.U16_MAX_VERTEX_COUNT ? this.quadsIntIndexBuffer : this.quadsIndexBuffer;
             }
             case LINES -> this.linesIndexBuffer;
             case TRIANGLE_FAN -> this.triangleFanIndexBuffer;
             case TRIANGLE_STRIP, LINE_STRIP -> this.triangleStripIndexBuffer;
             case DEBUG_LINE_STRIP -> this.debugLineStripIndexBuffer;
             case TRIANGLES, DEBUG_LINES -> null;
-		};
+        };
     }
 }

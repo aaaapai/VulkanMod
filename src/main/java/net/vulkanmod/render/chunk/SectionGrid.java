@@ -1,9 +1,5 @@
 package net.vulkanmod.render.chunk;
 
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -12,21 +8,22 @@ import net.minecraft.world.level.Level;
 import net.vulkanmod.render.chunk.frustum.VFrustum;
 import net.vulkanmod.render.chunk.graph.GraphDirections;
 import net.vulkanmod.render.chunk.util.CircularIntList;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class SectionGrid {
 
     protected final Level level;
-    protected int gridHeight;
-    protected int gridWidth;
-    public RenderSection[] sections;
     final ChunkAreaManager chunkAreaManager;
-
-    private int prevSecX;
-    private int prevSecZ;
-
     private final CircularIntList xList;
     private final CircularIntList zList;
     private final CircularIntList.RangeIterator xComplIterator;
+    public RenderSection[] sections;
+    protected int gridHeight;
+    protected int gridWidth;
+    private int prevSecX;
+    private int prevSecZ;
 
     public SectionGrid(Level level, int viewDistance) {
         this.level = level;
@@ -148,7 +145,7 @@ public class SectionGrid {
 
                 for (int yRel = 0; yRel < this.gridHeight; ++yRel) {
                     moveSection(xRelativeIndex, yRel, zRelativeIndex, x1, z1,
-                                xList, zList, xRangeIterator.getCurrentIndex(), zIterator.getCurrentIndex());
+                            xList, zList, xRangeIterator.getCurrentIndex(), zIterator.getCurrentIndex());
                 }
             }
         }
@@ -167,7 +164,7 @@ public class SectionGrid {
 
                 for (int yRel = 0; yRel < this.gridHeight; ++yRel) {
                     moveSection(xRelativeIndex, yRel, zRelativeIndex, x1, z1,
-                                xList, zList, xComplIterator.getCurrentIndex(), zRangeIterator.getCurrentIndex());
+                            xList, zList, xComplIterator.getCurrentIndex(), zRangeIterator.getCurrentIndex());
                 }
             }
         }
@@ -189,7 +186,7 @@ public class SectionGrid {
         renderSection.setOrigin(x1, y1, z1);
 
         this.setNeighbours(renderSection, xList, zList, xCurrentIdx, zCurrentIdx,
-                           xRelativeIndex, yRel, zRelativeIndex);
+                xRelativeIndex, yRel, zRelativeIndex);
 
         ChunkArea oldArea = renderSection.getChunkArea();
 

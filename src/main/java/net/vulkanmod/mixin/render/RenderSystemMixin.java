@@ -10,11 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.lwjgl.system.MemoryUtil;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -26,18 +22,33 @@ import java.util.function.BiFunction;
 @Mixin(value = RenderSystem.class, remap = false)
 public abstract class RenderSystemMixin {
 
-    @Shadow @Final private static Matrix4fStack modelViewStack;
-    @Shadow private static Matrix4f textureMatrix;
-    @Shadow private static @Nullable Thread renderThread;
-    @Shadow @Nullable private static GpuBufferSlice shaderFog;
-    @Shadow @Nullable private static GpuBufferSlice shaderLightDirections;
-    @Shadow @Nullable private static GpuBufferSlice projectionMatrixBuffer;
-    @Shadow private static ProjectionType projectionType;
-    @Shadow private static ProjectionType savedProjectionType;
-    @Shadow @Nullable private static GpuBufferSlice savedProjectionMatrixBuffer;
+    @Shadow
+    @Final
+    private static Matrix4fStack modelViewStack;
+    @Shadow
+    private static Matrix4f textureMatrix;
+    @Shadow
+    private static @Nullable Thread renderThread;
+    @Shadow
+    @Nullable
+    private static GpuBufferSlice shaderFog;
+    @Shadow
+    @Nullable
+    private static GpuBufferSlice shaderLightDirections;
+    @Shadow
+    @Nullable
+    private static GpuBufferSlice projectionMatrixBuffer;
+    @Shadow
+    private static ProjectionType projectionType;
+    @Shadow
+    private static ProjectionType savedProjectionType;
+    @Shadow
+    @Nullable
+    private static GpuBufferSlice savedProjectionMatrixBuffer;
 
     @Shadow
-    public static void assertOnRenderThread() { }
+    public static void assertOnRenderThread() {
+    }
 
     @Inject(method = "initRenderer(JIZLjava/util/function/BiFunction;Z)V", at = @At("TAIL"))
     private static void hookInitRenderer(long window, int debugVerbosity, boolean debugSync,
@@ -52,7 +63,8 @@ public abstract class RenderSystemMixin {
     }
 
     @Overwrite(remap = false)
-    public static void setupDefaultState() { }
+    public static void setupDefaultState() {
+    }
 
     @Inject(method = "setProjectionMatrix", at = @At("TAIL"))
     private static void captureProjection(GpuBufferSlice buffer, ProjectionType type, CallbackInfo ci) {

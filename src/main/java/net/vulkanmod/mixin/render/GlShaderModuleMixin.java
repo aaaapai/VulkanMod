@@ -1,11 +1,9 @@
 package net.vulkanmod.mixin.render;
 
+import com.mojang.blaze3d.opengl.GlShaderModule;
+import net.vulkanmod.interfaces.GlShaderModuleExt;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-
-import com.mojang.blaze3d.opengl.GlShaderModule;
-
-import net.vulkanmod.interfaces.GlShaderModuleExt;
 
 @Mixin(value = GlShaderModule.class, remap = false)
 public class GlShaderModuleMixin implements GlShaderModuleExt {

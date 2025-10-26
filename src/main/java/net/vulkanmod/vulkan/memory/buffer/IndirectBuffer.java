@@ -1,15 +1,15 @@
 package net.vulkanmod.vulkan.memory.buffer;
 
-import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
-
-import java.nio.ByteBuffer;
-
 import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.memory.MemoryType;
 import net.vulkanmod.vulkan.queue.CommandPool;
 import net.vulkanmod.vulkan.queue.TransferQueue;
+
+import java.nio.ByteBuffer;
+
+import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 
 public class IndirectBuffer extends Buffer {
     CommandPool.CommandBuffer commandBuffer;

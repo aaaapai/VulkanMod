@@ -1,5 +1,8 @@
 package net.vulkanmod.mixin.render;
 
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import net.minecraft.client.renderer.DynamicUniforms;
+import net.vulkanmod.vulkan.VRenderSystem;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3fc;
@@ -8,11 +11,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-
-import net.minecraft.client.renderer.DynamicUniforms;
-import net.vulkanmod.vulkan.VRenderSystem;
 
 @Mixin(DynamicUniforms.class)
 public class DynamicUniformsMixin {

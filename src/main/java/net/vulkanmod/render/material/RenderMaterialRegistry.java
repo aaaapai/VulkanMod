@@ -11,31 +11,30 @@ import net.vulkanmod.util.TriState;
  * registry index to avoid storing large structures per vertex.
  */
 public final class RenderMaterialRegistry {
+    public static final RenderMaterial STANDARD_MATERIAL;
+    public static final RenderMaterial NO_AO_MATERIAL;
     private static final Int2ObjectMap<RenderMaterial> BY_ID = new Int2ObjectArrayMap<>();
     private static final Object2IntMap<RenderMaterial> TO_ID = new Object2IntOpenHashMap<>();
     private static int nextId;
-
-    public static final RenderMaterial STANDARD_MATERIAL;
-    public static final RenderMaterial NO_AO_MATERIAL;
 
     static {
         TO_ID.defaultReturnValue(-1);
 
         STANDARD_MATERIAL = intern(new RenderMaterial(BlendMode.DEFAULT,
-                                                      false,
-                                                      false,
-                                                      false,
-                                                      TriState.DEFAULT,
-                                                      TriState.DEFAULT,
-                                                      ShadeMode.VANILLA));
+                false,
+                false,
+                false,
+                TriState.DEFAULT,
+                TriState.DEFAULT,
+                ShadeMode.VANILLA));
 
         NO_AO_MATERIAL = intern(new RenderMaterial(BlendMode.DEFAULT,
-                                                   false,
-                                                   false,
-                                                   false,
-                                                   TriState.FALSE,
-                                                   TriState.DEFAULT,
-                                                   ShadeMode.VANILLA));
+                false,
+                false,
+                false,
+                TriState.FALSE,
+                TriState.DEFAULT,
+                ShadeMode.VANILLA));
     }
 
     private RenderMaterialRegistry() {

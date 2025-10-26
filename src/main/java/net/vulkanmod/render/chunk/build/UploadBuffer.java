@@ -2,7 +2,6 @@ package net.vulkanmod.render.chunk.build;
 
 import net.vulkanmod.render.chunk.cull.QuadFacing;
 import net.vulkanmod.render.chunk.util.BufferUtil;
-import net.vulkanmod.render.vertex.TerrainBufferBuilder;
 import net.vulkanmod.render.vertex.TerrainBuilder;
 import org.lwjgl.system.MemoryUtil;
 
@@ -30,15 +29,13 @@ public class UploadBuffer {
                     this.vertexBuffers[i] = BufferUtil.clone(bufferBuilder.getBuffer());
                 }
             }
-        }
-        else {
+        } else {
             this.vertexBuffers = null;
         }
 
         if (!drawState.sequentialIndex()) {
             this.indexBuffer = BufferUtil.clone(terrainBuilder.getIndexBuffer());
-        }
-        else {
+        } else {
             this.indexBuffer = null;
         }
     }

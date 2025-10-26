@@ -1,33 +1,24 @@
 package net.vulkanmod.config.gui.widget;
 
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
-import net.vulkanmod.config.gui.GuiElement;
 import net.vulkanmod.config.gui.GuiRenderer;
-import net.vulkanmod.config.option.CyclingOption;
 import net.vulkanmod.config.option.Option;
-import net.vulkanmod.render.util.MathUtil;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
-
-import java.util.Objects;
 
 public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
         implements NarratableEntry {
 
+    private final Component name;
     public int controlX;
     public int controlWidth;
-    private final Component name;
     protected Component displayedValue;
 
     protected boolean controlHovered;
@@ -152,12 +143,7 @@ public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return this.active && this.visible && mouseX >= (double)this.x && mouseY >= (double)this.y && mouseX < (double)(this.x + this.width) && mouseY < (double)(this.y + this.height);
-    }
-
-    @Override
-    public void setFocused(boolean bl) {
-        this.focused = bl;
+        return this.active && this.visible && mouseX >= (double) this.x && mouseY >= (double) this.y && mouseX < (double) (this.x + this.width) && mouseY < (double) (this.y + this.height);
     }
 
     @Override
@@ -165,8 +151,13 @@ public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
         return this.focused;
     }
 
+    @Override
+    public void setFocused(boolean bl) {
+        this.focused = bl;
+    }
+
     protected boolean clicked(double mouseX, double mouseY) {
-        return this.active && this.visible && mouseX >= (double)this.controlX && mouseY >= (double)this.y && mouseX < (double)(this.x + this.width) && mouseY < (double)(this.y + this.height);
+        return this.active && this.visible && mouseX >= (double) this.controlX && mouseY >= (double) this.y && mouseX < (double) (this.x + this.width) && mouseY < (double) (this.y + this.height);
     }
 
     public Component getName() {

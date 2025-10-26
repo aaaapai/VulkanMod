@@ -1,15 +1,8 @@
 package net.vulkanmod.render;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-
-import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.vulkanmod.vulkan.Renderer;
@@ -21,6 +14,11 @@ import net.vulkanmod.vulkan.memory.buffer.VertexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.index.AutoIndexBuffer;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
+import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
+
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 @Environment(EnvType.CLIENT)
 public class VBO {
@@ -39,6 +37,23 @@ public class VBO {
 
     public VBO(MemoryType memoryType) {
         this.memoryType = memoryType;
+    }
+
+    private static Matrix4f snapshotMatrix(ByteBuffer buffer) {
+        FloatBuffer floatBuffer = buffer.asFloatBuffer().duplicate();
+        floatBuffer.rewind();
+        return new Matrix4f(floatBuffer);
+    }
+
+    private static int toGlMode(VertexFormat.Mode mode) {
+        return switch (mode) {
+            case LINES, DEBUG_LINES -> GL11.GL_LINES;
+            case LINE_STRIP, DEBUG_LINE_STRIP -> GL11.GL_LINE_STRIP;
+            case TRIANGLES -> GL11.GL_TRIANGLES;
+            case TRIANGLE_STRIP -> GL11.GL_TRIANGLE_STRIP;
+            case TRIANGLE_FAN -> GL11.GL_TRIANGLE_FAN;
+            case QUADS -> GL11.GL_QUADS;
+        };
     }
 
     public void upload(MeshData meshData) {
@@ -103,8 +118,7 @@ public class VBO {
             }
 
             this.autoIndexed = true;
-        }
-        else {
+        } else {
             if (this.indexBuffer != null && !this.autoIndexed) {
                 this.indexBuffer.scheduleFree();
             }
@@ -131,8 +145,7 @@ public class VBO {
 
             if (this.indexBuffer != null) {
                 Renderer.getDrawer().drawIndexed(this.vertexBuffer, this.indexBuffer, this.indexCount);
-            }
-            else {
+            } else {
                 Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
             }
 
@@ -140,18 +153,11 @@ public class VBO {
         }
     }
 
-    private static Matrix4f snapshotMatrix(ByteBuffer buffer) {
-        FloatBuffer floatBuffer = buffer.asFloatBuffer().duplicate();
-        floatBuffer.rewind();
-        return new Matrix4f(floatBuffer);
-    }
-
     public void draw() {
         if (this.indexCount != 0) {
             if (this.indexBuffer != null) {
                 Renderer.getDrawer().drawIndexed(this.vertexBuffer, this.indexBuffer, this.indexCount);
-            }
-            else {
+            } else {
                 Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
             }
         }
@@ -171,17 +177,6 @@ public class VBO {
 
         this.vertexCount = 0;
         this.indexCount = 0;
-    }
-
-    private static int toGlMode(VertexFormat.Mode mode) {
-        return switch (mode) {
-            case LINES, DEBUG_LINES -> GL11.GL_LINES;
-            case LINE_STRIP, DEBUG_LINE_STRIP -> GL11.GL_LINE_STRIP;
-            case TRIANGLES -> GL11.GL_TRIANGLES;
-            case TRIANGLE_STRIP -> GL11.GL_TRIANGLE_STRIP;
-            case TRIANGLE_FAN -> GL11.GL_TRIANGLE_FAN;
-            case QUADS -> GL11.GL_QUADS;
-        };
     }
 
 }

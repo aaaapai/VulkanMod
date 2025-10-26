@@ -1,18 +1,5 @@
 package net.vulkanmod.mixin.debug;
 
-import static net.vulkanmod.Initializer.getVersion;
-
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
@@ -21,6 +8,18 @@ import net.vulkanmod.vulkan.SystemInfo;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.vulkan.memory.MemoryManager;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static net.vulkanmod.Initializer.getVersion;
 
 @Mixin(DebugScreenOverlay.class)
 public abstract class DebugScreenOverlayM {
@@ -28,15 +27,14 @@ public abstract class DebugScreenOverlayM {
     @Shadow
     @Final
     private Minecraft minecraft;
+    @Shadow
+    @Final
+    private Font font;
 
     @Shadow
     private static long bytesToMegabytes(long bytes) {
         return 0;
     }
-
-    @Shadow
-    @Final
-    private Font font;
 
     @Shadow
     protected abstract List<String> getGameInformation();

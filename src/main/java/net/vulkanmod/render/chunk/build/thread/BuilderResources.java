@@ -34,8 +34,7 @@ public class BuilderResources {
         LightPipeline smoothLightPipeline;
         if (Initializer.CONFIG.ambientOcclusion == LightMode.SUB_BLOCK) {
             smoothLightPipeline = new NewSmoothLightPipeline(lightDataCache);
-        }
-        else {
+        } else {
             smoothLightPipeline = new SmoothLightPipeline(lightDataCache);
         }
 

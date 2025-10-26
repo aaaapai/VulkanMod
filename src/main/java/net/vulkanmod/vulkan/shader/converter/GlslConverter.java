@@ -3,10 +3,12 @@ package net.vulkanmod.vulkan.shader.converter;
 import net.vulkanmod.vulkan.shader.descriptor.ImageDescriptor;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
 
 public class GlslConverter {
-    
+
     ShaderStage shaderStage;
     private State state;
 
@@ -62,7 +64,7 @@ public class GlslConverter {
                 var lines2 = line.splitWithDelimiters(";", 0);
 
                 int matchingFor = 0;
-                for (int i = 0; i < lines2.length;) {
+                for (int i = 0; i < lines2.length; ) {
                     StringBuilder line2 = new StringBuilder(lines2[i]);
                     i++;
 
@@ -94,8 +96,7 @@ public class GlslConverter {
                     }
 
                 }
-            }
-            else {
+            } else {
                 String parsedLine = this.parseLine(line);
                 if (parsedLine != null) {
                     out.append(parsedLine);

@@ -62,8 +62,7 @@ public class TintCache {
             }
 
             this.temp = new int[size];
-        }
-        else {
+        } else {
             for (Layer[] layers : layers.values()) {
                 for (Layer layer : layers) {
                     layer.invalidate();

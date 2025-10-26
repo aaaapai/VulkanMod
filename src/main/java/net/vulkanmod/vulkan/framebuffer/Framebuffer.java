@@ -1,53 +1,39 @@
 package net.vulkanmod.vulkan.framebuffer;
 
-import static net.vulkanmod.vulkan.Vulkan.DYNAMIC_RENDERING;
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_UNORM;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_SAMPLED_BIT;
-import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
-import static org.lwjgl.vulkan.VK10.vkDestroyFramebuffer;
-
-import java.nio.LongBuffer;
-import java.util.Arrays;
-
-import org.apache.commons.lang3.Validate;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK10;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkFramebufferCreateInfo;
-import org.lwjgl.vulkan.VkRect2D;
-import org.lwjgl.vulkan.VkViewport;
-
 import it.unimi.dsi.fastutil.objects.Reference2LongArrayMap;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.texture.VulkanImage;
+import org.apache.commons.lang3.Validate;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
+
+import java.nio.LongBuffer;
+import java.util.Arrays;
+
+import static net.vulkanmod.vulkan.Vulkan.DYNAMIC_RENDERING;
+import static org.lwjgl.vulkan.VK10.*;
 
 public class Framebuffer {
     public static final int DEFAULT_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
 
 //    private long id;
-
+    private final Reference2LongArrayMap<RenderPass> renderpassToFramebufferMap = new Reference2LongArrayMap<>();
     protected int format;
     protected int depthFormat;
     protected int width, height;
     protected boolean linearFiltering;
     protected boolean depthLinearFiltering;
     protected int attachmentCount;
-
+    protected VulkanImage depthAttachment;
     boolean hasColorAttachment;
     boolean hasDepthAttachment;
-
     private VulkanImage colorAttachment;
-    protected VulkanImage depthAttachment;
-
-    private final Reference2LongArrayMap<RenderPass> renderpassToFramebufferMap = new Reference2LongArrayMap<>();
 
     //SwapChain
-    protected Framebuffer() {}
+    protected Framebuffer() {
+    }
 
     public Framebuffer(Builder builder) {
         this.format = builder.format;
@@ -65,6 +51,14 @@ public class Framebuffer {
             this.colorAttachment = builder.colorAttachment;
             this.depthAttachment = builder.depthAttachment;
         }
+    }
+
+    public static Builder builder(int width, int height, int colorAttachments, boolean hasDepthAttachment) {
+        return new Builder(width, height, colorAttachments, hasDepthAttachment);
+    }
+
+    public static Builder builder(VulkanImage colorAttachment, VulkanImage depthAttachment) {
+        return new Builder(colorAttachment, depthAttachment);
     }
 
     public void createImages() {
@@ -218,14 +212,6 @@ public class Framebuffer {
         return this.depthFormat;
     }
 
-    public static Builder builder(int width, int height, int colorAttachments, boolean hasDepthAttachment) {
-        return new Builder(width, height, colorAttachments, hasDepthAttachment);
-    }
-
-    public static Builder builder(VulkanImage colorAttachment, VulkanImage depthAttachment) {
-        return new Builder(colorAttachment, depthAttachment);
-    }
-
     public static class Builder {
         final boolean createImages;
         final int width, height;
@@ -234,7 +220,7 @@ public class Framebuffer {
         VulkanImage colorAttachment;
         VulkanImage depthAttachment;
 
-//        int colorAttachments;
+        //        int colorAttachments;
         boolean hasColorAttachment;
         boolean hasDepthAttachment;
 

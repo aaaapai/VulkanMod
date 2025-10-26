@@ -15,25 +15,21 @@ public class ChunkAreaManager {
     public static final int AREA_SIZE = WIDTH * WIDTH * HEIGHT;
 
     public static final int AREA_SH_XZ = Util.flooredLog(WIDTH);
-    public static final int AREA_SH_Y = Util.flooredLog(HEIGHT);
-
-    public static final int SEC_SH = 4;
     public static final int BLOCK_TO_AREA_SH_XZ = AREA_SH_XZ + SEC_SH;
+    public static final int AREA_SH_Y = Util.flooredLog(HEIGHT);
     public static final int BLOCK_TO_AREA_SH_Y = AREA_SH_Y + SEC_SH;
-
+    public static final int SEC_SH = 4;
     public final int size;
     final int sectionGridWidth;
     final int xzSize;
     final int ySize;
     final int minHeight;
     final ChunkArea[] chunkAreasArr;
-
-    int prevX;
-    int prevZ;
-
     private final CircularIntList xList;
     private final CircularIntList zList;
     private final CircularIntList.RangeIterator xComplIterator;
+    int prevX;
+    int prevZ;
 
     public ChunkAreaManager(int width, int height, int minHeight) {
         this.minHeight = minHeight;
@@ -246,7 +242,7 @@ public class ChunkAreaManager {
         vbUsed /= div;
         ibSize /= div;
         ibUsed /= div;
-        frag   /= div;
+        frag /= div;
 
         return new String[]{
                 String.format("Vertex Buffers: %d/%d MB", vbUsed, vbSize),

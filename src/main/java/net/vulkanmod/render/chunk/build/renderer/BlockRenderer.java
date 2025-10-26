@@ -1,10 +1,5 @@
 package net.vulkanmod.render.chunk.build.renderer;
 
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
@@ -40,6 +35,10 @@ import net.vulkanmod.render.vertex.TerrainBuilder;
 import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
 import net.vulkanmod.vulkan.util.ColorUtil;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import java.util.List;
 
 public class BlockRenderer {
     private static final Direction[] DIRECTIONS = Direction.values();
@@ -68,21 +67,20 @@ public class BlockRenderer {
     private final LightPipeline flatLightPipeline;
     private final LightPipeline smoothLightPipeline;
     private final net.vulkanmod.render.chunk.build.color.BlockColorRegistry blockColorRegistry;
-
+    private final boolean backFaceCulling = Initializer.CONFIG.backFaceCulling;
+    private final BlockPos.MutableBlockPos tempPos = new BlockPos.MutableBlockPos();
     private BuilderResources resources;
     private BlockAndTintGetter renderRegion;
     private boolean enableCulling = true;
-
     private BlockState blockState;
     private BlockPos blockPos;
     private boolean useAO;
-
     private long seed;
     private TerrainRenderType renderType;
     private TerrainBuilder terrainBuilder;
     private Vector3f currentPos;
-
-    private final boolean backFaceCulling = Initializer.CONFIG.backFaceCulling;
+    private int cullCompletionFlags;
+    private int cullResultFlags;
 
     public BlockRenderer(LightPipeline flatLightPipeline, LightPipeline smoothLightPipeline) {
         this.flatLightPipeline = flatLightPipeline;
@@ -161,8 +159,8 @@ public class BlockRenderer {
         quad.clear();
 
         RenderMaterial material = bakedQuad.shade()
-            ? baseMaterial
-            : RenderMaterialRegistry.disableDiffuse(baseMaterial, true);
+                ? baseMaterial
+                : RenderMaterialRegistry.disableDiffuse(baseMaterial, true);
 
         quad.fromVanilla(bakedQuad, material, cullFace);
 
@@ -313,10 +311,6 @@ public class BlockRenderer {
 
         return true;
     }
-
-    private final BlockPos.MutableBlockPos tempPos = new BlockPos.MutableBlockPos();
-    private int cullCompletionFlags;
-    private int cullResultFlags;
 
     public void clearCache() {
         this.occlusionCache.clear();

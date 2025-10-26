@@ -1,20 +1,6 @@
 package net.vulkanmod.mixin.render.vertex;
 
-import org.joml.Matrix4f;
-import org.lwjgl.system.MemoryUtil;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-
+import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.vulkanmod.interfaces.ExtendedVertexBuilder;
@@ -22,23 +8,32 @@ import net.vulkanmod.mixin.matrix.PoseAccessor;
 import net.vulkanmod.render.util.MathUtil;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
 import net.vulkanmod.vulkan.util.ColorUtil;
+import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryUtil;
+import org.spongepowered.asm.mixin.*;
 
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderM
         implements VertexConsumer, ExtendedVertexBuilder {
 
-    @Shadow private boolean fastFormat;
-    @Shadow private boolean fullFormat;
-    @Shadow private VertexFormat format;
-
-    @Shadow protected abstract long beginVertex();
-
-    @Shadow private int elementsToFill;
-    @Shadow @Final private int initialElementsToFill;
-
-    @Shadow protected abstract long beginElement(VertexFormatElement vertexFormatElement);
-
+    @Shadow
+    private boolean fastFormat;
+    @Shadow
+    private boolean fullFormat;
+    @Shadow
+    private VertexFormat format;
+    @Shadow
+    private int elementsToFill;
+    @Shadow
+    @Final
+    private int initialElementsToFill;
     private long ptr;
+
+    @Shadow
+    protected abstract long beginVertex();
+
+    @Shadow
+    protected abstract long beginElement(VertexFormatElement vertexFormatElement);
 
     public void vertex(float x, float y, float z, int packedColor, float u, float v, int overlay, int light, int packedNormal) {
         this.ptr = this.beginVertex();
@@ -58,8 +53,7 @@ public abstract class BufferBuilderM
             MemoryUtil.memPutInt(ptr + 28, light);
             MemoryUtil.memPutInt(ptr + 32, packedNormal);
 
-        }
-        else {
+        } else {
             this.elementsToFill = this.initialElementsToFill;
 
             this.position(x, y, z);
@@ -180,7 +174,7 @@ public abstract class BufferBuilderM
         int normalZ = direction.getStepZ();
         Matrix4f matrix4f = matrixEntry.pose();
 
-        boolean trustedNormals = ((PoseAccessor)(Object)matrixEntry).trustedNormals();
+        boolean trustedNormals = ((PoseAccessor) (Object) matrixEntry).trustedNormals();
         int normal = MathUtil.packTransformedNorm(matrixEntry.normal(), trustedNormals, normalX, normalY, normalZ);
 
         for (int k = 0; k < 4; ++k) {

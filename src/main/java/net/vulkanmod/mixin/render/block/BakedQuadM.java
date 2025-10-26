@@ -5,8 +5,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.vulkanmod.render.chunk.build.pipeline.helper.NormalHelper;
 import net.vulkanmod.render.chunk.cull.QuadFacing;
-import net.vulkanmod.render.model.quad.ModelQuadView;
 import net.vulkanmod.render.model.quad.ModelQuadFlags;
+import net.vulkanmod.render.model.quad.ModelQuadView;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,13 +19,23 @@ import static net.vulkanmod.render.model.quad.ModelQuad.VERTEX_SIZE;
 @Mixin(BakedQuad.class)
 public class BakedQuadM implements ModelQuadView {
 
-    @Shadow @Final protected int[] vertices;
-    @Shadow @Final protected Direction direction;
-    @Shadow @Final protected int tintIndex;
+    @Shadow
+    @Final
+    protected int[] vertices;
+    @Shadow
+    @Final
+    protected Direction direction;
+    @Shadow
+    @Final
+    protected int tintIndex;
 
     private int flags;
     private int normal;
     private QuadFacing facing;
+
+    private static int vertexOffset(int vertexIndex) {
+        return vertexIndex * VERTEX_SIZE;
+    }
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(int[] vertices, int tintIndex, Direction face, TextureAtlasSprite textureAtlasSprite, boolean shade, CallbackInfo ci) {
@@ -99,9 +109,5 @@ public class BakedQuadM implements ModelQuadView {
     @Override
     public boolean isTinted() {
         return this.tintIndex != -1;
-    }
-
-    private static int vertexOffset(int vertexIndex) {
-        return vertexIndex * VERTEX_SIZE;
     }
 }

@@ -11,11 +11,11 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.KHRBufferDeviceAddress.*;
 import static org.lwjgl.vulkan.KHRRayTracingPipeline.*;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK11.*;
-import static org.lwjgl.vulkan.VK12.*;
+import static org.lwjgl.vulkan.VK11.vkGetPhysicalDeviceProperties2;
+import static org.lwjgl.vulkan.VK12.VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+import static org.lwjgl.vulkan.VK12.vkGetBufferDeviceAddress;
 
 public class RayTracingPipeline extends Pipeline {
 
@@ -47,6 +47,11 @@ public class RayTracingPipeline extends Pipeline {
         createDescriptorSets(3); //Renderer.getFramesNum());
 
         PIPELINES.add(this);
+    }
+
+    private static int alignUp(int value, int alignment) {
+        long aligned = ((long) value + alignment - 1L) / alignment * alignment;
+        return (int) aligned;
     }
 
     private void createShaderModules(SPIRVUtils.SPIRV raygenShaderSPIRV, SPIRVUtils.SPIRV missShaderSPIRV, SPIRVUtils.SPIRV chitShaderSPIRV) {
@@ -220,10 +225,5 @@ public class RayTracingPipeline extends Pipeline {
         public RayTracingPipeline createRayTracingPipeline() {
             return new RayTracingPipeline(this);
         }
-    }
-
-    private static int alignUp(int value, int alignment) {
-        long aligned = ((long) value + alignment - 1L) / alignment * alignment;
-        return (int) aligned;
     }
 }

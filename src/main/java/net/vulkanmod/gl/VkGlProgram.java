@@ -4,10 +4,16 @@ import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import net.vulkanmod.vulkan.shader.Pipeline;
 
 public class VkGlProgram {
-    private static int ID_COUNTER = 1;
     private static final Int2ReferenceOpenHashMap<VkGlProgram> map = new Int2ReferenceOpenHashMap<>();
+    private static int ID_COUNTER = 1;
     private static int boundProgramId = 0;
     private static VkGlProgram boundProgram;
+    int id;
+    Pipeline pipeline;
+
+    VkGlProgram(int i) {
+        this.id = i;
+    }
 
     public static VkGlProgram getBoundProgram() {
         return boundProgram;
@@ -36,13 +42,6 @@ public class VkGlProgram {
             throw new NullPointerException("bound texture is null");
         }
 
-    }
-
-    int id;
-    Pipeline pipeline;
-
-    VkGlProgram(int i) {
-        this.id = i;
     }
 
     public void bindPipeline(Pipeline pipeline) {

@@ -1,78 +1,7 @@
 package net.vulkanmod.vulkan;
 
-import static java.util.stream.Collectors.toSet;
-import static net.vulkanmod.vulkan.queue.Queue.getQueueFamilies;
-import static net.vulkanmod.vulkan.util.VUtil.asPointerBuffer;
-import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
-import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
-import static org.lwjgl.system.MemoryStack.stackGet;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryStack.stackUTF8;
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.util.vma.Vma.vmaCreateAllocator;
-import static org.lwjgl.util.vma.Vma.vmaDestroyAllocator;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-import static org.lwjgl.vulkan.EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.vkCreateDebugUtilsMessengerEXT;
-import static org.lwjgl.vulkan.EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT;
-import static org.lwjgl.vulkan.KHRAccelerationStructure.VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRBufferDeviceAddress.VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRDeferredHostOperations.VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRRayTracingPipeline.VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_ERROR_EXTENSION_NOT_PRESENT;
-import static org.lwjgl.vulkan.VK10.VK_FALSE;
-import static org.lwjgl.vulkan.VK10.VK_MAKE_VERSION;
-import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
-import static org.lwjgl.vulkan.VK10.vkCreateCommandPool;
-import static org.lwjgl.vulkan.VK10.vkCreateInstance;
-import static org.lwjgl.vulkan.VK10.vkDestroyCommandPool;
-import static org.lwjgl.vulkan.VK10.vkDestroyFence;
-import static org.lwjgl.vulkan.VK10.vkDestroyInstance;
-import static org.lwjgl.vulkan.VK10.vkDeviceWaitIdle;
-import static org.lwjgl.vulkan.VK10.vkEnumerateInstanceLayerProperties;
-import static org.lwjgl.vulkan.VK10.vkGetInstanceProcAddr;
-import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
-
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
-import org.lwjgl.util.vma.VmaVulkanFunctions;
-import org.lwjgl.vulkan.EXTDebugUtils;
-import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.VkAllocationCallbacks;
-import org.lwjgl.vulkan.VkApplicationInfo;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
-import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
-import org.lwjgl.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
-import org.lwjgl.vulkan.VkDebugUtilsObjectNameInfoEXT;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkInstance;
-import org.lwjgl.vulkan.VkInstanceCreateInfo;
-import org.lwjgl.vulkan.VkLayerProperties;
-
-import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.gl.HiddenGlContext;
+import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.framebuffer.SwapChain;
 import net.vulkanmod.vulkan.memory.MemoryManager;
@@ -83,6 +12,34 @@ import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.texture.SamplerManager;
 import net.vulkanmod.vulkan.util.VkResult;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
+import org.lwjgl.util.vma.VmaVulkanFunctions;
+import org.lwjgl.vulkan.*;
+
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.util.*;
+
+import static java.util.stream.Collectors.toSet;
+import static net.vulkanmod.vulkan.queue.Queue.getQueueFamilies;
+import static net.vulkanmod.vulkan.util.VUtil.asPointerBuffer;
+import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
+import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
+import static org.lwjgl.system.MemoryStack.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.util.vma.Vma.vmaCreateAllocator;
+import static org.lwjgl.util.vma.Vma.vmaDestroyAllocator;
+import static org.lwjgl.vulkan.EXTDebugUtils.*;
+import static org.lwjgl.vulkan.KHRAccelerationStructure.VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRBufferDeviceAddress.VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRDeferredHostOperations.VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRRayTracingPipeline.VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
 public class Vulkan {
 
@@ -93,6 +50,18 @@ public class Vulkan {
     public static final boolean DYNAMIC_RENDERING = false;
 
     public static final Set<String> VALIDATION_LAYERS;
+    public static final Set<String> REQUIRED_EXTENSION = getRequiredExtensionSet();
+    public static long window;
+    public static boolean use24BitsDepthFormat = true;
+    private static VkInstance instance;
+    private static long debugMessenger;
+    private static long surface;
+    private static long commandPool;
+    private static VkCommandBuffer immediateCmdBuffer;
+    private static long immediateFence;
+    private static long allocator;
+    private static StagingBuffer[] stagingBuffers;
+    private static int DEFAULT_DEPTH_FORMAT = 0;
 
     static {
         if (ENABLE_VALIDATION_LAYERS) {
@@ -106,16 +75,8 @@ public class Vulkan {
         }
     }
 
-    public static final Set<String> REQUIRED_EXTENSION = getRequiredExtensionSet();
-
     private static Set<String> getRequiredExtensionSet() {
-        ArrayList<String> extensions = new ArrayList<>(List.of(
-                VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
-                VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
-                VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-                VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
-        ));
+        ArrayList<String> extensions = new ArrayList<>(List.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME));
 
         if (DYNAMIC_RENDERING) {
             extensions.add(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
@@ -140,14 +101,12 @@ public class Vulkan {
 
         System.err.println(s);
 
-        if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0)
-            System.nanoTime();
+        if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0) System.nanoTime();
 
         return VK_FALSE;
     }
 
-    private static int createDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo,
-                                                    VkAllocationCallbacks allocationCallbacks, LongBuffer pDebugMessenger) {
+    private static int createDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo, VkAllocationCallbacks allocationCallbacks, LongBuffer pDebugMessenger) {
 
         if (vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT") != NULL) {
             return vkCreateDebugUtilsMessengerEXT(instance, createInfo, allocationCallbacks, pDebugMessenger);
@@ -171,23 +130,6 @@ public class Vulkan {
     public static long getAllocator() {
         return allocator;
     }
-
-    public static long window;
-
-    private static VkInstance instance;
-    private static long debugMessenger;
-    private static long surface;
-
-    private static long commandPool;
-    private static VkCommandBuffer immediateCmdBuffer;
-    private static long immediateFence;
-
-    private static long allocator;
-
-    private static StagingBuffer[] stagingBuffers;
-
-    public static boolean use24BitsDepthFormat = true;
-    private static int DEFAULT_DEPTH_FORMAT = 0;
 
     public static void initVulkan(long window) {
         createInstance();
@@ -313,9 +255,7 @@ public class Vulkan {
 
             vkEnumerateInstanceLayerProperties(layerCount, availableLayers);
 
-            Set<String> availableLayerNames = availableLayers.stream()
-                    .map(VkLayerProperties::layerNameString)
-                    .collect(toSet());
+            Set<String> availableLayerNames = availableLayers.stream().map(VkLayerProperties::layerNameString).collect(toSet());
 
             return availableLayerNames.containsAll(Vulkan.VALIDATION_LAYERS);
         }
@@ -344,8 +284,7 @@ public class Vulkan {
 
             LongBuffer pDebugMessenger = stack.longs(VK_NULL_HANDLE);
 
-            checkResult(createDebugUtilsMessengerEXT(instance, createInfo, null, pDebugMessenger),
-                    "Failed to set up debug messenger");
+            checkResult(createDebugUtilsMessengerEXT(instance, createInfo, null, pDebugMessenger), "Failed to set up debug messenger");
 
             debugMessenger = pDebugMessenger.get(0);
         }
@@ -369,8 +308,7 @@ public class Vulkan {
 
             LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
 
-            checkResult(glfwCreateWindowSurface(instance, window, null, pSurface),
-                    "Failed to create window surface");
+            checkResult(glfwCreateWindowSurface(instance, window, null, pSurface), "Failed to create window surface");
 
             surface = pSurface.get(0);
         }
@@ -391,8 +329,7 @@ public class Vulkan {
 
             PointerBuffer pAllocator = stack.pointers(VK_NULL_HANDLE);
 
-            checkResult(vmaCreateAllocator(allocatorCreateInfo, pAllocator),
-                    "Failed to create Allocator");
+            checkResult(vmaCreateAllocator(allocatorCreateInfo, pAllocator), "Failed to create Allocator");
 
             allocator = pAllocator.get(0);
         }
@@ -411,8 +348,7 @@ public class Vulkan {
 
             LongBuffer pCommandPool = stack.mallocLong(1);
 
-            checkResult(vkCreateCommandPool(DeviceManager.vkDevice, poolInfo, null, pCommandPool),
-                    "Failed to create command pool");
+            checkResult(vkCreateCommandPool(DeviceManager.vkDevice, poolInfo, null, pCommandPool), "Failed to create command pool");
 
             commandPool = pCommandPool.get(0);
         }

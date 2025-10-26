@@ -40,17 +40,27 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
     private final BlockPos.MutableBlockPos mBlockPos = new BlockPos.MutableBlockPos();
 
     private final ModelQuad modelQuad = new ModelQuad();
-
-    BuilderResources resources;
-
     private final LightPipeline smoothLightPipeline;
     private final LightPipeline flatLightPipeline;
-
     private final int[] quadColors = new int[4];
+    BuilderResources resources;
 
     public FluidRenderer(LightPipeline flatLightPipeline, LightPipeline smoothLightPipeline) {
         this.smoothLightPipeline = smoothLightPipeline;
         this.flatLightPipeline = flatLightPipeline;
+    }
+
+    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, BlockState adjBlockState) {
+
+        if (adjBlockState.getFluidState().getType().isSame(fluidState.getType()))
+            return false;
+
+        // self-occlusion by waterlogging
+        if (blockState.canOcclude()) {
+            return !blockState.isFaceSturdy(blockAndTintGetter, blockPos, direction);
+        }
+
+        return true;
     }
 
     public void setResources(BuilderResources resources) {
@@ -70,7 +80,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
             handler = FluidRenderHandlerRegistry.INSTANCE.get(isLava ? Fluids.LAVA : Fluids.WATER);
         }
 
-        FluidRendering.render(handler, this.resources.getRegion(),blockPos, bufferBuilder, blockState, fluidState, this);
+        FluidRendering.render(handler, this.resources.getRegion(), blockPos, bufferBuilder, blockState, fluidState, this);
     }
 
     private boolean isFaceOccludedByState(BlockGetter blockGetter, float h, Direction direction, BlockPos blockPos, BlockState blockState) {
@@ -90,19 +100,6 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
         } else {
             return false;
         }
-    }
-
-    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, BlockState adjBlockState) {
-
-        if (adjBlockState.getFluidState().getType().isSame(fluidState.getType()))
-            return false;
-
-        // self-occlusion by waterlogging
-        if (blockState.canOcclude()) {
-            return !blockState.isFaceSturdy(blockAndTintGetter, blockPos, direction);
-        }
-
-        return true;
     }
 
     public BlockState getAdjBlockState(BlockAndTintGetter blockAndTintGetter, int x, int y, int z, Direction dir) {

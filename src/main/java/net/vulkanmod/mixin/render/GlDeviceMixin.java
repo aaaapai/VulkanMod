@@ -1,19 +1,5 @@
 package net.vulkanmod.mixin.render;
 
-import java.util.function.BiFunction;
-
-import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
 import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.opengl.GlProgram;
 import com.mojang.blaze3d.opengl.GlRenderPipeline;
@@ -21,35 +7,48 @@ import com.mojang.blaze3d.opengl.GlShaderModule;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import com.mojang.blaze3d.shaders.ShaderType;
-
 import net.minecraft.resources.ResourceLocation;
 import net.vulkanmod.gl.VkGlProgram;
 import net.vulkanmod.interfaces.GlShaderModuleExt;
 import net.vulkanmod.mixin.render.accessor.ShaderCompilationKeyAccessor;
 import net.vulkanmod.render.pipeline.VulkanPipelineCompiler;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.function.BiFunction;
 
 @Mixin(value = GlDevice.class, remap = false)
 public abstract class GlDeviceMixin {
 
+    @Unique
+    private static final String VULKANMOD_SHADER_ERROR = "[VulkanMod] Missing GLSL source for shader %s (%s)";
     @Shadow
     private BiFunction<ResourceLocation, ShaderType, String> defaultShaderSource;
-
-    @Shadow @Final @Mutable
+    @Shadow
+    @Final
+    @Mutable
     private int uniformOffsetAlignment;
+
+    @Inject(method = "getMaxSupportedTextureSize", at = @At("HEAD"), cancellable = true)
+    private static void vulkanmod$maxTextureSize(CallbackInfoReturnable<Integer> cir) {
+        cir.setReturnValue(16384);
+    }
 
     @Shadow
     protected abstract GlShaderModule getOrCompileShader(ResourceLocation id, ShaderType type,
                                                          net.minecraft.client.renderer.ShaderDefines defines,
                                                          BiFunction<ResourceLocation, ShaderType, String> shaderSourceGetter);
 
-    @Unique
-    private static final String VULKANMOD_SHADER_ERROR = "[VulkanMod] Missing GLSL source for shader %s (%s)";
-
     @Inject(
-        method = "compileShader(Lcom/mojang/blaze3d/opengl/GlDevice$ShaderCompilationKey;Ljava/util/function/BiFunction;)Lcom/mojang/blaze3d/opengl/GlShaderModule;",
-        at = @At("HEAD"),
-        cancellable = true
+            method = "compileShader(Lcom/mojang/blaze3d/opengl/GlDevice$ShaderCompilationKey;Ljava/util/function/BiFunction;)Lcom/mojang/blaze3d/opengl/GlShaderModule;",
+            at = @At("HEAD"),
+            cancellable = true
     )
     private void vulkanmod$compileShader(@Coerce Object keyObject,
                                          BiFunction<ResourceLocation, ShaderType, String> sourceGetter,
@@ -75,20 +74,20 @@ public abstract class GlDeviceMixin {
     }
 
     @Inject(
-        method = "compilePipeline(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Ljava/util/function/BiFunction;)Lcom/mojang/blaze3d/opengl/GlRenderPipeline;",
-        at = @At("HEAD"),
-        cancellable = true
+            method = "compilePipeline(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Ljava/util/function/BiFunction;)Lcom/mojang/blaze3d/opengl/GlRenderPipeline;",
+            at = @At("HEAD"),
+            cancellable = true
     )
     private void vulkanmod$compilePipeline(RenderPipeline pipeline,
                                            @Nullable BiFunction<ResourceLocation, ShaderType, String> sourceGetter,
                                            CallbackInfoReturnable<GlRenderPipeline> cir) {
         BiFunction<ResourceLocation, ShaderType, String> srcGetter =
-            sourceGetter != null ? sourceGetter : (id, type) -> null;
+                sourceGetter != null ? sourceGetter : (id, type) -> null;
 
         GlShaderModule vertexModule = this.getOrCompileShader(pipeline.getVertexShader(), ShaderType.VERTEX,
-                                                              pipeline.getShaderDefines(), srcGetter);
+                pipeline.getShaderDefines(), srcGetter);
         GlShaderModule fragmentModule = this.getOrCompileShader(pipeline.getFragmentShader(), ShaderType.FRAGMENT,
-                                                                pipeline.getShaderDefines(), srcGetter);
+                pipeline.getShaderDefines(), srcGetter);
 
         String vertexSource = ((GlShaderModuleExt) vertexModule).vulkanmod$getProcessedSource();
         String fragmentSource = ((GlShaderModuleExt) fragmentModule).vulkanmod$getProcessedSource();
@@ -102,17 +101,12 @@ public abstract class GlDeviceMixin {
 
         int programId = VkGlProgram.genProgramId();
         VkGlProgram vkProgram = VkGlProgram.getProgram(programId);
-       vkProgram.bindPipeline(graphicsPipeline);
+        vkProgram.bindPipeline(graphicsPipeline);
 
         GlProgram program = GlProgramInvoker.vulkanmod$create(programId, pipeline.getLocation().toString());
 
         cir.setReturnValue(new GlRenderPipeline(pipeline, program));
         cir.cancel();
-    }
-
-    @Inject(method = "getMaxSupportedTextureSize", at = @At("HEAD"), cancellable = true)
-    private static void vulkanmod$maxTextureSize(CallbackInfoReturnable<Integer> cir) {
-        cir.setReturnValue(16384);
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))

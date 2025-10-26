@@ -1,10 +1,10 @@
 package net.vulkanmod.render.chunk.build.light.data;
 
-import java.util.Arrays;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockAndTintGetter;
+
+import java.util.Arrays;
 
 /**
  * A light data cache which uses a flat-array to store the light data for the blocks in a given chunk and its direct

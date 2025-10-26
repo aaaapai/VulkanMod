@@ -48,8 +48,7 @@ public abstract class VTextureSelector {
     public static void uploadSubTexture(int mipLevel, int width, int height, int xOffset, int yOffset, int unpackSkipRows, int unpackSkipPixels, int unpackRowLength, ByteBuffer buffer) {
         VulkanImage texture = boundTextures[activeTexture];
 
-        if(texture == null)
-            throw new NullPointerException("Texture is null at index: " + activeTexture);
+        if (texture == null) throw new NullPointerException("Texture is null at index: " + activeTexture);
 
         texture.uploadSubTextureAsync(mipLevel, width, height, xOffset, yOffset, unpackSkipRows, unpackSkipPixels, unpackRowLength, buffer);
     }
@@ -111,8 +110,7 @@ public abstract class VTextureSelector {
 
     public static void setActiveTexture(int activeTexture) {
         if (activeTexture < 0 || activeTexture >= SIZE) {
-            Initializer.LOGGER.error(
-                    String.format("On Texture binding: index %d out of range [0, %d]", activeTexture, SIZE - 1));
+            Initializer.LOGGER.error(String.format("On Texture binding: index %d out of range [0, %d]", activeTexture, SIZE - 1));
         }
 
         VTextureSelector.activeTexture = activeTexture;

@@ -1,24 +1,15 @@
 package net.vulkanmod.render.chunk.build.thread;
 
+import net.vulkanmod.render.vertex.TerrainBuilder;
+import net.vulkanmod.render.vertex.TerrainRenderType;
+
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import net.vulkanmod.render.vertex.TerrainBuilder;
-import net.vulkanmod.render.vertex.TerrainRenderType;
-
 public class ThreadBuilderPack {
     private static Function<TerrainRenderType, TerrainBuilder> terrainBuilderConstructor;
-
-    public static void defaultTerrainBuilderConstructor() {
-        terrainBuilderConstructor = renderType -> new TerrainBuilder(TerrainRenderType.getRenderType(renderType).bufferSize());
-    }
-
-    public static void setTerrainBuilderConstructor(Function<TerrainRenderType, TerrainBuilder> constructor) {
-        terrainBuilderConstructor = constructor;
-    }
-
     private final Map<TerrainRenderType, TerrainBuilder> builders;
 
     public ThreadBuilderPack() {
@@ -28,6 +19,14 @@ public class ThreadBuilderPack {
                         terrainBuilderConstructor.apply(terrainRenderType))
         );
         builders = map;
+    }
+
+    public static void defaultTerrainBuilderConstructor() {
+        terrainBuilderConstructor = renderType -> new TerrainBuilder(TerrainRenderType.getRenderType(renderType).bufferSize());
+    }
+
+    public static void setTerrainBuilderConstructor(Function<TerrainRenderType, TerrainBuilder> constructor) {
+        terrainBuilderConstructor = constructor;
     }
 
     public TerrainBuilder builder(TerrainRenderType renderType) {

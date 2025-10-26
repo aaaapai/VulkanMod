@@ -13,9 +13,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SpriteContents.Ticker.class)
 public class MSpriteContents {
 
-    @Shadow int subFrame;
-    @Shadow int frame;
-    @Shadow @Final SpriteContents.AnimatedTexture animationInfo;
+    @Shadow
+    int subFrame;
+    @Shadow
+    int frame;
+    @Shadow
+    @Final
+    SpriteContents.AnimatedTexture animationInfo;
 
     @Inject(method = "tickAndUpload", at = @At("HEAD"), cancellable = true)
     private void checkUpload(int i, int j, CallbackInfo ci) {
@@ -29,8 +33,7 @@ public class MSpriteContents {
             }
 
             ci.cancel();
-        }
-        else {
+        } else {
             SpriteUpdateUtil.addTransitionedLayout(VTextureSelector.getBoundTexture());
         }
     }

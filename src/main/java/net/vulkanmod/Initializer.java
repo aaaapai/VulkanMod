@@ -1,55 +1,47 @@
 package net.vulkanmod;
 
-import java.nio.file.Path;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.vulkanmod.config.Config;
 import net.vulkanmod.config.Platform;
 import net.vulkanmod.config.video.VideoModeManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.nio.file.Path;
 
 public class Initializer implements ClientModInitializer {
-	public static final Logger LOGGER = LogManager.getLogger("VulkanMod");
+    public static final Logger LOGGER = LogManager.getLogger("VulkanMod");
+    public static Config CONFIG;
+    private static String VERSION;
 
-	private static String VERSION;
-	public static Config CONFIG;
+    private static Config loadConfig(Path path) {
+        Config config = Config.load(path);
 
-	@Override
-	public void onInitializeClient() {
+        if (config == null) {
+            config = new Config();
+            config.write();
+        }
 
-		VERSION = FabricLoader.getInstance()
-				.getModContainer("vulkanmod")
-				.get()
-				.getMetadata()
-				.getVersion().getFriendlyString();
+        return config;
+    }
 
-		LOGGER.info("== VulkanMod ==");
+    public static String getVersion() {
+        return VERSION;
+    }
 
-		Platform.init();
-		VideoModeManager.init();
+    @Override
+    public void onInitializeClient() {
 
-		var configPath = FabricLoader.getInstance()
-				.getConfigDir()
-				.resolve("vulkanmod_settings.json");
+        VERSION = FabricLoader.getInstance().getModContainer("vulkanmod").get().getMetadata().getVersion().getFriendlyString();
 
-		CONFIG = loadConfig(configPath);
-	}
+        LOGGER.info("== VulkanMod ==");
 
-	private static Config loadConfig(Path path) {
-		Config config = Config.load(path);
+        Platform.init();
+        VideoModeManager.init();
 
-		if(config == null) {
-			config = new Config();
-			config.write();
-		}
+        var configPath = FabricLoader.getInstance().getConfigDir().resolve("vulkanmod_settings.json");
 
-		return config;
-	}
-
-	public static String getVersion() {
-		return VERSION;
-	}
+        CONFIG = loadConfig(configPath);
+    }
 }

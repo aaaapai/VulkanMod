@@ -1,15 +1,10 @@
 package net.vulkanmod.config;
 
-import static net.vulkanmod.Initializer.LOGGER;
-import static org.lwjgl.glfw.GLFW.GLFW_ANY_PLATFORM;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_COCOA;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WIN32;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11;
-
 import org.apache.commons.lang3.SystemUtils;
 import org.lwjgl.glfw.GLFW;
+
+import static net.vulkanmod.Initializer.LOGGER;
+import static org.lwjgl.glfw.GLFW.*;
 
 public abstract class Platform {
     private static final int activePlat = getSupportedPlat();

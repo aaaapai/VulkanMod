@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import net.vulkanmod.vulkan.Renderer;
 import org.joml.Matrix4f;
@@ -52,7 +51,7 @@ public abstract class GuiRenderer {
     }
 
     public static void fill(float x0, float y0, float x1, float y1, float z, int color) {
-        guiGraphics.fill((int)x0, (int)y0, (int)x1, (int)y1, color);
+        guiGraphics.fill((int) x0, (int) y0, (int) x1, (int) y1, color);
     }
 
     public static void fillGradient(float x0, float y0, float x1, float y1, int color1, int color2) {
@@ -60,7 +59,7 @@ public abstract class GuiRenderer {
     }
 
     public static void fillGradient(float x0, float y0, float x1, float y1, float z, int color1, int color2) {
-        guiGraphics.fillGradient((int)x0, (int)y0, (int)x1, (int)y1, color1, color2);
+        guiGraphics.fillGradient((int) x0, (int) y0, (int) x1, (int) y1, color1, color2);
     }
 
     public static void renderBoxBorder(float x0, float y0, float width, float height, float borderWidth, int color) {

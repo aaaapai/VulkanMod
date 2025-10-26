@@ -1,13 +1,12 @@
 package net.vulkanmod.mixin.compatibility.gl;
 
+import net.vulkanmod.gl.VkGlFramebuffer;
+import net.vulkanmod.gl.VkGlRenderbuffer;
+import net.vulkanmod.gl.VkGlTexture;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.NativeType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-
-import net.vulkanmod.gl.VkGlFramebuffer;
-import net.vulkanmod.gl.VkGlRenderbuffer;
-import net.vulkanmod.gl.VkGlTexture;
 
 @Mixin(GL30.class)
 public class GL30M {

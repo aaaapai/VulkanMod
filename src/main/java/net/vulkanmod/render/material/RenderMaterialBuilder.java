@@ -75,11 +75,11 @@ public final class RenderMaterialBuilder {
 
     public RenderMaterial build() {
         return RenderMaterialRegistry.intern(new RenderMaterial(this.blendMode,
-                                                                this.disableColorIndex,
-                                                                this.emissive,
-                                                                this.disableDiffuse,
-                                                                this.ambientOcclusion,
-                                                                this.glint,
-                                                                this.shadeMode));
+                this.disableColorIndex,
+                this.emissive,
+                this.disableDiffuse,
+                this.ambientOcclusion,
+                this.glint,
+                this.shadeMode));
     }
 }

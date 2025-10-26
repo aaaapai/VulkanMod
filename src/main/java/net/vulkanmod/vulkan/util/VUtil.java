@@ -1,17 +1,16 @@
 package net.vulkanmod.vulkan.util;
 
-import static org.lwjgl.system.MemoryStack.stackGet;
+import net.vulkanmod.vulkan.memory.buffer.Buffer;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-
-import net.vulkanmod.vulkan.memory.buffer.Buffer;
-import sun.misc.Unsafe;
+import static org.lwjgl.system.MemoryStack.stackGet;
 
 public class VUtil {
     public static final boolean CHECKS = true;
@@ -39,9 +38,7 @@ public class VUtil {
 
         PointerBuffer buffer = stack.mallocPointer(collection.size());
 
-        collection.stream()
-                .map(stack::UTF8)
-                .forEach(buffer::put);
+        collection.stream().map(stack::UTF8).forEach(buffer::put);
 
         return buffer.rewind();
     }

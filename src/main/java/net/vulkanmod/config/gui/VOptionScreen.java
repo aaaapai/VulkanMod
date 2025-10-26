@@ -1,10 +1,6 @@
 package net.vulkanmod.config.gui;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.Lists;
-
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -22,6 +18,9 @@ import net.vulkanmod.config.option.Options;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VOptionScreen extends Screen {
     public final static int RED = ColorUtil.ARGB.pack(0.3f, 0.0f, 0.0f, 0.8f);
     final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("vulkanmod", "vlogo_transparent.png");
@@ -29,20 +28,15 @@ public class VOptionScreen extends Screen {
     private final Screen parent;
 
     private final List<OptionPage> optionPages;
-
+    private final List<VButtonWidget> pageButtons = Lists.newArrayList();
+    private final List<VButtonWidget> buttons = Lists.newArrayList();
     private int currentListIdx = 0;
-
     private int tooltipX;
     private int tooltipY;
     private int tooltipWidth;
-
     private VButtonWidget supportButton;
-
     private VButtonWidget doneButton;
     private VButtonWidget applyButton;
-
-    private final List<VButtonWidget> pageButtons = Lists.newArrayList();
-    private final List<VButtonWidget> buttons = Lists.newArrayList();
 
     public VOptionScreen(Component title, Screen parent) {
         super(title);

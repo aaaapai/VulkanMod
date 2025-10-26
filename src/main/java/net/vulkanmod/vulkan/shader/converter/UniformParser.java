@@ -13,9 +13,8 @@ public class UniformParser {
 
     private final GlslConverter converterInstance;
     private final StageUniforms[] stageUniforms = new StageUniforms[GlslConverter.ShaderStage.values().length];
-    private StageUniforms currentUniforms;
     List<Uniform> globalUniforms = new ArrayList<>();
-
+    private StageUniforms currentUniforms;
     private String type;
     private String name;
 
@@ -29,14 +28,20 @@ public class UniformParser {
         }
     }
 
+    public static String removeSemicolon(String s) {
+        int last = s.length() - 1;
+        if ((s.charAt(last)) != ';')
+            throw new IllegalArgumentException("last char is not ;");
+        return s.substring(0, last);
+    }
+
     public boolean parseToken(String token) {
         if (token.matches("uniform")) return false;
 
         if (this.type == null) {
             this.type = token;
 
-        }
-        else if (this.name == null) {
+        } else if (this.name == null) {
             token = removeSemicolon(token);
 
             this.name = token;
@@ -46,8 +51,7 @@ public class UniformParser {
             if ("sampler2D".equals(this.type)) {
                 if (!this.currentUniforms.samplers.contains(uniform))
                     this.currentUniforms.samplers.add(uniform);
-            }
-            else {
+            } else {
                 if (!this.globalUniforms.contains(uniform))
                     this.globalUniforms.add(uniform);
             }
@@ -89,7 +93,7 @@ public class UniformParser {
 
         for (ImageDescriptor imageDescriptor : this.imageDescriptors) {
             builder.append(String.format("layout(binding = %d) uniform %s %s;\n", imageDescriptor.getBinding(),
-                                         imageDescriptor.qualifier, imageDescriptor.name));
+                    imageDescriptor.qualifier, imageDescriptor.name));
         }
         builder.append("\n");
 
@@ -128,13 +132,6 @@ public class UniformParser {
         return imageDescriptors;
     }
 
-    public static String removeSemicolon(String s) {
-        int last = s.length() - 1;
-        if ((s.charAt(last)) != ';')
-            throw new IllegalArgumentException("last char is not ;");
-        return s.substring(0, last);
-    }
-
     public List<Uniform> getGlobalUniforms() {
         return globalUniforms;
     }
@@ -143,16 +140,16 @@ public class UniformParser {
         return this.imageDescriptors;
     }
 
+    enum State {
+        Uniform,
+        Sampler,
+        None
+    }
+
     public record Uniform(String type, String name) {
     }
 
     private static class StageUniforms {
         List<Uniform> samplers = new ArrayList<>();
-    }
-
-    enum State {
-        Uniform,
-        Sampler,
-        None
     }
 }

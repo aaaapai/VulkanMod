@@ -42,9 +42,20 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class Pipeline {
 
+    protected static final List<Pipeline> PIPELINES = new LinkedList<>();
     private static final VkDevice DEVICE = Vulkan.getVkDevice();
     protected static final long PIPELINE_CACHE = createPipelineCache();
-    protected static final List<Pipeline> PIPELINES = new LinkedList<>();
+    public final String name;
+    protected long descriptorSetLayout;
+    protected long pipelineLayout;
+    protected DescriptorSets[] descriptorSets;
+    protected List<UBO> buffers;
+    protected ManualUBO manualUBO;
+    protected List<ImageDescriptor> imageDescriptors;
+    protected PushConstants pushConstants;
+    public Pipeline(String name) {
+        this.name = name;
+    }
 
     private static long createPipelineCache() {
         try (MemoryStack stack = stackPush()) {
@@ -73,19 +84,23 @@ public abstract class Pipeline {
         });
     }
 
-    public final String name;
+    static long createShaderModule(ByteBuffer spirvCode) {
 
-    protected long descriptorSetLayout;
-    protected long pipelineLayout;
+        try (MemoryStack stack = stackPush()) {
 
-    protected DescriptorSets[] descriptorSets;
-    protected List<UBO> buffers;
-    protected ManualUBO manualUBO;
-    protected List<ImageDescriptor> imageDescriptors;
-    protected PushConstants pushConstants;
+            VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack);
 
-    public Pipeline(String name) {
-        this.name = name;
+            createInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
+            createInfo.pCode(spirvCode);
+
+            LongBuffer pShaderModule = stack.mallocLong(1);
+
+            if (vkCreateShaderModule(DEVICE, createInfo, null, pShaderModule) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create shader module");
+            }
+
+            return pShaderModule.get(0);
+        }
     }
 
     protected void createDescriptorSetLayout() {
@@ -179,8 +194,7 @@ public abstract class Pipeline {
     }
 
     public void resetDescriptorPool(int i) {
-        if (this.descriptorSets != null)
-            this.descriptorSets[i].resetIdx();
+        if (this.descriptorSets != null) this.descriptorSets[i].resetIdx();
 
     }
 
@@ -205,36 +219,16 @@ public abstract class Pipeline {
         this.descriptorSets[frame].bindSets(commandBuffer, uniformBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
     }
 
-    static long createShaderModule(ByteBuffer spirvCode) {
-
-        try (MemoryStack stack = stackPush()) {
-
-            VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack);
-
-            createInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
-            createInfo.pCode(spirvCode);
-
-            LongBuffer pShaderModule = stack.mallocLong(1);
-
-            if (vkCreateShaderModule(DEVICE, createInfo, null, pShaderModule) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create shader module");
-            }
-
-            return pShaderModule.get(0);
-        }
-    }
-
     protected static class DescriptorSets {
         private final Pipeline pipeline;
+        private final long[] boundUBs;
+        private final ImageDescriptor.State[] boundTextures;
+        private final IntBuffer dynamicOffsets;
         private int poolSize = 10;
         private long descriptorPool;
         private LongBuffer sets;
         private long currentSet;
         private int currentIdx = -1;
-
-        private final long[] boundUBs;
-        private final ImageDescriptor.State[] boundTextures;
-        private final IntBuffer dynamicOffsets;
 
         DescriptorSets(Pipeline pipeline) {
             this.pipeline = pipeline;
@@ -256,8 +250,7 @@ public abstract class Pipeline {
                 this.updateUniforms(uniformBuffer);
                 this.updateDescriptorSet(stack, uniformBuffer);
 
-                vkCmdBindDescriptorSets(commandBuffer, bindPoint, pipeline.pipelineLayout,
-                        0, stack.longs(currentSet), dynamicOffsets);
+                vkCmdBindDescriptorSets(commandBuffer, bindPoint, pipeline.pipelineLayout, 0, stack.longs(currentSet), dynamicOffsets);
             }
         }
 
@@ -285,8 +278,7 @@ public abstract class Pipeline {
         }
 
         private boolean needsUpdate(UniformBuffer uniformBuffer) {
-            if (currentIdx == -1)
-                return true;
+            if (currentIdx == -1) return true;
 
             for (int j = 0; j < pipeline.imageDescriptors.size(); ++j) {
                 ImageDescriptor imageDescriptor = pipeline.imageDescriptors.get(j);
@@ -294,8 +286,7 @@ public abstract class Pipeline {
                 long view = imageDescriptor.getImageView(image);
                 long sampler = image.getSampler();
 
-                if (imageDescriptor.isReadOnlyLayout)
-                    image.readOnlyLayout();
+                if (imageDescriptor.isReadOnlyLayout) image.readOnlyLayout();
 
                 if (!this.boundTextures[j].isCurrentState(view, sampler)) {
                     return true;
@@ -306,8 +297,7 @@ public abstract class Pipeline {
                 UBO ubo = pipeline.buffers.get(j);
                 UniformBuffer uniformBufferI = ubo.getUniformBuffer();
 
-                if (uniformBufferI == null)
-                    uniformBufferI = uniformBuffer;
+                if (uniformBufferI == null) uniformBufferI = uniformBuffer;
 
                 if (this.boundUBs[j] != uniformBufferI.getId()) {
                     return true;
@@ -333,8 +323,7 @@ public abstract class Pipeline {
         private void updateDescriptorSet(MemoryStack stack, UniformBuffer uniformBuffer) {
 
             //Check if update is needed
-            if (!needsUpdate(uniformBuffer))
-                return;
+            if (!needsUpdate(uniformBuffer)) return;
 
             this.currentIdx++;
 
@@ -350,8 +339,7 @@ public abstract class Pipeline {
             int i = 0;
             for (UBO ubo : pipeline.buffers) {
                 UniformBuffer ub = ubo.getUniformBuffer();
-                if (ub == null)
-                    ub = uniformBuffer;
+                if (ub == null) ub = uniformBuffer;
                 boundUBs[i] = ub.getId();
 
                 bufferInfos[i] = VkDescriptorBufferInfo.calloc(1, stack);
@@ -379,15 +367,13 @@ public abstract class Pipeline {
                 long sampler = image.getSampler();
                 int layout = imageDescriptor.getLayout();
 
-                if (imageDescriptor.isReadOnlyLayout)
-                    image.readOnlyLayout();
+                if (imageDescriptor.isReadOnlyLayout) image.readOnlyLayout();
 
                 imageInfo[j] = VkDescriptorImageInfo.calloc(1, stack);
                 imageInfo[j].imageLayout(layout);
                 imageInfo[j].imageView(view);
 
-                if (imageDescriptor.useSampler)
-                    imageInfo[j].sampler(sampler);
+                if (imageDescriptor.useSampler) imageInfo[j].sampler(sampler);
 
                 VkWriteDescriptorSet samplerDescriptorWrite = descriptorWrites.get(i);
                 samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
@@ -508,13 +494,21 @@ public abstract class Pipeline {
             this(null, null);
         }
 
-        public GraphicsPipeline createGraphicsPipeline() {
-            Validate.isTrue(this.imageDescriptors != null && this.UBOs != null
-                            && this.vertShaderSPIRV != null && this.fragShaderSPIRV != null,
-                    "Cannot create Pipeline: resources missing");
+        public static int getStageFromString(String s) {
+            return switch (s) {
+                case "vertex" -> VK_SHADER_STAGE_VERTEX_BIT;
+                case "fragment" -> VK_SHADER_STAGE_FRAGMENT_BIT;
+                case "all" -> VK_SHADER_STAGE_ALL_GRAPHICS;
+                case "compute" -> VK_SHADER_STAGE_COMPUTE_BIT;
 
-            if (this.manualUBO != null)
-                this.UBOs.add(this.manualUBO);
+                default -> throw new RuntimeException("cannot identify type..");
+            };
+        }
+
+        public GraphicsPipeline createGraphicsPipeline() {
+            Validate.isTrue(this.imageDescriptors != null && this.UBOs != null && this.vertShaderSPIRV != null && this.fragShaderSPIRV != null, "Cannot create Pipeline: resources missing");
+
+            if (this.manualUBO != null) this.UBOs.add(this.manualUBO);
 
             return new GraphicsPipeline(this);
         }
@@ -603,8 +597,7 @@ public abstract class Pipeline {
                         }
 
                         uniformInfo.setBufferSupplier(uniformSupplier);
-                    }
-                    else {
+                    } else {
                         throw new IllegalStateException("No uniform supplier found for uniform: (%s:%s)".formatted(type2, name));
                     }
                 }
@@ -614,8 +607,7 @@ public abstract class Pipeline {
 
             UBO ubo = builder.buildUBO(binding, type);
 
-            if (binding >= this.nextBinding)
-                this.nextBinding = binding + 1;
+            if (binding >= this.nextBinding) this.nextBinding = binding + 1;
 
             this.UBOs.add(ubo);
         }
@@ -626,8 +618,7 @@ public abstract class Pipeline {
             int stage = getStageFromString(GsonHelper.getAsString(jsonobject, "type"));
             int size = GsonHelper.getAsInt(jsonobject, "size");
 
-            if (binding >= this.nextBinding)
-                this.nextBinding = binding + 1;
+            if (binding >= this.nextBinding) this.nextBinding = binding + 1;
 
             this.manualUBO = new ManualUBO(binding, stage, size);
         }
@@ -658,17 +649,6 @@ public abstract class Pipeline {
             }
 
             this.pushConstants = builder.buildPushConstant();
-        }
-
-        public static int getStageFromString(String s) {
-            return switch (s) {
-                case "vertex" -> VK_SHADER_STAGE_VERTEX_BIT;
-                case "fragment" -> VK_SHADER_STAGE_FRAGMENT_BIT;
-                case "all" -> VK_SHADER_STAGE_ALL_GRAPHICS;
-                case "compute" -> VK_SHADER_STAGE_COMPUTE_BIT;
-
-                default -> throw new RuntimeException("cannot identify type..");
-            };
         }
     }
 }

@@ -1,11 +1,10 @@
 package net.vulkanmod.mixin.render;
 
+import net.vulkanmod.gl.VkGlFramebuffer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-
-import net.vulkanmod.gl.VkGlFramebuffer;
 
 @Mixin(targets = "com.mojang.blaze3d.opengl.DirectStateAccess$Emulated", remap = false)
 public abstract class DirectStateAccessEmulatedMixin {

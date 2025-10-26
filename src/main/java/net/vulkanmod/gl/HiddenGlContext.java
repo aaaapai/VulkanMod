@@ -1,9 +1,8 @@
 package net.vulkanmod.gl;
 
+import net.vulkanmod.Initializer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryUtil;
-
-import net.vulkanmod.Initializer;
 
 /**
  * Creates a tiny off-screen GLFW window so Mojang's GlDevice can bootstrap
@@ -12,7 +11,8 @@ import net.vulkanmod.Initializer;
 public final class HiddenGlContext {
     private static long glWindow = MemoryUtil.NULL;
 
-    private HiddenGlContext() { }
+    private HiddenGlContext() {
+    }
 
     public static long getHandle() {
         if (glWindow != MemoryUtil.NULL) {

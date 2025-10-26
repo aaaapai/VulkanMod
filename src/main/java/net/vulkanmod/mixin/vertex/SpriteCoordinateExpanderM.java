@@ -15,7 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //TODO move
 @Mixin(SpriteCoordinateExpander.class)
 public class SpriteCoordinateExpanderM implements ExtendedVertexBuilder {
-    @Shadow @Final private TextureAtlasSprite sprite;
+    @Shadow
+    @Final
+    private TextureAtlasSprite sprite;
 
     @Unique
     private ExtendedVertexBuilder extDelegate;

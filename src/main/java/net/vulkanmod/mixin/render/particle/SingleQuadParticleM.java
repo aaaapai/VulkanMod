@@ -13,7 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.interfaces.ExtendedVertexBuilder;
 import net.vulkanmod.render.chunk.RenderSection;
 import net.vulkanmod.render.chunk.WorldRenderer;
-import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -25,31 +24,47 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(SingleQuadParticle.class)
 public abstract class SingleQuadParticleM extends Particle {
 
-    @Shadow protected float quadSize;
-
-    @Unique private final Quaternionf quaternionf = new Quaternionf();
-    @Unique private final Vector3f vector3f = new Vector3f();
-
-    @Shadow protected float rCol;
-    @Shadow protected float gCol;
-    @Shadow protected float bCol;
-    @Shadow protected float alpha;
-    @Shadow protected float roll;
-    @Shadow protected float oRoll;
-
-    @Shadow protected abstract float getU0();
-    @Shadow protected abstract float getU1();
-    @Shadow protected abstract float getV0();
-    @Shadow protected abstract float getV1();
-
-    @Shadow public abstract float getQuadSize(float f);
-
-    @Shadow public abstract SingleQuadParticle.FacingCameraMode getFacingCameraMode();
+    @Unique
+    private final Quaternionf quaternionf = new Quaternionf();
+    @Unique
+    private final Vector3f vector3f = new Vector3f();
+    @Shadow
+    protected float quadSize;
+    @Shadow
+    protected float rCol;
+    @Shadow
+    protected float gCol;
+    @Shadow
+    protected float bCol;
+    @Shadow
+    protected float alpha;
+    @Shadow
+    protected float roll;
+    @Shadow
+    protected float oRoll;
 
     protected SingleQuadParticleM(ClientLevel clientLevel, double d, double e, double f, double g, double h, double i) {
         super(clientLevel, d, e, f, g, h, i);
         this.quadSize = 0.1F * (this.random.nextFloat() * 0.5F + 0.5F) * 2.0F;
     }
+
+    @Shadow
+    protected abstract float getU0();
+
+    @Shadow
+    protected abstract float getU1();
+
+    @Shadow
+    protected abstract float getV0();
+
+    @Shadow
+    protected abstract float getV1();
+
+    @Shadow
+    public abstract float getQuadSize(float f);
+
+    @Shadow
+    public abstract SingleQuadParticle.FacingCameraMode getFacingCameraMode();
 
     /**
      * @author
@@ -87,12 +102,12 @@ public abstract class SingleQuadParticleM extends Particle {
         float v1 = this.getV1();
         int light = this.getLightColor(f);
 
-        ExtendedVertexBuilder vertexBuilder = (ExtendedVertexBuilder)vertexConsumer;
+        ExtendedVertexBuilder vertexBuilder = (ExtendedVertexBuilder) vertexConsumer;
         int packedColor = ColorUtil.RGBA.pack(this.rCol, this.gCol, this.bCol, this.alpha);
 
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z,  1.0F, -1.0F, j, u1, v1, packedColor, light);
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z,  1.0F,  1.0F, j, u1, v0, packedColor, light);
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z, -1.0F,  1.0F, j, u0, v0, packedColor, light);
+        this.renderVertex(vertexBuilder, quaternionf, x, y, z, 1.0F, -1.0F, j, u1, v1, packedColor, light);
+        this.renderVertex(vertexBuilder, quaternionf, x, y, z, 1.0F, 1.0F, j, u1, v0, packedColor, light);
+        this.renderVertex(vertexBuilder, quaternionf, x, y, z, -1.0F, 1.0F, j, u0, v0, packedColor, light);
         this.renderVertex(vertexBuilder, quaternionf, x, y, z, -1.0F, -1.0F, j, u0, v1, packedColor, light);
     }
 

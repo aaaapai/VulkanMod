@@ -1,7 +1,5 @@
 package net.vulkanmod.render.chunk.build.biome;
 
-import org.joml.Vector3f;
-
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.LinearCongruentialGenerator;
 import net.minecraft.util.Mth;
@@ -10,15 +8,14 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.vulkanmod.render.chunk.build.RenderRegion;
+import org.joml.Vector3f;
 
 public class BiomeData {
     private static final int ZOOM_LENGTH = 4;
     private static final int BIOMES_PER_SECTION = 4 * 4 * 4;
     private static final int SIZE = RenderRegion.SIZE * BIOMES_PER_SECTION;
-
-    Biome[] biomes = new Biome[SIZE];
     private final long biomeZoomSeed;
-
+    Biome[] biomes = new Biome[SIZE];
     int secX, secY, secZ;
 
     // Cached cell offsets
@@ -31,10 +28,41 @@ public class BiomeData {
         this.secZ = secZ;
     }
 
+    private static Vector3f computeCellOffset(long l, int cellX, int cellY, int cellZ) {
+        long seed;
+        seed = LinearCongruentialGenerator.next(l, cellX);
+        seed = LinearCongruentialGenerator.next(seed, cellY);
+        seed = LinearCongruentialGenerator.next(seed, cellZ);
+        seed = LinearCongruentialGenerator.next(seed, cellX);
+        seed = LinearCongruentialGenerator.next(seed, cellY);
+        seed = LinearCongruentialGenerator.next(seed, cellZ);
+
+        float xOffset = getFiddle(seed);
+        seed = LinearCongruentialGenerator.next(seed, l);
+        float yOffset = getFiddle(seed);
+        seed = LinearCongruentialGenerator.next(seed, l);
+        float zOffset = getFiddle(seed);
+
+        return new Vector3f(xOffset, yOffset, zOffset);
+    }
+
+    private static float getFiddle(long l) {
+        float d = Math.floorMod(l >> 24, 1024) * (1.0f / 1024.0f);
+        return (d - 0.5f) * 0.9f;
+    }
+
+    private static int getRelativeSectionIdx(int x, int y, int z) {
+        return ((x * RenderRegion.WIDTH * RenderRegion.WIDTH) + (y * RenderRegion.WIDTH) + z) * BIOMES_PER_SECTION;
+    }
+
+    private static int getRelativeIdx(int x, int y, int z) {
+        return (x * ZOOM_LENGTH * ZOOM_LENGTH) + (y * ZOOM_LENGTH) + z;
+    }
+
     public void getBiomeData(Level level, LevelChunkSection chunkSection, int secX, int secY, int secZ) {
         Biome defaultValue = level.registryAccess()
-                                  .lookupOrThrow(Registries.BIOME)
-                                  .getValueOrThrow(Biomes.PLAINS);
+                .lookupOrThrow(Registries.BIOME)
+                .getValueOrThrow(Biomes.PLAINS);
 
         int baseIdx = getRelativeSectionIdx(secX, secY, secZ);
 
@@ -46,9 +74,8 @@ public class BiomeData {
 
                     if (chunkSection != null) {
                         biomes[idx] = chunkSection.getNoiseBiome(x, y, z)
-                                                  .value();
-                    }
-                    else {
+                                .value();
+                    } else {
                         biomes[idx] = defaultValue;
                     }
 
@@ -117,37 +144,6 @@ public class BiomeData {
         }
 
         return this.offsets[idx];
-    }
-
-    private static Vector3f computeCellOffset(long l, int cellX, int cellY, int cellZ) {
-        long seed;
-        seed = LinearCongruentialGenerator.next(l, cellX);
-        seed = LinearCongruentialGenerator.next(seed, cellY);
-        seed = LinearCongruentialGenerator.next(seed, cellZ);
-        seed = LinearCongruentialGenerator.next(seed, cellX);
-        seed = LinearCongruentialGenerator.next(seed, cellY);
-        seed = LinearCongruentialGenerator.next(seed, cellZ);
-
-        float xOffset = getFiddle(seed);
-        seed = LinearCongruentialGenerator.next(seed, l);
-        float yOffset = getFiddle(seed);
-        seed = LinearCongruentialGenerator.next(seed, l);
-        float zOffset = getFiddle(seed);
-
-        return new Vector3f(xOffset, yOffset, zOffset);
-    }
-
-    private static float getFiddle(long l) {
-        float d = Math.floorMod(l >> 24, 1024) * (1.0f / 1024.0f);
-        return (d - 0.5f) * 0.9f;
-    }
-
-    private static int getRelativeSectionIdx(int x, int y, int z) {
-        return ((x * RenderRegion.WIDTH * RenderRegion.WIDTH) + (y * RenderRegion.WIDTH) + z) * BIOMES_PER_SECTION;
-    }
-
-    private static int getRelativeIdx(int x, int y, int z) {
-        return (x * ZOOM_LENGTH * ZOOM_LENGTH) + (y * ZOOM_LENGTH) + z;
     }
 
 }

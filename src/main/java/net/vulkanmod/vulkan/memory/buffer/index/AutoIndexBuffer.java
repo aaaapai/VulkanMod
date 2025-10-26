@@ -1,14 +1,13 @@
 package net.vulkanmod.vulkan.memory.buffer.index;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
-
-import org.lwjgl.system.MemoryUtil;
-
 import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
+import org.lwjgl.system.MemoryUtil;
+
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 public class AutoIndexBuffer {
     public static final int U16_MAX_VERTEX_COUNT = 65536;
@@ -22,59 +21,6 @@ public class AutoIndexBuffer {
         this.drawType = type;
 
         createIndexBuffer(vertexCount);
-    }
-
-    private void createIndexBuffer(int vertexCount) {
-        this.vertexCount = vertexCount;
-        ByteBuffer buffer;
-
-        IndexBuffer.IndexType indexType = IndexBuffer.IndexType.UINT16;
-
-        if (vertexCount > U16_MAX_VERTEX_COUNT &&
-            (this.drawType == DrawType.QUADS || this.drawType == DrawType.LINES))
-        {
-            indexType = IndexBuffer.IndexType.UINT32;
-        }
-
-        switch (this.drawType) {
-            case QUADS -> {
-                if (indexType == IndexBuffer.IndexType.UINT16)
-                    buffer = genQuadIndices(vertexCount);
-                else {
-                    buffer = genIntQuadIndices(vertexCount);
-                }
-            }
-            case TRIANGLE_FAN -> buffer = genTriangleFanIndices(vertexCount);
-            case TRIANGLE_STRIP -> buffer = genTriangleStripIndices(vertexCount);
-            case LINES -> buffer = genLinesIndices(vertexCount);
-            case DEBUG_LINE_STRIP -> buffer = genDebugLineStripIndices(vertexCount);
-            default -> throw new IllegalArgumentException("Unsupported drawType: %s".formatted(this.drawType));
-        }
-
-        int size = buffer.capacity();
-        this.indexBuffer = new IndexBuffer(size, MemoryTypes.GPU_MEM, indexType);
-        this.indexBuffer.copyBuffer(buffer, buffer.remaining());
-
-        MemoryUtil.memFree(buffer);
-    }
-
-    public void checkCapacity(int vertexCount) {
-        if(vertexCount > this.vertexCount) {
-            int newVertexCount = this.vertexCount * 2;
-            Initializer.LOGGER.info("Reallocating AutoIndexBuffer from {} to {}", this.vertexCount, newVertexCount);
-
-            this.indexBuffer.scheduleFree();
-            createIndexBuffer(newVertexCount);
-        }
-    }
-
-    public IndexBuffer getIndexBuffer() { return this.indexBuffer; }
-
-    public void freeBuffer() {
-        this.indexBuffer.scheduleFree();
-    }
-    public int getIndexCount(int vertexCount) {
-        return getIndexCount(this.drawType, vertexCount);
     }
 
     public static int getIndexCount(DrawType drawType, int vertexCount) {
@@ -108,7 +54,7 @@ public class AutoIndexBuffer {
         ShortBuffer idxs = buffer.asShortBuffer();
 
         int j = 0;
-        for(int i = 0; i < vertexCount; i += 4) {
+        for (int i = 0; i < vertexCount; i += 4) {
             idxs.put(j + 0, (short) (i));
             idxs.put(j + 1, (short) (i + 1));
             idxs.put(j + 2, (short) (i + 2));
@@ -130,7 +76,7 @@ public class AutoIndexBuffer {
         IntBuffer idxs = buffer.asIntBuffer();
 
         int j = 0;
-        for(int i = 0; i < vertexCount; i += 4) {
+        for (int i = 0; i < vertexCount; i += 4) {
             idxs.put(j + 0, (i));
             idxs.put(j + 1, (i + 1));
             idxs.put(j + 2, (i + 2));
@@ -152,7 +98,7 @@ public class AutoIndexBuffer {
         ShortBuffer idxs = buffer.asShortBuffer();
 
         int j = 0;
-        for(int i = 0; i < vertexCount; i += 4) {
+        for (int i = 0; i < vertexCount; i += 4) {
             idxs.put(j + 0, (short) (i));
             idxs.put(j + 1, (short) (i + 1));
             idxs.put(j + 2, (short) (i + 2));
@@ -220,6 +166,61 @@ public class AutoIndexBuffer {
 
     public static int roundUpToDivisible(int n, int d) {
         return ((n + d - 1) / d) * d;
+    }
+
+    private void createIndexBuffer(int vertexCount) {
+        this.vertexCount = vertexCount;
+        ByteBuffer buffer;
+
+        IndexBuffer.IndexType indexType = IndexBuffer.IndexType.UINT16;
+
+        if (vertexCount > U16_MAX_VERTEX_COUNT &&
+                (this.drawType == DrawType.QUADS || this.drawType == DrawType.LINES)) {
+            indexType = IndexBuffer.IndexType.UINT32;
+        }
+
+        switch (this.drawType) {
+            case QUADS -> {
+                if (indexType == IndexBuffer.IndexType.UINT16)
+                    buffer = genQuadIndices(vertexCount);
+                else {
+                    buffer = genIntQuadIndices(vertexCount);
+                }
+            }
+            case TRIANGLE_FAN -> buffer = genTriangleFanIndices(vertexCount);
+            case TRIANGLE_STRIP -> buffer = genTriangleStripIndices(vertexCount);
+            case LINES -> buffer = genLinesIndices(vertexCount);
+            case DEBUG_LINE_STRIP -> buffer = genDebugLineStripIndices(vertexCount);
+            default -> throw new IllegalArgumentException("Unsupported drawType: %s".formatted(this.drawType));
+        }
+
+        int size = buffer.capacity();
+        this.indexBuffer = new IndexBuffer(size, MemoryTypes.GPU_MEM, indexType);
+        this.indexBuffer.copyBuffer(buffer, buffer.remaining());
+
+        MemoryUtil.memFree(buffer);
+    }
+
+    public void checkCapacity(int vertexCount) {
+        if (vertexCount > this.vertexCount) {
+            int newVertexCount = this.vertexCount * 2;
+            Initializer.LOGGER.info("Reallocating AutoIndexBuffer from {} to {}", this.vertexCount, newVertexCount);
+
+            this.indexBuffer.scheduleFree();
+            createIndexBuffer(newVertexCount);
+        }
+    }
+
+    public IndexBuffer getIndexBuffer() {
+        return this.indexBuffer;
+    }
+
+    public void freeBuffer() {
+        this.indexBuffer.scheduleFree();
+    }
+
+    public int getIndexCount(int vertexCount) {
+        return getIndexCount(this.drawType, vertexCount);
     }
 
     public enum DrawType {

@@ -1,8 +1,8 @@
 package net.vulkanmod.render.material;
 
-import java.util.Objects;
-
 import net.vulkanmod.util.TriState;
+
+import java.util.Objects;
 
 /**
  * Immutable material descriptor used by the new rendering path.
@@ -69,12 +69,12 @@ public final class RenderMaterial {
         }
 
         return RenderMaterialRegistry.intern(new RenderMaterial(this.blendMode,
-                                                                this.disableColorIndex,
-                                                                this.emissive,
-                                                                disable,
-                                                                this.ambientOcclusion,
-                                                                this.glint,
-                                                                this.shadeMode));
+                this.disableColorIndex,
+                this.emissive,
+                disable,
+                this.ambientOcclusion,
+                this.glint,
+                this.shadeMode));
     }
 
     @Override
@@ -88,12 +88,12 @@ public final class RenderMaterial {
         }
 
         return this.disableColorIndex == that.disableColorIndex
-               && this.emissive == that.emissive
-               && this.disableDiffuse == that.disableDiffuse
-               && this.blendMode == that.blendMode
-               && this.ambientOcclusion == that.ambientOcclusion
-               && this.glint == that.glint
-               && this.shadeMode == that.shadeMode;
+                && this.emissive == that.emissive
+                && this.disableDiffuse == that.disableDiffuse
+                && this.blendMode == that.blendMode
+                && this.ambientOcclusion == that.ambientOcclusion
+                && this.glint == that.glint
+                && this.shadeMode == that.shadeMode;
     }
 
     @Override

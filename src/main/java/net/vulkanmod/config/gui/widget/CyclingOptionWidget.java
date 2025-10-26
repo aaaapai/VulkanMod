@@ -24,7 +24,7 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
 
     @Override
     protected int getYImage(boolean hovered) {
-        return  0;
+        return 0;
     }
 
     public void renderControls(double mouseX, double mouseY) {
@@ -70,8 +70,7 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
     public void onClick(double mouseX, double mouseY) {
         if (leftButton.isHovered(mouseX, mouseY)) {
             option.prevValue();
-        }
-        else if (rightButton.isHovered(mouseX, mouseY)) {
+        } else if (rightButton.isHovered(mouseX, mouseY)) {
             option.nextValue();
         }
     }
@@ -87,13 +86,13 @@ public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
     }
 
     @Override
-    public void setFocused(boolean bl) {
-        this.focused = bl;
+    public boolean isFocused() {
+        return this.focused;
     }
 
     @Override
-    public boolean isFocused() {
-        return this.focused;
+    public void setFocused(boolean bl) {
+        this.focused = bl;
     }
 
     class Button {
