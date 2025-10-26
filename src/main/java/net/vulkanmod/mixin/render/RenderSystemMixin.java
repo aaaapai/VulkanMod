@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -68,9 +69,6 @@ public abstract class RenderSystemMixin {
     @Inject(method = "setShaderFog", at = @At("TAIL"))
     private static void captureFog(GpuBufferSlice buffer, CallbackInfo ci) {
         shaderFog = buffer;
-        if (buffer != null) {
-            updateFog(buffer);
-        }
     }
 
     @Inject(method = "setShaderLights", at = @At("TAIL"))
@@ -91,6 +89,7 @@ public abstract class RenderSystemMixin {
         VRenderSystem.setTextureMatrix(textureMatrix);
     }
 
+    @Unique
     private static void updateProjection(GpuBufferSlice slice) {
         try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
             FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -110,6 +109,7 @@ public abstract class RenderSystemMixin {
         }
     }
 
+    @Unique
     private static void updateLights(GpuBufferSlice slice) {
         try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
             FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -120,25 +120,6 @@ public abstract class RenderSystemMixin {
             float ly1 = buffer.get(5);
             float lz1 = buffer.get(6);
             VRenderSystem.setShaderLights(lx0, ly0, lz0, lx1, ly1, lz1);
-        }
-    }
-
-    private static void updateFog(GpuBufferSlice slice) {
-        try (GpuBuffer.MappedView view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(slice, true, false)) {
-            FloatBuffer buffer = view.data().order(ByteOrder.nativeOrder()).asFloatBuffer();
-            float r = buffer.get(0);
-            float g = buffer.get(1);
-            float b = buffer.get(2);
-            float a = buffer.get(3);
-            float environmentalStart = buffer.get(4);
-            float renderStart = buffer.get(5);
-            float environmentalEnd = buffer.get(6);
-            float renderEnd = buffer.get(7);
-            float skyEnd = buffer.get(8);
-            float cloudEnd = buffer.get(9);
-            VRenderSystem.setShaderFogColor(r, g, b, a);
-            VRenderSystem.setFogParameters(environmentalStart, renderStart, environmentalEnd, renderEnd, skyEnd, cloudEnd);
-            VRenderSystem.setFogShapeIndex(0);
         }
     }
 }

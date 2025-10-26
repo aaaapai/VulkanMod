@@ -76,6 +76,10 @@ public abstract class PipelineManager {
         RayTracingPipeline.Builder pipelineBuilder = new RayTracingPipeline.Builder(configName);
 
         JsonObject config = ShaderLoadUtil.getJsonConfig("raytracing", configName);
+        if (config == null) {
+            return null;
+        }
+
         pipelineBuilder.parseBindings(config);
 
         ShaderLoadUtil.loadShader(pipelineBuilder, configName, "raytracing", SPIRVUtils.ShaderKind.RAYGEN_SHADER);
@@ -118,7 +122,9 @@ public abstract class PipelineManager {
         terrainShader.cleanUp();
         fastBlitPipeline.cleanUp();
         cloudsPipeline.cleanUp();
-        rayTracingPipeline.cleanUp();
+        if (rayTracingPipeline != null) {
+            rayTracingPipeline.cleanUp();
+        }
         dynamicPipelines.values().forEach(GraphicsPipeline::cleanUp);
         dynamicPipelines.clear();
     }

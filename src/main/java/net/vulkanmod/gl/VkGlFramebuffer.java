@@ -1,5 +1,11 @@
 package net.vulkanmod.gl;
 
+import static org.lwjgl.vulkan.VK10.VK_ATTACHMENT_LOAD_OP_LOAD;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
+
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
@@ -7,11 +13,6 @@ import net.vulkanmod.vulkan.framebuffer.Framebuffer;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
 import net.vulkanmod.vulkan.texture.ImageUtil;
 import net.vulkanmod.vulkan.texture.VulkanImage;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-
-import static org.lwjgl.vulkan.VK11.VK_ATTACHMENT_LOAD_OP_LOAD;
-import static org.lwjgl.vulkan.VK11.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 public class VkGlFramebuffer {
     private static int idCounter = 1;
@@ -154,6 +155,15 @@ public class VkGlFramebuffer {
     }
 
     void setAttachmentTexture(int attachment, int texture) {
+        if (texture == 0) {
+            switch (attachment) {
+                case GL30.GL_COLOR_ATTACHMENT0 -> this.colorAttachment = null;
+                case GL30.GL_DEPTH_ATTACHMENT -> this.depthAttachment = null;
+                default -> {}
+            }
+            return;
+        }
+
         VkGlTexture glTexture = VkGlTexture.getTexture(texture);
 
         if (glTexture == null)

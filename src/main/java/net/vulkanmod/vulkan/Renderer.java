@@ -624,6 +624,9 @@ public class Renderer {
 
     private void doRayTracing() {
         RayTracingPipeline pipeline = PipelineManager.getRayTracingPipeline();
+        if (pipeline == null) {
+            return;
+        }
         bindRayTracingPipeline(pipeline);
 
         uploadAndBindUBOs(pipeline);

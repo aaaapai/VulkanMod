@@ -9,8 +9,10 @@ import net.vulkanmod.vulkan.VRenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.ByteBuffer;
 
@@ -185,21 +187,10 @@ public class GlStateManagerM {
         VkGlTexture.activeTexture(texture);
     }
 
-    /**
-     * @author
-     * @reason Apply texture parameters to Vulkan sampler state.
-     */
-    @Overwrite(remap = false)
-    public static void _texParameter(int target, int pname, int param) {
+    @Inject(method = "_texParameter(III)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void vulkanmod$texParameterInt(int target, int pname, int param, CallbackInfo ci) {
         VkGlTexture.texParameteri(target, pname, param);
-    }
-
-    /**
-     * @author
-     * @reason No-op placeholder for float texture parameters not supported yet.
-     */
-    @Overwrite(remap = false)
-    public static void _texParameter(int target, int pname, float param) {
+        ci.cancel();
     }
 
     /**
