@@ -3,7 +3,7 @@ description: Suggest an idea for this project
 body:
   - type: markdown
     attributes:
-      value: >-
+      value: >-        
         - **Check if another similar request has already been made before creating a new one.**
 
   - type: textarea
