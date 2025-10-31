@@ -1,12 +1,11 @@
 package net.vulkanmod.vulkan.pass;
 
 import net.vulkanmod.gl.VkGlTexture;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 public interface MainPass {
 
-    void begin(VkCommandBuffer commandBuffer, MemoryStack stack);
+    void begin(VkCommandBuffer commandBuffer);
 
     void end(VkCommandBuffer commandBuffer);
 

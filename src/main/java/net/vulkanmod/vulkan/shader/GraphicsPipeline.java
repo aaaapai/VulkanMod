@@ -43,7 +43,7 @@ public class GraphicsPipeline extends Pipeline {
         createShaderModules(builder.vertShaderSPIRV, builder.fragShaderSPIRV);
 
         if (builder.renderPass != null)
-            graphicsPipelines.computeIfAbsent(PipelineState.DEFAULT, this::createGraphicsPipeline);
+            graphicsPipelines.computeLongIfAbsent(PipelineState.DEFAULT, this::createGraphicsPipeline);
 
         createDescriptorSets(Renderer.getFramesNum());
 
@@ -183,7 +183,7 @@ public class GraphicsPipeline extends Pipeline {
     }
 
     public long getHandle(PipelineState state) {
-        return graphicsPipelines.computeIfAbsent(state, this::createGraphicsPipeline);
+        return graphicsPipelines.computeLongIfAbsent(state, this::createGraphicsPipeline);
     }
 
     private long createGraphicsPipeline(PipelineState state) {

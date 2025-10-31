@@ -4,9 +4,23 @@ import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.memory.MemoryManager;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
+import net.vulkanmod.vulkan.texture.VulkanImage;
+import net.vulkanmod.vulkan.util.VUtil;
+import org.lwjgl.vulkan.KHRDynamicRendering;
+import org.lwjgl.vulkan.VkAttachmentDescription;
+import org.lwjgl.vulkan.VkAttachmentReference;
+import org.lwjgl.vulkan.VkClearValue;
+import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.VkRect2D;
+import org.lwjgl.vulkan.VkRenderPassBeginInfo;
+import org.lwjgl.vulkan.VkRenderPassCreateInfo;
+import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
+import org.lwjgl.vulkan.VkRenderingInfo;
+import org.lwjgl.vulkan.VkSubpassDependency;
+import org.lwjgl.vulkan.VkSubpassDescription;
+import org.lwjgl.vulkan.VkViewport;
 
+import java.lang.foreign.Arena;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -43,91 +57,134 @@ public class RenderPass {
     }
 
     private void createRenderPass() {
+        try (Arena arena = Arena.ofConfined()) {
+            VkAttachmentDescription.Buffer attachments = VUtil.structBuffer(
+                arena,
+                VkAttachmentDescription.SIZEOF,
+                VkAttachmentDescription.ALIGNOF,
+                attachmentCount,
+                VkAttachmentDescription::create
+            );
+            VkAttachmentReference.Buffer attachmentRefs = attachmentCount > 0
+                ? VUtil.structBuffer(arena, VkAttachmentReference.SIZEOF, VkAttachmentReference.ALIGNOF, attachmentCount, VkAttachmentReference::create)
+                : null;
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(attachmentCount, stack);
-            VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.calloc(attachmentCount, stack);
-
-            VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
+            VkSubpassDescription.Buffer subpass = VUtil.structBuffer(
+                arena,
+                VkSubpassDescription.SIZEOF,
+                VkSubpassDescription.ALIGNOF,
+                1,
+                VkSubpassDescription::create
+            );
             subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
-            int i = 0;
+            int attachmentIndex = 0;
 
-            // Color attachment
             if (colorAttachmentInfo != null) {
-                VkAttachmentDescription colorAttachment = attachments.get(i);
+                VkAttachmentDescription colorAttachment = attachments.get(attachmentIndex);
                 colorAttachment.format(colorAttachmentInfo.format)
-                        .samples(VK_SAMPLE_COUNT_1_BIT)
-                        .loadOp(colorAttachmentInfo.loadOp)
-                        .storeOp(colorAttachmentInfo.storeOp)
-                        .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                        .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                        .initialLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-                        .finalLayout(colorAttachmentInfo.finalLayout);
+                    .samples(VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(colorAttachmentInfo.loadOp)
+                    .storeOp(colorAttachmentInfo.storeOp)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                    .finalLayout(colorAttachmentInfo.finalLayout);
 
-                VkAttachmentReference colorAttachmentRef = attachmentRefs.get(0)
-                        .attachment(0)
-                        .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                VkAttachmentReference.Buffer colorRef = VUtil.structBuffer(
+                    arena,
+                    VkAttachmentReference.SIZEOF,
+                    VkAttachmentReference.ALIGNOF,
+                    1,
+                    VkAttachmentReference::create
+                );
+                colorRef.get(0)
+                    .attachment(attachmentIndex)
+                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 subpass.colorAttachmentCount(1);
-                subpass.pColorAttachments(VkAttachmentReference.calloc(1, stack).put(0, colorAttachmentRef));
-
-                ++i;
+                subpass.pColorAttachments(colorRef);
+                attachmentIndex++;
             }
 
-            // Depth-Stencil attachment
             if (depthAttachmentInfo != null) {
-                VkAttachmentDescription depthAttachment = attachments.get(i);
+                VkAttachmentDescription depthAttachment = attachments.get(attachmentIndex);
                 depthAttachment.format(depthAttachmentInfo.format)
-                        .samples(VK_SAMPLE_COUNT_1_BIT)
-                        .loadOp(depthAttachmentInfo.loadOp)
-                        .storeOp(depthAttachmentInfo.storeOp)
-                        .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                        .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                        .initialLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-                        .finalLayout(depthAttachmentInfo.finalLayout);
+                    .samples(VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(depthAttachmentInfo.loadOp)
+                    .storeOp(depthAttachmentInfo.storeOp)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                    .finalLayout(depthAttachmentInfo.finalLayout);
 
-                VkAttachmentReference depthAttachmentRef = attachmentRefs.get(1)
-                        .attachment(1)
-                        .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+                VkAttachmentReference.Buffer depthRef = VUtil.structBuffer(
+                    arena,
+                    VkAttachmentReference.SIZEOF,
+                    VkAttachmentReference.ALIGNOF,
+                    1,
+                    VkAttachmentReference::create
+                );
+                depthRef.get(0)
+                    .attachment(attachmentIndex)
+                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-                subpass.pDepthStencilAttachment(depthAttachmentRef);
+                subpass.pDepthStencilAttachment(depthRef.get(0));
+                attachmentIndex++;
             }
 
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
-            renderPassInfo.sType$Default()
-                    .pAttachments(attachments)
-                    .pSubpasses(subpass);
+            VkRenderPassCreateInfo renderPassInfo = VUtil.struct(
+                arena,
+                VkRenderPassCreateInfo.SIZEOF,
+                VkRenderPassCreateInfo.ALIGNOF,
+                VkRenderPassCreateInfo::create
+            );
+            renderPassInfo.sType$Default();
+            renderPassInfo.pAttachments(attachments);
+            renderPassInfo.pSubpasses(subpass);
 
-            //Layout transition subpass depency
-            switch (colorAttachmentInfo.finalLayout) {
-                case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> {
-                    VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.calloc(1, stack);
-                    subpassDependencies.get(0)
+            if (colorAttachmentInfo != null) {
+                switch (colorAttachmentInfo.finalLayout) {
+                    case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> {
+                        VkSubpassDependency.Buffer dependency = VUtil.structBuffer(
+                            arena,
+                            VkSubpassDependency.SIZEOF,
+                            VkSubpassDependency.ALIGNOF,
+                            1,
+                            VkSubpassDependency::create
+                        );
+                        dependency.get(0)
                             .srcSubpass(VK_SUBPASS_EXTERNAL)
                             .dstSubpass(0)
                             .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
                             .dstStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
                             .srcAccessMask(0)
                             .dstAccessMask(0);
-
-                    renderPassInfo.pDependencies(subpassDependencies);
-                }
-                case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL -> {
-                    VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.calloc(1, stack);
-                    subpassDependencies.get(0)
+                        renderPassInfo.pDependencies(dependency);
+                    }
+                    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL -> {
+                        VkSubpassDependency.Buffer dependency = VUtil.structBuffer(
+                            arena,
+                            VkSubpassDependency.SIZEOF,
+                            VkSubpassDependency.ALIGNOF,
+                            1,
+                            VkSubpassDependency::create
+                        );
+                        dependency.get(0)
                             .srcSubpass(0)
                             .dstSubpass(VK_SUBPASS_EXTERNAL)
                             .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
                             .dstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
                             .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
                             .dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
-
-                    renderPassInfo.pDependencies(subpassDependencies);
+                        renderPassInfo.pDependencies(dependency);
+                    }
+                    default -> {
+                    }
                 }
             }
 
-            LongBuffer pRenderPass = stack.mallocLong(1);
+            LongBuffer pRenderPass = VUtil.allocateLongBuffer(arena, 1);
 
             if (vkCreateRenderPass(Vulkan.getVkDevice(), renderPassInfo, null, pRenderPass) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create render pass");
@@ -137,27 +194,52 @@ public class RenderPass {
         }
     }
 
-    public void beginRenderPass(VkCommandBuffer commandBuffer, long framebufferId, MemoryStack stack) {
+    public void beginRenderPass(VkCommandBuffer commandBuffer, long framebufferId, Arena arena) {
 
         if (colorAttachmentInfo != null
-                && framebuffer.getColorAttachment().getCurrentLayout() != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-            framebuffer.getColorAttachment().transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                && framebuffer.getColorAttachment().getCurrentLayout() != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            VulkanImage.transitionImageLayout(arena, commandBuffer, framebuffer.getColorAttachment(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        }
         if (depthAttachmentInfo != null
-                && framebuffer.getDepthAttachment().getCurrentLayout() != VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-            framebuffer.getDepthAttachment().transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+                && framebuffer.getDepthAttachment().getCurrentLayout() != VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            VulkanImage.transitionImageLayout(arena, commandBuffer, framebuffer.getDepthAttachment(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        }
 
-        VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+        VkRenderPassBeginInfo renderPassInfo = VUtil.struct(
+            arena,
+            VkRenderPassBeginInfo.SIZEOF,
+            VkRenderPassBeginInfo.ALIGNOF,
+            VkRenderPassBeginInfo::create
+        );
         renderPassInfo.sType$Default();
         renderPassInfo.renderPass(this.id);
         renderPassInfo.framebuffer(framebufferId);
 
-        VkRect2D renderArea = VkRect2D.malloc(stack);
+        VkRect2D renderArea = VUtil.struct(
+            arena,
+            VkRect2D.SIZEOF,
+            VkRect2D.ALIGNOF,
+            VkRect2D::create
+        );
         renderArea.offset().set(0, 0);
         renderArea.extent().set(framebuffer.getWidth(), framebuffer.getHeight());
         renderPassInfo.renderArea(renderArea);
 
-        VkClearValue.Buffer clearValues = VkClearValue.malloc(2, stack);
-        clearValues.get(0).color().float32(VRenderSystem.clearColor);
+        VkClearValue.Buffer clearValues = VUtil.structBuffer(
+            arena,
+            VkClearValue.SIZEOF,
+            VkClearValue.ALIGNOF,
+            2,
+            VkClearValue::create
+        );
+        float clearR = VRenderSystem.clearColor.get(0);
+        float clearG = VRenderSystem.clearColor.get(1);
+        float clearB = VRenderSystem.clearColor.get(2);
+        float clearA = VRenderSystem.clearColor.get(3);
+        clearValues.get(0).color().float32(0, clearR);
+        clearValues.get(0).color().float32(1, clearG);
+        clearValues.get(0).color().float32(2, clearB);
+        clearValues.get(0).color().float32(3, clearA);
         clearValues.get(1).depthStencil().set(1.0f, 0);
 
         renderPassInfo.pClearValues(clearValues);
@@ -179,23 +261,48 @@ public class RenderPass {
         Renderer.getInstance().setBoundRenderPass(null);
     }
 
-    public void beginDynamicRendering(VkCommandBuffer commandBuffer, MemoryStack stack) {
-        VkRect2D renderArea = VkRect2D.malloc(stack);
+    public void beginDynamicRendering(VkCommandBuffer commandBuffer, Arena arena, Framebuffer framebuffer) {
+        VkRect2D renderArea = VUtil.struct(
+            arena,
+            VkRect2D.SIZEOF,
+            VkRect2D.ALIGNOF,
+            VkRect2D::create
+        );
         renderArea.offset().set(0, 0);
         renderArea.extent().set(framebuffer.getWidth(), framebuffer.getHeight());
 
-        VkClearValue.Buffer clearValues = VkClearValue.malloc(2, stack);
-        clearValues.get(0).color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+        VkClearValue.Buffer clearValues = VUtil.structBuffer(
+            arena,
+            VkClearValue.SIZEOF,
+            VkClearValue.ALIGNOF,
+            2,
+            VkClearValue::create
+        );
+        clearValues.get(0).color().float32(0, 0.0f);
+        clearValues.get(0).color().float32(1, 0.0f);
+        clearValues.get(0).color().float32(2, 0.0f);
+        clearValues.get(0).color().float32(3, 1.0f);
         clearValues.get(1).depthStencil().set(1.0f, 0);
 
-        VkRenderingInfo renderingInfo = VkRenderingInfo.calloc(stack);
+        VkRenderingInfo renderingInfo = VUtil.struct(
+            arena,
+            VkRenderingInfo.SIZEOF,
+            VkRenderingInfo.ALIGNOF,
+            VkRenderingInfo::create
+        );
         renderingInfo.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_INFO_KHR);
         renderingInfo.renderArea(renderArea);
         renderingInfo.layerCount(1);
 
         // Color attachment
         if (colorAttachmentInfo != null) {
-            VkRenderingAttachmentInfo.Buffer colorAttachment = VkRenderingAttachmentInfo.calloc(1, stack);
+            VkRenderingAttachmentInfo.Buffer colorAttachment = VUtil.structBuffer(
+                arena,
+                VkRenderingAttachmentInfo.SIZEOF,
+                VkRenderingAttachmentInfo.ALIGNOF,
+                1,
+                VkRenderingAttachmentInfo::create
+            );
             colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
             colorAttachment.imageView(framebuffer.getColorAttachment().getImageView());
             colorAttachment.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -208,7 +315,12 @@ public class RenderPass {
 
         //Depth attachment
         if (depthAttachmentInfo != null) {
-            VkRenderingAttachmentInfo depthAttachment = VkRenderingAttachmentInfo.calloc(stack);
+            VkRenderingAttachmentInfo depthAttachment = VUtil.struct(
+                arena,
+                VkRenderingAttachmentInfo.SIZEOF,
+                VkRenderingAttachmentInfo.ALIGNOF,
+                VkRenderingAttachmentInfo::create
+            );
             depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
             depthAttachment.imageView(framebuffer.getDepthAttachment().getImageView());
             depthAttachment.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);

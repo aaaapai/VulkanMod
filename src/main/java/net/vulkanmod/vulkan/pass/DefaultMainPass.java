@@ -9,10 +9,9 @@ import net.vulkanmod.vulkan.framebuffer.RenderPass;
 import net.vulkanmod.vulkan.framebuffer.SwapChain;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
 import net.vulkanmod.vulkan.texture.VulkanImage;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkRect2D;
-import org.lwjgl.vulkan.VkViewport;
+
+import java.lang.foreign.Arena;
 
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
@@ -55,28 +54,26 @@ public class DefaultMainPass implements MainPass {
     }
 
     @Override
-    public void begin(VkCommandBuffer commandBuffer, MemoryStack stack) {
+    public void begin(VkCommandBuffer commandBuffer) {
         SwapChain framebuffer = Renderer.getInstance().getSwapChain();
 
-        VulkanImage colorAttachment = framebuffer.getColorAttachment();
-        colorAttachment.transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        try (Arena arena = Arena.ofConfined()) {
+            VulkanImage colorAttachment = framebuffer.getColorAttachment();
+            VulkanImage.transitionImageLayout(arena, commandBuffer, colorAttachment, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        }
 
-        framebuffer.beginRenderPass(commandBuffer, this.mainRenderPass, stack);
-
-        VkViewport.Buffer pViewport = framebuffer.viewport(stack);
-        vkCmdSetViewport(commandBuffer, 0, pViewport);
-
-        VkRect2D.Buffer pScissor = framebuffer.scissor(stack);
-        vkCmdSetScissor(commandBuffer, 0, pScissor);
+        framebuffer.beginRenderPass(commandBuffer, this.mainRenderPass);
+        framebuffer.applyViewport(commandBuffer);
+        framebuffer.applyScissor(commandBuffer);
     }
 
     @Override
     public void end(VkCommandBuffer commandBuffer) {
         Renderer.getInstance().endRenderPass(commandBuffer);
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
+        try (Arena arena = Arena.ofConfined()) {
             SwapChain framebuffer = Renderer.getInstance().getSwapChain();
-            framebuffer.getColorAttachment().transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            VulkanImage.transitionImageLayout(arena, commandBuffer, framebuffer.getColorAttachment(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
         }
 
         int result = vkEndCommandBuffer(commandBuffer);
@@ -107,10 +104,7 @@ public class DefaultMainPass implements MainPass {
 
         Renderer.getInstance().endRenderPass(commandBuffer);
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            swapChain.beginRenderPass(commandBuffer, this.auxRenderPass, stack);
-        }
-
+        swapChain.beginRenderPass(commandBuffer, this.auxRenderPass);
     }
 
     @Override
@@ -123,8 +117,8 @@ public class DefaultMainPass implements MainPass {
         if (boundRenderPass == this.mainRenderPass || boundRenderPass == this.auxRenderPass)
             Renderer.getInstance().endRenderPass(commandBuffer);
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            swapChain.getColorAttachment().transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        try (Arena arena = Arena.ofConfined()) {
+            VulkanImage.transitionImageLayout(arena, commandBuffer, swapChain.getColorAttachment(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
         VTextureSelector.bindTexture(swapChain.getColorAttachment());

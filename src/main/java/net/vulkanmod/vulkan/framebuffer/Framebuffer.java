@@ -5,15 +5,28 @@ import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.texture.VulkanImage;
+import net.vulkanmod.vulkan.util.VUtil;
 import org.apache.commons.lang3.Validate;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.VkFramebufferCreateInfo;
+import org.lwjgl.vulkan.VkRect2D;
+import org.lwjgl.vulkan.VkDevice;
+import org.lwjgl.vulkan.VkViewport;
 
+import java.lang.foreign.Arena;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
 import static net.vulkanmod.vulkan.Vulkan.DYNAMIC_RENDERING;
-import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_UNORM;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_SAMPLED_BIT;
+import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK10.vkCmdSetScissor;
+import static org.lwjgl.vulkan.VK10.vkCmdSetViewport;
+import static org.lwjgl.vulkan.VK10.vkCreateFramebuffer;
+import static org.lwjgl.vulkan.VK10.vkDestroyFramebuffer;
 
 public class Framebuffer {
     public static final int DEFAULT_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
@@ -90,21 +103,25 @@ public class Framebuffer {
     }
 
     private long createFramebuffer(RenderPass renderPass) {
+        try (Arena arena = Arena.ofConfined()) {
+            LongBuffer attachments = colorAttachment != null && depthAttachment != null
+                ? VUtil.longBuffer(arena, colorAttachment.getImageView(), depthAttachment.getImageView())
+                : colorAttachment != null
+                    ? VUtil.longBuffer(arena, colorAttachment.getImageView())
+                    : null;
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-
-            LongBuffer attachments;
-            if (colorAttachment != null && depthAttachment != null) {
-                attachments = stack.longs(colorAttachment.getImageView(), depthAttachment.getImageView());
-            } else if (colorAttachment != null) {
-                attachments = stack.longs(colorAttachment.getImageView());
-            } else {
-                throw new IllegalStateException();
+            if (attachments == null) {
+                throw new IllegalStateException("Framebuffer must have at least one attachment");
             }
 
-            LongBuffer pFramebuffer = stack.mallocLong(1);
+            LongBuffer pFramebuffer = VUtil.allocateLongBuffer(arena, 1);
 
-            VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
+            VkFramebufferCreateInfo framebufferInfo = VUtil.struct(
+                arena,
+                VkFramebufferCreateInfo.SIZEOF,
+                VkFramebufferCreateInfo.ALIGNOF,
+                VkFramebufferCreateInfo::create
+            );
             framebufferInfo.sType$Default();
             framebufferInfo.renderPass(renderPass.getId());
             framebufferInfo.width(this.width);
@@ -112,7 +129,7 @@ public class Framebuffer {
             framebufferInfo.layers(1);
             framebufferInfo.pAttachments(attachments);
 
-            if (VK10.vkCreateFramebuffer(Vulkan.getVkDevice(), framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
+            if (vkCreateFramebuffer(Vulkan.getVkDevice(), framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create framebuffer");
             }
 
@@ -120,12 +137,16 @@ public class Framebuffer {
         }
     }
 
-    public void beginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass, MemoryStack stack) {
+    public void beginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass) {
         if (!DYNAMIC_RENDERING) {
             long framebufferId = this.getFramebufferId(renderPass);
-            renderPass.beginRenderPass(commandBuffer, framebufferId, stack);
+            try (Arena arena = Arena.ofConfined()) {
+                renderPass.beginRenderPass(commandBuffer, framebufferId, arena);
+            }
         } else {
-            renderPass.beginDynamicRendering(commandBuffer, stack);
+            try (Arena arena = Arena.ofConfined()) {
+                renderPass.beginDynamicRendering(commandBuffer, arena, this);
+            }
         }
 
         Renderer.getInstance().setBoundRenderPass(renderPass);
@@ -139,24 +160,40 @@ public class Framebuffer {
         return this.renderpassToFramebufferMap.computeIfAbsent(renderPass, renderPass1 -> createFramebuffer(renderPass));
     }
 
-    public VkViewport.Buffer viewport(MemoryStack stack) {
-        VkViewport.Buffer viewport = VkViewport.malloc(1, stack);
-        viewport.x(0.0f);
-        viewport.y(this.height);
-        viewport.width(this.width);
-        viewport.height(-this.height);
-        viewport.minDepth(0.0f);
-        viewport.maxDepth(1.0f);
+    public void applyViewport(VkCommandBuffer commandBuffer) {
+        try (Arena arena = Arena.ofConfined()) {
+            VkViewport.Buffer viewport = VUtil.structBuffer(
+                arena,
+                VkViewport.SIZEOF,
+                VkViewport.ALIGNOF,
+                1,
+                VkViewport::create
+            );
+            viewport.x(0.0f);
+            viewport.y(this.height);
+            viewport.width(this.width);
+            viewport.height(-this.height);
+            viewport.minDepth(0.0f);
+            viewport.maxDepth(1.0f);
 
-        return viewport;
+            vkCmdSetViewport(commandBuffer, 0, viewport);
+        }
     }
 
-    public VkRect2D.Buffer scissor(MemoryStack stack) {
-        VkRect2D.Buffer scissor = VkRect2D.malloc(1, stack);
-        scissor.offset().set(0, 0);
-        scissor.extent().set(this.width, this.height);
+    public void applyScissor(VkCommandBuffer commandBuffer) {
+        try (Arena arena = Arena.ofConfined()) {
+            VkRect2D.Buffer scissor = VUtil.structBuffer(
+                arena,
+                VkRect2D.SIZEOF,
+                VkRect2D.ALIGNOF,
+                1,
+                VkRect2D::create
+            );
+            scissor.offset().set(0, 0);
+            scissor.extent().set(this.width, this.height);
 
-        return scissor;
+            vkCmdSetScissor(commandBuffer, 0, scissor);
+        }
     }
 
     public void cleanUp() {

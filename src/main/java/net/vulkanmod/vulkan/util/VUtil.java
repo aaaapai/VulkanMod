@@ -5,10 +5,16 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.function.BiFunction;
+import java.util.function.LongFunction;
 
 import static org.lwjgl.system.MemoryStack.stackGet;
 
@@ -96,6 +102,56 @@ public class VUtil {
         MemorySegment srcSegment = srcBuffer.asSlice(srcOffset, size);
         MemorySegment dstSegment = MemorySegment.ofAddress(dstPtr).reinterpret(size);
         dstSegment.copyFrom(srcSegment);
+    }
+
+    public static ByteBuffer allocateByteBuffer(Arena arena, long bytes, long alignment) {
+        return arena.allocate(bytes, alignment).asByteBuffer();
+    }
+
+    public static LongBuffer allocateLongBuffer(Arena arena, int elements) {
+        MemorySegment segment = arena.allocate((long) elements * Long.BYTES, Long.BYTES);
+        return segment.asByteBuffer().asLongBuffer();
+    }
+
+    public static IntBuffer allocateIntBuffer(Arena arena, int elements) {
+        MemorySegment segment = arena.allocate((long) elements * Integer.BYTES, Integer.BYTES);
+        return segment.asByteBuffer().asIntBuffer();
+    }
+
+    public static LongBuffer longBuffer(Arena arena, long... values) {
+        MemorySegment segment = arena.allocate((long) values.length * Long.BYTES, Long.BYTES);
+        for (int i = 0; i < values.length; i++) {
+            segment.setAtIndex(ValueLayout.JAVA_LONG, i, values[i]);
+        }
+        return segment.asByteBuffer().asLongBuffer();
+    }
+
+    public static IntBuffer intBuffer(Arena arena, int... values) {
+        MemorySegment segment = arena.allocate((long) values.length * Integer.BYTES, Integer.BYTES);
+        for (int i = 0; i < values.length; i++) {
+            segment.setAtIndex(ValueLayout.JAVA_INT, i, values[i]);
+        }
+        return segment.asByteBuffer().asIntBuffer();
+    }
+
+    public static ByteBuffer utf8String(Arena arena, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        MemorySegment segment = arena.allocate(bytes.length + 1, 1);
+        segment.asSlice(0, bytes.length).copyFrom(MemorySegment.ofArray(bytes));
+        segment.set(ValueLayout.JAVA_BYTE, bytes.length, (byte) 0);
+        ByteBuffer buffer = segment.asByteBuffer();
+        buffer.limit(bytes.length + 1);
+        return buffer;
+    }
+
+    public static <T> T struct(Arena arena, int size, int alignment, LongFunction<T> factory) {
+        long address = arena.allocate(size, alignment).address();
+        return factory.apply(address);
+    }
+
+    public static <T> T structBuffer(Arena arena, int size, int alignment, int capacity, BiFunction<Long, Integer, T> factory) {
+        long address = arena.allocate((long) size * capacity, alignment).address();
+        return factory.apply(address, capacity);
     }
 
     public static int align(int x, int align) {

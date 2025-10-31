@@ -26,11 +26,13 @@ import net.vulkanmod.vulkan.shader.layout.PushConstants;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
 import net.vulkanmod.vulkan.util.VUtil;
 import net.vulkanmod.vulkan.util.VkResult;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -129,40 +131,59 @@ public class Renderer {
     public static void clearAttachments(int v, int width, int height) {
         if (skipRendering) return;
 
-        try (MemoryStack stack = stackPush()) {
-            //ClearValues have to be different for each attachment to clear,
-            //it seems it uses the same buffer: color and depth values override themselves
-            VkClearValue colorValue = VkClearValue.calloc(stack);
-            colorValue.color().float32(VRenderSystem.clearColor);
+        try (Arena arena = Arena.ofConfined()) {
+            VkClearValue colorValue = VUtil.struct(
+                arena,
+                VkClearValue.SIZEOF,
+                VkClearValue.ALIGNOF,
+                VkClearValue::create
+            );
+            float clearR = VRenderSystem.clearColor.get(0);
+            float clearG = VRenderSystem.clearColor.get(1);
+            float clearB = VRenderSystem.clearColor.get(2);
+            float clearA = VRenderSystem.clearColor.get(3);
+            colorValue.color().float32(0, clearR);
+            colorValue.color().float32(1, clearG);
+            colorValue.color().float32(2, clearB);
+            colorValue.color().float32(3, clearA);
 
-            VkClearValue depthValue = VkClearValue.calloc(stack);
-            depthValue.depthStencil().set(VRenderSystem.clearDepthValue, 0); //Use fast depth clears if possible
+            VkClearValue depthValue = VUtil.struct(
+                arena,
+                VkClearValue.SIZEOF,
+                VkClearValue.ALIGNOF,
+                VkClearValue::create
+            );
+            depthValue.depthStencil().set(VRenderSystem.clearDepthValue, 0);
 
             int attachmentsCount = v == (GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT) ? 2 : 1;
-            final VkClearAttachment.Buffer pAttachments = VkClearAttachment.malloc(attachmentsCount, stack);
+            VkClearAttachment.Buffer attachments = VUtil.structBuffer(
+                arena,
+                VkClearAttachment.SIZEOF,
+                VkClearAttachment.ALIGNOF,
+                attachmentsCount,
+                VkClearAttachment::create
+            );
+
             switch (v) {
                 case GL_DEPTH_BUFFER_BIT -> {
-
-                    VkClearAttachment clearDepth = pAttachments.get(0);
+                    VkClearAttachment clearDepth = attachments.get(0);
                     clearDepth.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
                     clearDepth.colorAttachment(0);
                     clearDepth.clearValue(depthValue);
                 }
                 case GL_COLOR_BUFFER_BIT -> {
-
-                    VkClearAttachment clearColor = pAttachments.get(0);
+                    VkClearAttachment clearColor = attachments.get(0);
                     clearColor.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
                     clearColor.colorAttachment(0);
                     clearColor.clearValue(colorValue);
                 }
                 case GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT -> {
-
-                    VkClearAttachment clearColor = pAttachments.get(0);
+                    VkClearAttachment clearColor = attachments.get(0);
                     clearColor.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
                     clearColor.colorAttachment(0);
                     clearColor.clearValue(colorValue);
 
-                    VkClearAttachment clearDepth = pAttachments.get(1);
+                    VkClearAttachment clearDepth = attachments.get(1);
                     clearDepth.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
                     clearDepth.colorAttachment(0);
                     clearDepth.clearValue(depthValue);
@@ -170,17 +191,19 @@ public class Renderer {
                 default -> throw new RuntimeException("unexpected value");
             }
 
-            //Rect to clear
-            VkRect2D renderArea = VkRect2D.malloc(stack);
-            renderArea.offset().set(0, 0);
-            renderArea.extent().set(width, height);
+            VkClearRect.Buffer rect = VUtil.structBuffer(
+                arena,
+                VkClearRect.SIZEOF,
+                VkClearRect.ALIGNOF,
+                1,
+                VkClearRect::create
+            );
+            rect.get(0).rect().offset().set(0, 0);
+            rect.get(0).rect().extent().set(width, height);
+            rect.get(0).baseArrayLayer(0);
+            rect.get(0).layerCount(1);
 
-            VkClearRect.Buffer pRect = VkClearRect.malloc(1, stack);
-            pRect.rect(renderArea);
-            pRect.baseArrayLayer(0);
-            pRect.layerCount(1);
-
-            vkCmdClearAttachments(INSTANCE.currentCmdBuffer, pAttachments, pRect);
+            vkCmdClearAttachments(INSTANCE.currentCmdBuffer, attachments, rect);
         }
     }
 
@@ -200,34 +223,42 @@ public class Renderer {
     }
 
     public static void setViewport(int x, int y, int width, int height) {
-        try (MemoryStack stack = stackPush()) {
-            setViewport(x, y, width, height, stack);
-        }
-    }
-
-    public static void setViewport(int x, int y, int width, int height, MemoryStack stack) {
         if (!INSTANCE.recordingCmds) return;
 
-        VkViewport.Buffer viewport = VkViewport.malloc(1, stack);
-        viewport.x(x);
-        viewport.y(height + y);
-        viewport.width(width);
-        viewport.height(-height);
-        viewport.minDepth(0.0f);
-        viewport.maxDepth(1.0f);
+        try (Arena arena = Arena.ofConfined()) {
+            VkViewport.Buffer viewport = VUtil.structBuffer(
+                arena,
+                VkViewport.SIZEOF,
+                VkViewport.ALIGNOF,
+                1,
+                VkViewport::create
+            );
+            viewport.x(x);
+            viewport.y(height + y);
+            viewport.width(width);
+            viewport.height(-height);
+            viewport.minDepth(0.0f);
+            viewport.maxDepth(1.0f);
 
-        vkCmdSetViewport(INSTANCE.currentCmdBuffer, 0, viewport);
+            vkCmdSetViewport(INSTANCE.currentCmdBuffer, 0, viewport);
+        }
     }
 
     public static void setScissor(int x, int y, int width, int height) {
         if (INSTANCE.boundFramebuffer == null) return;
 
-        try (MemoryStack stack = stackPush()) {
+        try (Arena arena = Arena.ofConfined()) {
             int framebufferHeight = INSTANCE.boundFramebuffer.getHeight();
 
             x = Math.max(0, x);
 
-            VkRect2D.Buffer scissor = VkRect2D.malloc(1, stack);
+            VkRect2D.Buffer scissor = VUtil.structBuffer(
+                arena,
+                VkRect2D.SIZEOF,
+                VkRect2D.ALIGNOF,
+                1,
+                VkRect2D::create
+            );
             scissor.offset().set(x, framebufferHeight - (y + height));
             scissor.extent().set(width, height);
 
@@ -238,21 +269,23 @@ public class Renderer {
     public static void resetScissor() {
         if (INSTANCE.boundFramebuffer == null) return;
 
-        try (MemoryStack stack = stackPush()) {
-            VkRect2D.Buffer scissor = INSTANCE.boundFramebuffer.scissor(stack);
-            vkCmdSetScissor(INSTANCE.currentCmdBuffer, 0, scissor);
-        }
+        INSTANCE.boundFramebuffer.applyScissor(INSTANCE.currentCmdBuffer);
     }
 
     public static void pushDebugSection(String s) {
         if (Vulkan.ENABLE_VALIDATION_LAYERS) {
             VkCommandBuffer commandBuffer = INSTANCE.currentCmdBuffer;
 
-            try (MemoryStack stack = stackPush()) {
-                VkDebugUtilsLabelEXT markerInfo = VkDebugUtilsLabelEXT.calloc(stack);
+            try (Arena arena = Arena.ofConfined()) {
+                VkDebugUtilsLabelEXT markerInfo = VUtil.struct(
+                    arena,
+                    VkDebugUtilsLabelEXT.SIZEOF,
+                    VkDebugUtilsLabelEXT.ALIGNOF,
+                    VkDebugUtilsLabelEXT::create
+                );
                 markerInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT);
-                ByteBuffer string = stack.UTF8(s);
-                markerInfo.pLabelName(string);
+                ByteBuffer label = VUtil.utf8String(arena, s);
+                markerInfo.pLabelName(label);
                 vkCmdBeginDebugUtilsLabelEXT(commandBuffer, markerInfo);
             }
         }
@@ -312,23 +345,30 @@ public class Renderer {
 
         commandBuffers = new ArrayList<>(framesNum);
 
-        try (MemoryStack stack = stackPush()) {
-
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+        try (Arena arena = Arena.ofConfined()) {
+            VkCommandBufferAllocateInfo allocInfo = VUtil.struct(
+                arena,
+                VkCommandBufferAllocateInfo.SIZEOF,
+                VkCommandBufferAllocateInfo.ALIGNOF,
+                VkCommandBufferAllocateInfo::create
+            );
             allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             allocInfo.commandPool(getCommandPool());
             allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             allocInfo.commandBufferCount(framesNum);
 
-            PointerBuffer pCommandBuffers = stack.mallocPointer(framesNum);
+            MemorySegment pCommandBuffers = arena.allocate(ValueLayout.ADDRESS, framesNum);
 
-            int vkResult = vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers);
+            int vkResult = VK10.nvkAllocateCommandBuffers(device, allocInfo.address(), pCommandBuffers.address());
             if (vkResult != VK_SUCCESS) {
                 throw new RuntimeException("Failed to allocate command buffers: %s".formatted(VkResult.decode(vkResult)));
             }
 
+            long stride = ValueLayout.ADDRESS.byteSize();
             for (int i = 0; i < framesNum; i++) {
-                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
+                MemorySegment handleSegment = pCommandBuffers.get(ValueLayout.ADDRESS, (long) i * stride);
+                long handle = handleSegment.address();
+                commandBuffers.add(new VkCommandBuffer(handle, device));
             }
         }
     }
@@ -338,32 +378,39 @@ public class Renderer {
         renderFinishedSemaphores = new ArrayList<>(framesNum);
         inFlightFences = new ArrayList<>(framesNum);
 
-        try (MemoryStack stack = stackPush()) {
-
-            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+        try (Arena arena = Arena.ofConfined()) {
+            VkSemaphoreCreateInfo semaphoreInfo = VUtil.struct(
+                arena,
+                VkSemaphoreCreateInfo.SIZEOF,
+                VkSemaphoreCreateInfo.ALIGNOF,
+                VkSemaphoreCreateInfo::create
+            );
             semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
 
-            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
+            VkFenceCreateInfo fenceInfo = VUtil.struct(
+                arena,
+                VkFenceCreateInfo.SIZEOF,
+                VkFenceCreateInfo.ALIGNOF,
+                VkFenceCreateInfo::create
+            );
             fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
 
-            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
-            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-            LongBuffer pFence = stack.mallocLong(1);
+            LongBuffer pImageAvailableSemaphore = VUtil.allocateLongBuffer(arena, 1);
+            LongBuffer pRenderFinishedSemaphore = VUtil.allocateLongBuffer(arena, 1);
+            LongBuffer pFence = VUtil.allocateLongBuffer(arena, 1);
 
             for (int i = 0; i < framesNum; i++) {
-
-                if (vkCreateSemaphore(device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS || vkCreateSemaphore(device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS || vkCreateFence(device, fenceInfo, null, pFence) != VK_SUCCESS) {
-
+                if (vkCreateSemaphore(device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS
+                    || vkCreateSemaphore(device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS
+                    || vkCreateFence(device, fenceInfo, null, pFence) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create synchronization objects for the frame: " + i);
                 }
 
                 imageAvailableSemaphores.add(pImageAvailableSemaphore.get(0));
                 renderFinishedSemaphores.add(pRenderFinishedSemaphore.get(0));
                 inFlightFences.add(pFence.get(0));
-
             }
-
         }
     }
 
@@ -443,26 +490,33 @@ public class Renderer {
 
             imageIndex = pImageIndex.get(0);
 
-            this.beginRenderPass(stack);
+            this.beginRenderPass();
         }
 
         p.pop();
     }
 
-    private void beginRenderPass(MemoryStack stack) {
-        VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-        beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-        beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
+    private void beginRenderPass() {
         VkCommandBuffer commandBuffer = currentCmdBuffer;
 
-        int vkResult = vkBeginCommandBuffer(commandBuffer, beginInfo);
-        if (vkResult != VK_SUCCESS) {
-            throw new RuntimeException("Failed to begin recording command buffer: %s".formatted(VkResult.decode(vkResult)));
+        try (Arena arena = Arena.ofConfined()) {
+            VkCommandBufferBeginInfo beginInfo = VUtil.struct(
+                arena,
+                VkCommandBufferBeginInfo.SIZEOF,
+                VkCommandBufferBeginInfo.ALIGNOF,
+                VkCommandBufferBeginInfo::create
+            );
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            int vkResult = vkBeginCommandBuffer(commandBuffer, beginInfo);
+            if (vkResult != VK_SUCCESS) {
+                throw new RuntimeException("Failed to begin recording command buffer: %s".formatted(VkResult.decode(vkResult)));
+            }
         }
 
         recordingCmds = true;
-        mainPass.begin(commandBuffer, stack);
+        mainPass.begin(commandBuffer);
 
         resetDynamicState(commandBuffer);
     }
@@ -560,9 +614,9 @@ public class Renderer {
             }
 
             vkWaitForFences(device, inFlightFences.get(currentFrame), true, VUtil.UINT64_MAX);
-
-            this.beginRenderPass(stack);
         }
+
+        this.beginRenderPass();
     }
 
     public void endRenderPass() {
@@ -586,10 +640,7 @@ public class Renderer {
 
         if (this.boundFramebuffer != framebuffer) {
             this.endRenderPass(currentCmdBuffer);
-
-            try (MemoryStack stack = stackPush()) {
-                framebuffer.beginRenderPass(currentCmdBuffer, renderPass, stack);
-            }
+            framebuffer.beginRenderPass(currentCmdBuffer, renderPass);
 
             this.boundFramebuffer = framebuffer;
         }

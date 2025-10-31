@@ -1,6 +1,5 @@
 package net.vulkanmod.vulkan;
 
-import net.vulkanmod.gl.HiddenGlContext;
 import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.framebuffer.SwapChain;
@@ -192,7 +191,6 @@ public class Vulkan {
         KHRSurface.vkDestroySurfaceKHR(instance, surface, null);
         vkDestroyInstance(instance, null);
 
-        HiddenGlContext.destroy();
     }
 
     private static void freeStagingBuffers() {

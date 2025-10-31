@@ -165,12 +165,20 @@ public class VulkanImage {
     }
 
     public static void transitionImageLayout(MemoryStack stack, VkCommandBuffer commandBuffer, VulkanImage image, int newLayout) {
+        try (java.lang.foreign.Arena arena = java.lang.foreign.Arena.ofConfined()) {
+            transitionImageLayout(arena, commandBuffer, image, newLayout);
+        }
+    }
+
+    public static void transitionImageLayout(java.lang.foreign.Arena arena, VkCommandBuffer commandBuffer, VulkanImage image, int newLayout) {
         if (image.currentLayout == newLayout) {
-//            System.out.println("new layout is equal to current layout");
             return;
         }
 
-        int sourceStage, srcAccessMask, destinationStage, dstAccessMask = 0;
+        int sourceStage;
+        int srcAccessMask;
+        int destinationStage;
+        int dstAccessMask;
 
         switch (image.currentLayout) {
             case VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> {
@@ -222,21 +230,35 @@ public class VulkanImage {
                 destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
             case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> {
+                dstAccessMask = 0;
                 destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
             }
             default -> throw new RuntimeException("Unexpected value:" + newLayout);
         }
 
-        transitionLayout(stack, commandBuffer, image, image.currentLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
+        transitionLayout(arena, commandBuffer, image, image.currentLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
     }
 
     public static void transitionLayout(MemoryStack stack, VkCommandBuffer commandBuffer, VulkanImage image, int oldLayout, int newLayout, int sourceStage, int srcAccessMask, int destinationStage, int dstAccessMask) {
-        transitionLayout(stack, commandBuffer, image, 0, oldLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
+        try (java.lang.foreign.Arena arena = java.lang.foreign.Arena.ofConfined()) {
+            transitionLayout(arena, commandBuffer, image, 0, oldLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
+        }
     }
 
     public static void transitionLayout(MemoryStack stack, VkCommandBuffer commandBuffer, VulkanImage image, int baseLevel, int oldLayout, int newLayout, int sourceStage, int srcAccessMask, int destinationStage, int dstAccessMask) {
+        try (java.lang.foreign.Arena arena = java.lang.foreign.Arena.ofConfined()) {
+            transitionLayout(arena, commandBuffer, image, baseLevel, oldLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
+        }
+    }
 
-        VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.calloc(1, stack);
+    public static void transitionLayout(java.lang.foreign.Arena arena, VkCommandBuffer commandBuffer, VulkanImage image, int oldLayout, int newLayout, int sourceStage, int srcAccessMask, int destinationStage, int dstAccessMask) {
+        transitionLayout(arena, commandBuffer, image, 0, oldLayout, newLayout, sourceStage, srcAccessMask, destinationStage, dstAccessMask);
+    }
+
+    public static void transitionLayout(java.lang.foreign.Arena arena, VkCommandBuffer commandBuffer, VulkanImage image, int baseLevel, int oldLayout, int newLayout, int sourceStage, int srcAccessMask, int destinationStage, int dstAccessMask) {
+
+        long barrierAddr = arena.allocate(VkImageMemoryBarrier.SIZEOF, VkImageMemoryBarrier.ALIGNOF).address();
+        VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.create(barrierAddr, 1);
         barrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
         barrier.oldLayout(image.currentLayout);
         barrier.newLayout(newLayout);
