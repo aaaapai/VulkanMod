@@ -1,8 +1,10 @@
 # <a href="https://github.com/xCollateral/VulkanMod"> <img src="./src/main/resources/assets/vulkanmod/Vlogo.png" width="30" height="30"/> </a> VulkanMod
 
-This is a fabric mod that introduces a brand new **Vulkan** based voxel rendering engine to **Minecraft java** in order to both replace the default OpenGL renderer and bring performance improvements.
+This is a fabric mod that introduces a brand new **Vulkan** based voxel rendering engine to **Minecraft java** in order
+to both replace the default OpenGL renderer and bring performance improvements.
 
 ### Why?
+
 - Highly experimental project that overhauls and modernizes the internal renderer for Minecraft. <br>
 - Updates the renderer from OpenGL 3.2 to Vulkan 1.2.  <br>
 - Provides a potential reference for a future-proof Vulkan codebase for Minecraft Java. <br>
@@ -14,6 +16,7 @@ This is a fabric mod that introduces a brand new **Vulkan** based voxel renderin
 [![Demostration Video](http://img.youtube.com/vi/sbr7UxcAmOE/0.jpg)](https://youtu.be/sbr7UxcAmOE)
 
 ## FAQ
+
 - Remember to check the [Wiki](https://github.com/xCollateral/VulkanMod/wiki) we wrote before asking for support!
 
 ## Installation
@@ -27,11 +30,13 @@ This is a fabric mod that introduces a brand new **Vulkan** based voxel renderin
 - [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/xCollateral/VulkanMod/total?style=flat-square&logo=github&label=Github%20Downloads)](https://github.com/xCollateral/VulkanMod/releases)
 
 ### Install guide:
->1) Install the [fabric modloader](https://fabricmc.net).
+
+> 1) Install the [fabric modloader](https://fabricmc.net).
 >1) Download and put the `Vulkanmod.jar` file into `.minecraft/mods`
 >1) Enjoy !
 
 ## Useful links
+
 <table>
     <tr>
       <th> Discord server</th>
@@ -51,18 +56,19 @@ This is a fabric mod that introduces a brand new **Vulkan** based voxel renderin
   </tr>
 </table>
 
-
 ## Features
 
 ### Optimizations:
->- [x] Multiple chunk culling algorithms
+
+> - [x] Multiple chunk culling algorithms
 >- [x] Reduced CPU overhead
 >- [x] Improved GPU performance
 >- [x] Indirect Draw mode (reduces CPU overhead)
 >- [x] Chunk rendering optimizations
 
 ### New changes:
->- [x] Native Wayland support
+
+> - [x] Native Wayland support
 >- [x] GPU selector
 >- [x] Windowed fullscreen mode
 >- [x] Revamped graphic settings menu
@@ -70,8 +76,10 @@ This is a fabric mod that introduces a brand new **Vulkan** based voxel renderin
 >- [ ] Shader support
 >- [ ] Removed Herobrine
 
-
 ## Notes
-- This mod is still in development, please report issues in the [issue tab](https://github.com/xCollateral/VulkanMod/issues) with logs attached!
-- This mode isn't just "minecraft on vulkan" (e.g: [zink](https://docs.mesa3d.org/drivers/zink.html) ), it is a full rewrite of the minecraft renderer.
+
+- This mod is still in development, please report issues in
+  the [issue tab](https://github.com/xCollateral/VulkanMod/issues) with logs attached!
+- This mode isn't just "minecraft on vulkan" (e.g: [zink](https://docs.mesa3d.org/drivers/zink.html) ), it is a full
+  rewrite of the minecraft renderer.
 
