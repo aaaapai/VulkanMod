@@ -212,9 +212,9 @@ public class Vulkan {
             VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack);
 
             appInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
-            appInfo.pApplicationName(stack.UTF8Safe("VulkanMod"));
+            appInfo.pApplicationName(Objects.requireNonNull(stack.UTF8Safe("VulkanMod")));
             appInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
-            appInfo.pEngineName(stack.UTF8Safe("VulkanMod Engine"));
+            appInfo.pEngineName(Objects.requireNonNull(stack.UTF8Safe("VulkanMod Engine")));
             appInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
             appInfo.apiVersion(VK_API_VERSION_1_2);
 
@@ -239,7 +239,14 @@ public class Vulkan {
             int result = vkCreateInstance(createInfo, null, instancePtr);
             checkResult(result, "Failed to create instance");
 
-            instance = new VkInstance(instancePtr.get(0), createInfo);
+            // Workaround for LWJGL 3.3.x + Java 25 infinite recursion bug in VkInstance constructor
+            // The standard constructor with createInfo: new VkInstance(handle, createInfo)
+            // causes stack overflow in getInstanceCapabilities() -> getAvailableDeviceExtensions()
+            //
+            // Workaround: Pass null for createInfo to skip automatic capability detection
+            // Capabilities will need to be manually queried later if needed
+            long handle = instancePtr.get(0);
+            instance = new VkInstance(handle, null);
         }
     }
 

@@ -44,12 +44,8 @@ public abstract class VRenderSystem {
     public static MappedBuffer screenSize = new MappedBuffer(2 * 4);
     public static float alphaCutout = 0.0f;
     private static long window;
-    private static float fogEnvironmentalStart;
     private static float fogRenderStart;
-    private static float fogEnvironmentalEnd;
     private static float fogRenderEnd;
-    private static float fogSkyEnd;
-    private static float fogCloudEnd;
     private static int fogShapeIndex;
     private static float shaderGameTime;
     private static float glintAlpha = 1.0f;
@@ -128,9 +124,9 @@ public abstract class VRenderSystem {
 
     public static void setModelOffset(float x, float y, float z) {
         long ptr = modelOffset.ptr;
-        VUtil.UNSAFE.putFloat(ptr, x);
-        VUtil.UNSAFE.putFloat(ptr + 4, y);
-        VUtil.UNSAFE.putFloat(ptr + 8, z);
+        VUtil.putFloat(ptr, x);
+        VUtil.putFloat(ptr + 4, y);
+        VUtil.putFloat(ptr + 8, z);
     }
 
     public static void setShaderColor(float f1, float f2, float f3, float f4) {
@@ -160,12 +156,8 @@ public abstract class VRenderSystem {
     }
 
     public static void setFogParameters(float environmentalStart, float renderStart, float environmentalEnd, float renderEnd, float skyEnd, float cloudEnd) {
-        fogEnvironmentalStart = environmentalStart;
         fogRenderStart = renderStart;
-        fogEnvironmentalEnd = environmentalEnd;
         fogRenderEnd = renderEnd;
-        fogSkyEnd = skyEnd;
-        fogCloudEnd = cloudEnd;
     }
 
     public static float[] getShaderColorArray() {

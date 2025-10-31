@@ -54,9 +54,13 @@ public abstract class EncodingFormat {
     /**
      * used for quick clearing of quad buffers.
      */
-    static final int[] EMPTY = new int[TOTAL_STRIDE];
+    static final int[] EMPTY;
     private static final int DIRECTION_COUNT = Direction.values().length;
     private static final int NULLABLE_DIRECTION_COUNT = DIRECTION_COUNT + 1;
+    private static final int NORMALS_BIT_LENGTH = 4;
+    private static final int GEOMETRY_BIT_LENGTH = GeometryHelper.FLAG_BIT_COUNT;
+    private static final int MATERIAL_BIT_LENGTH = 12;
+    private static final int CULL_BIT_OFFSET = 0;
     private static final int CULL_BIT_LENGTH = Mth.ceillog2(NULLABLE_DIRECTION_COUNT);
     private static final int LIGHT_BIT_OFFSET = CULL_BIT_OFFSET + CULL_BIT_LENGTH;
     private static final int CULL_MASK = bitMask(CULL_BIT_LENGTH, CULL_BIT_OFFSET);
@@ -69,14 +73,10 @@ public abstract class EncodingFormat {
     private static final int GEOMETRY_MASK = bitMask(GEOMETRY_BIT_LENGTH, GEOMETRY_BIT_OFFSET);
     private static final int NORMALS_MASK = bitMask(NORMALS_BIT_LENGTH, NORMALS_BIT_OFFSET);
     private static final int LIGHT_MASK = bitMask(LIGHT_BIT_LENGTH, LIGHT_BIT_OFFSET);
-    private static final int NORMALS_BIT_LENGTH = 4;
-    private static final int GEOMETRY_BIT_LENGTH = GeometryHelper.FLAG_BIT_COUNT;
-    private static final int MATERIAL_BIT_LENGTH = 12;
-    private static final int CULL_BIT_OFFSET = 0;
 
     static {
         final VertexFormat format = DefaultVertexFormat.BLOCK;
-        VERTEX_X = HEADER_STRIDE + 0;
+        VERTEX_X = HEADER_STRIDE;
         VERTEX_Y = HEADER_STRIDE + 1;
         VERTEX_Z = HEADER_STRIDE + 2;
         VERTEX_COLOR = HEADER_STRIDE + 3;
@@ -88,6 +88,7 @@ public abstract class EncodingFormat {
         QUAD_STRIDE = VERTEX_STRIDE * 4;
         QUAD_STRIDE_BYTES = QUAD_STRIDE * 4;
         TOTAL_STRIDE = HEADER_STRIDE + QUAD_STRIDE;
+        EMPTY = new int[TOTAL_STRIDE];
 
         Preconditions.checkState(VERTEX_STRIDE == QuadView.VANILLA_VERTEX_STRIDE, "Indigo vertex stride (%s) mismatched with rendering API (%s)", VERTEX_STRIDE, QuadView.VANILLA_VERTEX_STRIDE);
         Preconditions.checkState(QUAD_STRIDE == QuadView.VANILLA_QUAD_STRIDE, "Indigo quad stride (%s) mismatched with rendering API (%s)", QUAD_STRIDE, QuadView.VANILLA_QUAD_STRIDE);

@@ -61,19 +61,19 @@ public class Drawer {
             Arrays.stream(this.vertexBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.vertexBuffers = new VertexBuffer[framesNum];
-        Arrays.setAll(this.vertexBuffers, i -> new VertexBuffer(INITIAL_VB_SIZE, MemoryTypes.HOST_MEM));
+        Arrays.setAll(this.vertexBuffers, _ -> new VertexBuffer(INITIAL_VB_SIZE, MemoryTypes.HOST_MEM));
 
         if (this.indexBuffers != null) {
             Arrays.stream(this.indexBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.indexBuffers = new IndexBuffer[framesNum];
-        Arrays.setAll(this.indexBuffers, i -> new IndexBuffer(INITIAL_IB_SIZE, MemoryTypes.HOST_MEM));
+        Arrays.setAll(this.indexBuffers, _ -> new IndexBuffer(INITIAL_IB_SIZE, MemoryTypes.HOST_MEM));
 
         if (this.uniformBuffers != null) {
             Arrays.stream(this.uniformBuffers).iterator().forEachRemaining(Buffer::scheduleFree);
         }
         this.uniformBuffers = new UniformBuffer[framesNum];
-        Arrays.setAll(this.uniformBuffers, i -> new UniformBuffer(INITIAL_UB_SIZE, MemoryTypes.HOST_MEM));
+        Arrays.setAll(this.uniformBuffers, _ -> new UniformBuffer(INITIAL_UB_SIZE, MemoryTypes.HOST_MEM));
     }
 
     public void resetBuffers(int currentFrame) {
@@ -119,8 +119,8 @@ public class Drawer {
     public void drawIndexed(Buffer vertexBuffer, Buffer indexBuffer, int indexCount, int indexType) {
         VkCommandBuffer commandBuffer = Renderer.getCommandBuffer();
 
-        VUtil.UNSAFE.putLong(pBuffers, vertexBuffer.getId());
-        VUtil.UNSAFE.putLong(pOffsets, vertexBuffer.getOffset());
+        VUtil.putLong(pBuffers, vertexBuffer.getId());
+        VUtil.putLong(pOffsets, vertexBuffer.getOffset());
         nvkCmdBindVertexBuffers(commandBuffer, 0, 1, pBuffers, pOffsets);
 
         bindIndexBuffer(commandBuffer, indexBuffer, indexType);
@@ -130,8 +130,8 @@ public class Drawer {
     public void draw(VertexBuffer vertexBuffer, int vertexCount) {
         VkCommandBuffer commandBuffer = Renderer.getCommandBuffer();
 
-        VUtil.UNSAFE.putLong(pBuffers, vertexBuffer.getId());
-        VUtil.UNSAFE.putLong(pOffsets, vertexBuffer.getOffset());
+        VUtil.putLong(pBuffers, vertexBuffer.getId());
+        VUtil.putLong(pOffsets, vertexBuffer.getOffset());
         nvkCmdBindVertexBuffers(commandBuffer, 0, 1, pBuffers, pOffsets);
 
         vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);

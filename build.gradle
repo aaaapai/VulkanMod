@@ -19,10 +19,25 @@ repositories {
             includeGroup("org.parchmentmc.data")
         }
     }
+    maven {
+        name = "LWJGL Snapshots"
+        url = "https://central.sonatype.com/repository/maven-snapshots"
+    }
 }
 
 loom {
     accessWidenerPath = file("src/main/resources/vulkanmod.accesswidener")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "org.lwjgl:lwjgl:3.4.0-SNAPSHOT"
+        force "org.lwjgl:lwjgl-glfw:3.4.0-SNAPSHOT"
+        force "org.lwjgl:lwjgl-jemalloc:3.4.0-SNAPSHOT"
+        force "org.lwjgl:lwjgl-openal:3.4.0-SNAPSHOT"
+        force "org.lwjgl:lwjgl-freetype:3.4.0-SNAPSHOT"
+        force "org.lwjgl:lwjgl-stb:3.4.0-SNAPSHOT"
+    }
 }
 
 dependencies {
@@ -52,8 +67,8 @@ dependencies {
     includeModule("fabric-block-view-api-v2")
 }
 
-project.ext.lwjglVersion = "3.3.3"
-project.ext.jomlVersion = "1.10.4"
+project.ext.lwjglVersion = "3.4.0-SNAPSHOT"
+project.ext.jomlVersion = "1.10.8"
 project.ext.winNatives = "natives-windows"
 project.ext.linuxNatives = "natives-linux"
 project.ext.macosNatives = "natives-macos"
@@ -87,7 +102,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+    it.options.release = 25
 }
 
 java {
@@ -96,8 +111,8 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
