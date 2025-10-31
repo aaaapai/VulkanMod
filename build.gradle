@@ -29,7 +29,7 @@ loom {
     accessWidenerPath = file("src/main/resources/vulkanmod.accesswidener")
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force "org.lwjgl:lwjgl:3.4.0-SNAPSHOT"
         force "org.lwjgl:lwjgl-glfw:3.4.0-SNAPSHOT"
