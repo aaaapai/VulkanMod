@@ -1,6 +1,7 @@
 package net.vulkanmod.mixin.debug;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
