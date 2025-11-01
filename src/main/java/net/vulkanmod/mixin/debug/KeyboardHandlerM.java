@@ -16,15 +16,10 @@ public abstract class KeyboardHandlerM {
     private boolean handledDebugKey;
 
     @Shadow
-    protected abstract boolean handleChunkDebugKeys(net.minecraft.class_11908 keyEvent);
+    protected abstract boolean handleChunkDebugKeys(KeyEvent keyEvent);
 
-    @Inject(
-        method = "method_1466(JILnet/minecraft/class_11908;)V",
-        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;isKeyDown(Lcom/mojang/blaze3d/platform/Window;I)Z", ordinal = 0, shift = At.Shift.AFTER),
-        remap = false
-    )
-    private void chunkDebug(long window, int key, net.minecraft.class_11908 keyEvent, CallbackInfo ci) {
-        // GLFW key 296 -> F7
+    @Inject(method = "keyPress", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;isKeyDown(Lcom/mojang/blaze3d/platform/Window;I)Z", ordinal = 0, shift = At.Shift.AFTER), remap = false)
+    private void chunkDebug(long window, int action, KeyEvent keyEvent, CallbackInfo ci) {        // GLFW key 296 -> F7
         // U -> Capture frustum
         this.handledDebugKey |= InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), 296)
                 && this.handleChunkDebugKeys(keyEvent);
