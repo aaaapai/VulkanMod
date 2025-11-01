@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "net.vulkanmod.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_25",
   "plugin": "net.vulkanmod.mixin.MixinPlugin",
   "mixins": [],
   "client": [
@@ -17,8 +17,6 @@
     "compatibility.gl.GL11M",
     "compatibility.gl.GL15M",
     "compatibility.gl.GL30M",
-    "debug.DebugScreenOverlayM",
-    "debug.KeyboardHandlerM",
     "debug.crash_report.SystemReportM",
     "matrix.Matrix4fM",
     "matrix.PoseAccessor",
