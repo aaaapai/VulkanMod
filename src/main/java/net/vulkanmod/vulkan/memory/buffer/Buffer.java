@@ -24,6 +24,9 @@ public class Buffer {
     }
 
     public void createBuffer(long bufferSize) {
+        if (this.type == null) {
+            this.type = Type.DEVICE_LOCAL;
+        }
         this.type.createBuffer(this, bufferSize);
 
         if (this.type.mappable()) {
