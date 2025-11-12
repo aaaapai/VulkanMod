@@ -20,6 +20,7 @@ public abstract class MTextureManager {
 
     /**
      * @author
+     * @reason Avoid ticking textures while the renderer is skipped and coordinate layout transitions with the Vulkan backend.
      */
     @Overwrite
     public void tick() {

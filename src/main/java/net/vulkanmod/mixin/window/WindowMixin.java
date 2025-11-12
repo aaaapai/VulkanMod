@@ -88,6 +88,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
+     * @reason Propagate vsync toggles to the Vulkan backend instead of GL swap control.
      */
     @Overwrite
     public void updateVsync(boolean vsync) {
@@ -97,6 +98,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
+     * @reason Track fullscreen toggles so we can reconfigure the swapchain lazily.
      */
     @Overwrite
     public void toggleFullScreen() {
@@ -106,6 +108,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
+     * @reason Advance the Vulkan frame loop before handling fullscreen/window transitions.
      */
     @Overwrite
     public void updateDisplay(@Nullable TracyFrameCapture tracyFrameCapture) {
@@ -119,6 +122,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
+     * @reason Replace Mojang's window mode handling with the Vulkan-friendly variant driven by our config.
      */
     @Overwrite
     private void setMode() {
@@ -192,7 +196,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
-     * @reason
+     * @reason Schedule a swapchain resize when the framebuffer dimensions change.
      */
     @Overwrite
     private void onFramebufferResize(long window, int width, int height) {
@@ -215,7 +219,7 @@ public abstract class WindowMixin {
 
     /**
      * @author
-     * @reason
+     * @reason Track logical window size changes so the Vulkan swapchain can be recreated lazily.
      */
     @Overwrite
     private void onResize(long window, int width, int height) {

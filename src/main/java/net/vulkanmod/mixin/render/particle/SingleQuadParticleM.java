@@ -1,33 +1,27 @@
 package net.vulkanmod.mixin.render.particle;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.state.QuadParticleRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
-import net.vulkanmod.interfaces.ExtendedVertexBuilder;
 import net.vulkanmod.render.chunk.RenderSection;
 import net.vulkanmod.render.chunk.WorldRenderer;
-import net.vulkanmod.util.ColorUtil;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SingleQuadParticle.class)
 public abstract class SingleQuadParticleM extends Particle {
 
-    @Unique
-    private final Quaternionf quaternionf = new Quaternionf();
-    @Unique
-    private final Vector3f vector3f = new Vector3f();
     @Shadow
     protected float quadSize;
     @Shadow
@@ -66,61 +60,15 @@ public abstract class SingleQuadParticleM extends Particle {
     @Shadow
     public abstract SingleQuadParticle.FacingCameraMode getFacingCameraMode();
 
-    /**
-     * @author
-     * @reason
-     */
-    @Overwrite
-    public void render(VertexConsumer vertexConsumer, Camera camera, float f) {
-        double lx = (Mth.lerp(f, this.xo, this.x));
-        double ly = (Mth.lerp(f, this.yo, this.y));
-        double lz = (Mth.lerp(f, this.zo, this.z));
+    @Inject(method = "extract(Lnet/minecraft/client/renderer/state/QuadParticleRenderState;Lnet/minecraft/client/Camera;F)V", at = @At("HEAD"), cancellable = true)
+    private void vulkanmod$cullParticles(QuadParticleRenderState state, Camera camera, float partialTicks, CallbackInfo ci) {
+        double lx = Mth.lerp(partialTicks, this.xo, this.x);
+        double ly = Mth.lerp(partialTicks, this.yo, this.y);
+        double lz = Mth.lerp(partialTicks, this.zo, this.z);
 
-        if (cull(WorldRenderer.getInstance(), lx, ly, lz))
-            return;
-
-        Vec3 vec3 = camera.getPosition();
-        float offsetX = (float) (lx - vec3.x());
-        float offsetY = (float) (ly - vec3.y());
-        float offsetZ = (float) (lz - vec3.z());
-
-        quaternionf.identity();
-        this.getFacingCameraMode().setRotation(quaternionf, camera, f);
-        if (this.roll != 0.0F) {
-            quaternionf.rotateZ(Mth.lerp(f, this.oRoll, this.roll));
+        if (cull(WorldRenderer.getInstance(), lx, ly, lz)) {
+            ci.cancel();
         }
-
-        this.renderRotatedQuad(vertexConsumer, quaternionf, offsetX, offsetY, offsetZ, f);
-    }
-
-    @Unique
-    private void renderRotatedQuad(VertexConsumer vertexConsumer, Quaternionf quaternionf, float x, float y, float z, float f) {
-        float j = this.getQuadSize(f);
-        float u0 = this.getU0();
-        float u1 = this.getU1();
-        float v0 = this.getV0();
-        float v1 = this.getV1();
-        int light = this.getLightColor(f);
-
-        ExtendedVertexBuilder vertexBuilder = (ExtendedVertexBuilder) vertexConsumer;
-        int packedColor = ColorUtil.RGBA.pack(this.rCol, this.gCol, this.bCol, this.alpha);
-
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z, 1.0F, -1.0F, j, u1, v1, packedColor, light);
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z, 1.0F, 1.0F, j, u1, v0, packedColor, light);
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z, -1.0F, 1.0F, j, u0, v0, packedColor, light);
-        this.renderVertex(vertexBuilder, quaternionf, x, y, z, -1.0F, -1.0F, j, u0, v1, packedColor, light);
-    }
-
-    @Unique
-    private void renderVertex(
-            ExtendedVertexBuilder vertexConsumer, Quaternionf quaternionf, float x, float y, float z, float i, float j, float k, float u, float v, int color, int light
-    ) {
-        vector3f.set(i, j, 0.0f)
-                .rotate(quaternionf)
-                .mul(k)
-                .add(x, y, z);
-
-        vertexConsumer.vertex(vector3f.x(), vector3f.y(), vector3f.z(), u, v, color, light);
     }
 
     protected int getLightColor(float f) {
@@ -135,7 +83,7 @@ public abstract class SingleQuadParticleM extends Particle {
 
     /**
      * @author
-     * @reason Prevent vanilla from queuing the default quad renderer – Vulkan handles rendering directly in {@link #render}.
+     * @reason Prevent vanilla from queuing GL particle batches once we skip drawing via {@link #vulkanmod$cullParticles}.
      */
     @Overwrite
     public ParticleRenderType getGroup() {

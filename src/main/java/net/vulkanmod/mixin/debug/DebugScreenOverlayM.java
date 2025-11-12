@@ -1,16 +1,12 @@
 package net.vulkanmod.mixin.debug;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.vulkanmod.render.chunk.WorldRenderer;
 import net.vulkanmod.vulkan.SystemInfo;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.Device;
 import net.vulkanmod.vulkan.memory.MemoryManager;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -24,25 +20,7 @@ import static net.vulkanmod.Initializer.getVersion;
 @Mixin(DebugScreenOverlay.class)
 public abstract class DebugScreenOverlayM {
 
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-    @Shadow
-    @Final
-    private Font font;
-
-    @Shadow
-    private static long bytesToMegabytes(long bytes) {
-        return 0;
-    }
-
-    @Shadow
-    protected abstract List<String> getGameInformation();
-
-    @Shadow
-    protected abstract List<String> getSystemInformation();
-
-    @Redirect(method = "getSystemInformation", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Lists;newArrayList([Ljava/lang/Object;)Ljava/util/ArrayList;"))
+    @Redirect(method = "getSystemInformation", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Lists;newArrayList([Ljava/lang/Object;)Ljava/util/ArrayList;"), remap = false)
     private ArrayList<String> redirectList(Object[] elements) {
         ArrayList<String> strings = new ArrayList<>();
 
@@ -75,5 +53,9 @@ public abstract class DebugScreenOverlayM {
 
     private long getOffHeapMemory() {
         return bytesToMegabytes(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed());
+    }
+
+    private static long bytesToMegabytes(long bytes) {
+        return bytes / 1024L / 1024L;
     }
 }

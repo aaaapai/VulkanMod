@@ -11,6 +11,9 @@ public abstract class DirectStateAccessCoreMixin {
 
     /**
      * Route framebuffer creation through the Vulkan compatibility layer so IDs are tracked.
+     *
+     * @author VulkanMod
+     * @reason Keep framebuffer handles in sync with VkGlFramebuffer.
      */
     @Overwrite(remap = false)
     public int createFrameBufferObject() {
@@ -19,6 +22,9 @@ public abstract class DirectStateAccessCoreMixin {
 
     /**
      * Attach Mojang's textures to our emulated framebuffer and optionally bind it.
+     *
+     * @author VulkanMod
+     * @reason Redirect framebuffer attachments to VkGlFramebuffer to avoid touching GL.
      */
     @Overwrite(remap = false)
     public void bindFrameBufferTextures(int framebuffer, int colorTexture, int depthTexture, int level, int bindTarget) {
@@ -46,6 +52,9 @@ public abstract class DirectStateAccessCoreMixin {
 
     /**
      * Forward blits through the Vulkan framebuffer bridge.
+     *
+     * @author VulkanMod
+     * @reason Copy operations must happen inside the Vulkan abstraction to keep render targets consistent.
      */
     @Overwrite(remap = false)
     public void blitFrameBuffers(int srcFramebuffer, int dstFramebuffer,

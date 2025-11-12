@@ -126,7 +126,8 @@ public abstract class BufferBuilderM
     }
 
     /**
-     * @author
+     * @author VulkanMod
+     * @reason Write vertices directly into mapped native memory so Vulkan can consume them without GL translation.
      */
     @Overwrite
     public void addVertex(float x, float y, float z, int color, float u, float v, int overlay, int light, float normalX, float normalY, float normalZ) {

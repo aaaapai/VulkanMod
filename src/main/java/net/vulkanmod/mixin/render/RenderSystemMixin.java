@@ -62,6 +62,10 @@ public abstract class RenderSystemMixin {
         }
     }
 
+    /**
+     * @author VulkanMod
+     * @reason Default GL state is reimplemented inside VRenderSystem.
+     */
     @Overwrite(remap = false)
     public static void setupDefaultState() {
     }

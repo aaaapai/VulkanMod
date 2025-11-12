@@ -21,6 +21,9 @@ public abstract class GlProgramMixin {
 
     /**
      * Do not query OpenGL for uniforms – VulkanMod manages descriptors separately.
+     *
+     * @author VulkanMod
+     * @reason Skip redundant GL calls when running on the Vulkan backend.
      */
     @Overwrite(remap = false)
     public void setupUniforms(List<com.mojang.blaze3d.pipeline.RenderPipeline.UniformDescription> uniforms,
@@ -30,6 +33,9 @@ public abstract class GlProgramMixin {
 
     /**
      * Prevent OpenGL program destruction and forward cleanup to the Vulkan pipeline holder.
+     *
+     * @author VulkanMod
+     * @reason Resource lifetime is owned by VkGlProgram instances.
      */
     @Overwrite(remap = false)
     public void close() {
@@ -39,11 +45,19 @@ public abstract class GlProgramMixin {
         }
     }
 
+    /**
+     * @author VulkanMod
+     * @reason Expose cached uniforms without re-querying the GL driver.
+     */
     @Overwrite(remap = false)
     public Uniform getUniform(String name) {
         return this.uniformsByName != null ? this.uniformsByName.get(name) : null;
     }
 
+    /**
+     * @author VulkanMod
+     * @reason Keep parity with vanilla API while remaining a pure data accessor.
+     */
     @Overwrite(remap = false)
     public Map<String, Uniform> getUniforms() {
         return this.uniformsByName != null ? this.uniformsByName : Map.of();

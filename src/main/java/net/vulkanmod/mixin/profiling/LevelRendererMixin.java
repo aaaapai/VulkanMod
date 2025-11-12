@@ -1,103 +1,120 @@
 package net.vulkanmod.mixin.profiling;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.LevelTargetBundle;
+import net.vulkanmod.render.core.backend.BackendManager;
+import net.vulkanmod.render.core.backend.FrameGraphContext;
 import net.vulkanmod.render.profiling.Profiler;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Map;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
 
-    @Inject(method = "renderClouds", at = @At("HEAD"))
-    private void pushProfiler(PoseStack poseStack, Matrix4f matrix4f, Matrix4f matrix4f2, float f, double d, double e, double g, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.push("Clouds");
+    @Shadow @Final private LevelTargetBundle targets;
+
+    @Unique
+    private static final Map<String, String> VK$PASS_LABELS = Map.of(
+            "clear", "Clear",
+            "sky", "Sky",
+            "main", "Geometry",
+            "particles", "Particles",
+            "clouds", "Clouds",
+            "weather", "Weather",
+            "late_debug", "Debug"
+    );
+
+    @Inject(method = "renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V",
+            at = @At("HEAD"))
+    private void vk$pushRenderLevel(GraphicsResourceAllocator graphicsResourceAllocator,
+                                    DeltaTracker deltaTracker,
+                                    boolean renderBlockOutline,
+                                    Camera camera,
+                                    Matrix4f frustumMatrix,
+                                    Matrix4f projectionMatrix,
+                                    Matrix4f cullingProjectionMatrix,
+                                    GpuBufferSlice shaderFog,
+                                    Vector4f fogColor,
+                                    boolean renderSky,
+                                    CallbackInfo ci) {
+        Profiler.getMainProfiler().push("LevelRenderer");
+        BackendManager.get().beginFrameGraph(new FrameGraphContext(
+                graphicsResourceAllocator,
+                deltaTracker,
+                renderBlockOutline,
+                camera,
+                frustumMatrix,
+                projectionMatrix,
+                cullingProjectionMatrix,
+                shaderFog,
+                fogColor,
+                renderSky,
+                this.targets,
+                null
+        ));
     }
 
-    @Inject(method = "renderClouds", at = @At("RETURN"))
-    private void popProfiler(PoseStack poseStack, Matrix4f matrix4f, Matrix4f matrix4f2, float f, double d, double e, double g, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
+    @Inject(method = "renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V",
+            at = @At("RETURN"))
+    private void vk$popRenderLevel(GraphicsResourceAllocator graphicsResourceAllocator,
+                                   DeltaTracker deltaTracker,
+                                   boolean renderBlockOutline,
+                                   Camera camera,
+                                   Matrix4f frustumMatrix,
+                                   Matrix4f projectionMatrix,
+                                   Matrix4f cullingProjectionMatrix,
+                                   GpuBufferSlice shaderFog,
+                                   Vector4f fogColor,
+                                   boolean renderSky,
+                                   CallbackInfo ci) {
+        Profiler.getMainProfiler().pop();
     }
 
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;F)V",
-            shift = At.Shift.BEFORE))
-    private void pushProfiler3(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    @ModifyArg(method = "renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;execute(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder$Inspector;)V"),
+            index = 1)
+    private FrameGraphBuilder.Inspector vk$wrapInspector(FrameGraphBuilder.Inspector inspector) {
         Profiler profiler = Profiler.getMainProfiler();
-        profiler.push("Particles");
+        return new FrameGraphBuilder.Inspector() {
+            @Override
+            public void beforeExecutePass(String name) {
+                if (inspector != null) {
+                    inspector.beforeExecutePass(name);
+                }
+                profiler.push(VK$PASS_LABELS.getOrDefault(name, name));
+            }
+
+            @Override
+            public void afterExecutePass(String name) {
+                profiler.pop();
+                if (inspector != null) {
+                    inspector.afterExecutePass(name);
+                }
+            }
+        };
     }
 
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;F)V",
-            shift = At.Shift.AFTER))
-    private void popProfiler3(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 0,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain1(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.push("Opaque_terrain");
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 2,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain2(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
-        profiler.push("entities");
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 3,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain3_0(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
-        profiler.push("Translucent_terrain");
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 5,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain3_1(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
-        profiler.push("Translucent_terrain");
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 4,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain4_0(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            ordinal = 6,
-            shift = At.Shift.BEFORE))
-    private void profilerTerrain4_1(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
-        Profiler profiler = Profiler.getMainProfiler();
-        profiler.pop();
+    @ModifyVariable(method = "renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;<init>()V", shift = At.Shift.AFTER),
+            ordinal = 0)
+    private FrameGraphBuilder vk$captureBuilder(FrameGraphBuilder builder) {
+        BackendManager.get().attachFrameGraphBuilder(builder);
+        return builder;
     }
 }
