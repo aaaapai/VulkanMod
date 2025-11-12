@@ -9,7 +9,7 @@ import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -369,8 +369,8 @@ public class GraphicsPipeline extends Pipeline {
         }
 
         void cleanUp() {
-            MemoryUtil.memFree(this.bindingDescriptions);
-            MemoryUtil.memFree(this.attributeDescriptions);
+            this.bindingDescriptions.free();
+            this.attributeDescriptions.free();
         }
     }
 }

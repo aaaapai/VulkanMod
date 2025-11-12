@@ -5,7 +5,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.config.option.CyclingOption;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.util.ColorUtil;
 
 public class CyclingOptionWidget extends OptionWidget<CyclingOption<?>> {
     private Button leftButton;

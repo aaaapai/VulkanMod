@@ -1,6 +1,6 @@
 package net.vulkanmod.render.chunk.util;
 
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 

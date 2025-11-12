@@ -4,7 +4,7 @@ import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.util.ARGB;
 import net.vulkanmod.vulkan.framebuffer.Framebuffer;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
-import net.vulkanmod.vulkan.util.VUtil;
+import net.vulkanmod.util.VUtil;
 import org.lwjgl.vulkan.VkClearAttachment;
 import org.lwjgl.vulkan.VkClearRect;
 import org.lwjgl.vulkan.VkCommandBuffer;

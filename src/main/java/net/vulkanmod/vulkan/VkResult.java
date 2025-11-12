@@ -1,4 +1,4 @@
-package net.vulkanmod.vulkan.util;
+package net.vulkanmod.vulkan;
 
 public class VkResult {
     public static final int VK_SUCCESS = 0;

@@ -1,6 +1,7 @@
-package net.vulkanmod.vulkan;
+package net.vulkanmod.render.core;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
@@ -8,8 +9,7 @@ import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.UniformBuffer;
 import net.vulkanmod.vulkan.memory.buffer.VertexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.index.AutoIndexBuffer;
-import net.vulkanmod.vulkan.util.VUtil;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 import java.nio.ByteBuffer;
@@ -119,8 +119,8 @@ public class Drawer {
     public void drawIndexed(Buffer vertexBuffer, Buffer indexBuffer, int indexCount, int indexType) {
         VkCommandBuffer commandBuffer = Renderer.getCommandBuffer();
 
-        VUtil.putLong(pBuffers, vertexBuffer.getId());
-        VUtil.putLong(pOffsets, vertexBuffer.getOffset());
+        MemoryUtil.memPutLong(pBuffers, vertexBuffer.getId());
+        MemoryUtil.memPutLong(pOffsets, vertexBuffer.getOffset());
         nvkCmdBindVertexBuffers(commandBuffer, 0, 1, pBuffers, pOffsets);
 
         bindIndexBuffer(commandBuffer, indexBuffer, indexType);
@@ -130,8 +130,8 @@ public class Drawer {
     public void draw(VertexBuffer vertexBuffer, int vertexCount) {
         VkCommandBuffer commandBuffer = Renderer.getCommandBuffer();
 
-        VUtil.putLong(pBuffers, vertexBuffer.getId());
-        VUtil.putLong(pOffsets, vertexBuffer.getOffset());
+        MemoryUtil.memPutLong(pBuffers, vertexBuffer.getId());
+        MemoryUtil.memPutLong(pOffsets, vertexBuffer.getOffset());
         nvkCmdBindVertexBuffers(commandBuffer, 0, 1, pBuffers, pOffsets);
 
         vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);

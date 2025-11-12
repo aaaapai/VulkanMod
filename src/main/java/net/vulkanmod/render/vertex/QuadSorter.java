@@ -3,7 +3,7 @@ package net.vulkanmod.render.vertex;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.vulkanmod.render.util.SortUtil;
 import org.joml.Vector3f;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 public class QuadSorter {
 

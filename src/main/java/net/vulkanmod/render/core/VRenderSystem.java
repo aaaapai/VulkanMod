@@ -1,15 +1,15 @@
-package net.vulkanmod.vulkan;
+package net.vulkanmod.render.core;
 
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
+import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.shader.PipelineState;
-import net.vulkanmod.vulkan.util.ColorUtil;
-import net.vulkanmod.vulkan.util.MappedBuffer;
-import net.vulkanmod.vulkan.util.VUtil;
+import net.vulkanmod.util.ColorUtil;
+import net.vulkanmod.util.MappedBuffer;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -124,9 +124,9 @@ public abstract class VRenderSystem {
 
     public static void setModelOffset(float x, float y, float z) {
         long ptr = modelOffset.ptr;
-        VUtil.putFloat(ptr, x);
-        VUtil.putFloat(ptr + 4, y);
-        VUtil.putFloat(ptr + 8, z);
+        MemoryUtil.memPutFloat(ptr, x);
+        MemoryUtil.memPutFloat(ptr + 4, y);
+        MemoryUtil.memPutFloat(ptr + 8, z);
     }
 
     public static void setShaderColor(float f1, float f2, float f3, float f4) {

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 

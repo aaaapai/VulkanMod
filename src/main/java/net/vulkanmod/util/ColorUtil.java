@@ -1,4 +1,4 @@
-package net.vulkanmod.vulkan.util;
+package net.vulkanmod.util;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

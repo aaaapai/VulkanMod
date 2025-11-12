@@ -9,12 +9,12 @@ import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.texture.VulkanImage;
-import net.vulkanmod.vulkan.util.Pair;
-import net.vulkanmod.vulkan.util.VkResult;
+import net.vulkanmod.util.Pair;
+import net.vulkanmod.vulkan.VkResult;
 import org.apache.commons.lang3.Validate;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaBudget;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
@@ -217,12 +217,12 @@ public class MemoryManager {
         }
     }
 
-    public PointerBuffer Map(long allocation) {
-        PointerBuffer data = MemoryUtil.memAllocPointer(1);
-
-        vmaMapMemory(ALLOCATOR, allocation, data);
-
-        return data;
+    public long map(long allocation) {
+        try (MemoryStack stack = stackPush()) {
+            PointerBuffer data = stack.mallocPointer(1);
+            vmaMapMemory(ALLOCATOR, allocation, data);
+            return data.get(0);
+        }
     }
 
     public synchronized void addToFreeable(Buffer buffer) {

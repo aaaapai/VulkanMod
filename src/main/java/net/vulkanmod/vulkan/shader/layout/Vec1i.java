@@ -1,7 +1,7 @@
 package net.vulkanmod.vulkan.shader.layout;
 
-import net.vulkanmod.vulkan.util.MappedBuffer;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MappedBuffer;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.util.function.Supplier;
 

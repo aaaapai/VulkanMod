@@ -15,8 +15,8 @@ import net.vulkanmod.config.gui.widget.VAbstractWidget;
 import net.vulkanmod.config.gui.widget.VButtonWidget;
 import net.vulkanmod.config.option.OptionPage;
 import net.vulkanmod.config.option.Options;
-import net.vulkanmod.vulkan.VRenderSystem;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.render.core.VRenderSystem;
+import net.vulkanmod.util.ColorUtil;
 
 import java.util.ArrayList;
 import java.util.List;

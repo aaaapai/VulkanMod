@@ -5,8 +5,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.vulkanmod.config.gui.GuiRenderer;
-import net.vulkanmod.vulkan.VRenderSystem;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.render.core.VRenderSystem;
+import net.vulkanmod.util.ColorUtil;
 
 import java.util.function.Consumer;
 

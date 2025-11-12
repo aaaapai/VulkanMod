@@ -10,8 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.config.option.Option;
-import net.vulkanmod.vulkan.VRenderSystem;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.render.core.VRenderSystem;
+import net.vulkanmod.util.ColorUtil;
 
 public abstract class OptionWidget<O extends Option<?>> extends VAbstractWidget
         implements NarratableEntry {
