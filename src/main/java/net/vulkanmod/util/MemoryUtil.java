@@ -12,6 +12,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +23,8 @@ import java.util.Objects;
 public final class MemoryUtil {
     public static final long NULL = 0L;
 
-    private static final Map<Buffer, Arena> BUFFER_ARENAS = Collections.synchronizedMap(new IdentityHashMap<>());
+    private static final Map<Object, Arena> BUFFER_ARENAS = Collections.synchronizedMap(new IdentityHashMap<>());
+    private static final Map<Long, Buffer> POINTER_ALLOCATIONS = Collections.synchronizedMap(new HashMap<>());
 
     private MemoryUtil() {
     }
@@ -31,11 +33,11 @@ public final class MemoryUtil {
         return buffer.order(ByteOrder.nativeOrder());
     }
 
-    private static void register(Buffer buffer, Arena arena) {
+    private static void register(Object buffer, Arena arena) {
         BUFFER_ARENAS.put(buffer, arena);
     }
 
-    private static Arena remove(Buffer buffer) {
+    private static Arena remove(Object buffer) {
         return BUFFER_ARENAS.remove(buffer);
     }
 
@@ -82,14 +84,17 @@ public final class MemoryUtil {
     }
 
     public static void memFree(Buffer buffer) {
-        if (buffer == null) {
-            return;
-        }
+        memFreeInternal(buffer);
+    }
 
+    public static void memFree(PointerBuffer buffer) {
+        memFreeInternal(buffer);
+    }
+
+    private static void memFreeInternal(Object buffer) {
+        if (buffer == null) return;
         Arena arena = remove(buffer);
-        if (arena != null) {
-            arena.close();
-        }
+        if (arena != null) arena.close();
     }
 
     public static void memPutFloat(long address, float value) {
@@ -164,6 +169,14 @@ public final class MemoryUtil {
         return buffer;
     }
 
+    public static ByteBuffer memByteBuffer(IntBuffer buffer) {
+        Objects.requireNonNull(buffer, "buffer");
+        ByteBuffer byteBuffer = MemorySegment.ofBuffer(buffer).asByteBuffer();
+        byteBuffer.limit(buffer.remaining() * Integer.BYTES);
+        byteBuffer.position(0);
+        return configure(byteBuffer);
+    }
+
     public static ByteBuffer memSlice(ByteBuffer buffer, int offset, int length) {
         Objects.requireNonNull(buffer, "buffer");
         ByteBuffer dup = buffer.duplicate();
@@ -192,5 +205,21 @@ public final class MemoryUtil {
         }
 
         return builder.toString();
+    }
+
+    public static long nmemAlignedAlloc(int alignment, long size) {
+        Arena arena = Arena.ofShared();
+        ByteBuffer buffer = configure(arena.allocate(size, alignment).asByteBuffer());
+        register(buffer, arena);
+        long address = memAddress(buffer);
+        POINTER_ALLOCATIONS.put(address, buffer);
+        return address;
+    }
+
+    public static void nmemAlignedFree(long address) {
+        Buffer buffer = POINTER_ALLOCATIONS.remove(address);
+        if (buffer != null) {
+            memFree(buffer);
+        }
     }
 }

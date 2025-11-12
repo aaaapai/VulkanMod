@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.SourceFactor;
 import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Objects;
 
@@ -287,22 +288,22 @@ public class PipelineState {
 
         public static int glToVulkan(int f) {
             return switch (f) {
-                case GlConst.GL_CLEAR -> VK_LOGIC_OP_CLEAR;
-                case GlConst.GL_AND -> VK_LOGIC_OP_AND;
-                case GlConst.GL_AND_REVERSE -> VK_LOGIC_OP_AND_REVERSE;
-                case GlConst.GL_COPY -> VK_LOGIC_OP_COPY;
-                case GlConst.GL_AND_INVERTED -> VK_LOGIC_OP_AND_INVERTED;
-                case GlConst.GL_NOOP -> VK_LOGIC_OP_NO_OP;
-                case GlConst.GL_XOR -> VK_LOGIC_OP_XOR;
-                case GlConst.GL_OR -> VK_LOGIC_OP_OR;
-                case GlConst.GL_NOR -> VK_LOGIC_OP_NOR;
-                case GlConst.GL_EQUIV -> VK_LOGIC_OP_EQUIVALENT;
-                case GlConst.GL_INVERT -> VK_LOGIC_OP_INVERT;
-                case GlConst.GL_OR_REVERSE -> VK_LOGIC_OP_OR_REVERSE;
-                case GlConst.GL_COPY_INVERTED -> VK_LOGIC_OP_COPY_INVERTED;
-                case GlConst.GL_OR_INVERTED -> VK_LOGIC_OP_OR_INVERTED;
-                case GlConst.GL_NAND -> VK_LOGIC_OP_NAND;
-                case GlConst.GL_SET -> VK_LOGIC_OP_SET;
+                case GL11.GL_CLEAR -> VK_LOGIC_OP_CLEAR;
+                case GL11.GL_AND -> VK_LOGIC_OP_AND;
+                case GL11.GL_AND_REVERSE -> VK_LOGIC_OP_AND_REVERSE;
+                case GL11.GL_COPY -> VK_LOGIC_OP_COPY;
+                case GL11.GL_AND_INVERTED -> VK_LOGIC_OP_AND_INVERTED;
+                case GL11.GL_NOOP -> VK_LOGIC_OP_NO_OP;
+                case GL11.GL_XOR -> VK_LOGIC_OP_XOR;
+                case GL11.GL_OR -> VK_LOGIC_OP_OR;
+                case GL11.GL_NOR -> VK_LOGIC_OP_NOR;
+                case GL11.GL_EQUIV -> VK_LOGIC_OP_EQUIVALENT;
+                case GL11.GL_INVERT -> VK_LOGIC_OP_INVERT;
+                case GL11.GL_OR_REVERSE -> VK_LOGIC_OP_OR_REVERSE;
+                case GL11.GL_COPY_INVERTED -> VK_LOGIC_OP_COPY_INVERTED;
+                case GL11.GL_OR_INVERTED -> VK_LOGIC_OP_OR_INVERTED;
+                case GL11.GL_NAND -> VK_LOGIC_OP_NAND;
+                case GL11.GL_SET -> VK_LOGIC_OP_SET;
 
                 default -> VK_LOGIC_OP_COPY;
             };

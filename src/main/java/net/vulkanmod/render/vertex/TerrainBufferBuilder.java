@@ -3,14 +3,14 @@ package net.vulkanmod.render.vertex;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
-import org.apache.logging.log4j.Logger;
 import net.vulkanmod.util.MemoryUtil;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.ByteBuffer;
 
 public class TerrainBufferBuilder implements VertexConsumer {
     private static final Logger LOGGER = Initializer.LOGGER;
-    private static final MemoryUtil.MemoryAllocator ALLOCATOR = MemoryUtil.getAllocator(false);
+    private ByteBuffer buffer;
     protected long bufferPtr;
     protected int nextElementByte;
     int vertices;
@@ -21,7 +21,8 @@ public class TerrainBufferBuilder implements VertexConsumer {
     private VertexBuilder vertexBuilder;
 
     public TerrainBufferBuilder(int size, int vertexSize, VertexBuilder vertexBuilder) {
-        this.bufferPtr = ALLOCATOR.malloc(size);
+        this.buffer = MemoryUtil.memAlloc(size);
+        this.bufferPtr = MemoryUtil.memAddress(this.buffer);
         this.capacity = size;
         this.vertexSize = vertexSize;
         this.vertexBuilder = vertexBuilder;
@@ -40,7 +41,11 @@ public class TerrainBufferBuilder implements VertexConsumer {
     }
 
     private void resize(int i) {
-        this.bufferPtr = ALLOCATOR.realloc(this.bufferPtr, i);
+        ByteBuffer newBuffer = MemoryUtil.memAlloc(i);
+        MemoryUtil.memCopy(this.bufferPtr, MemoryUtil.memAddress(newBuffer), Math.min(this.capacity, i));
+        MemoryUtil.memFree(this.buffer);
+        this.buffer = newBuffer;
+        this.bufferPtr = MemoryUtil.memAddress(newBuffer);
         LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", this.capacity, i);
         if (this.bufferPtr == 0L) {
             throw new OutOfMemoryError("Failed to resize buffer from " + this.capacity + " bytes to " + i + " bytes");
