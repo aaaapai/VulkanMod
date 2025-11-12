@@ -38,3 +38,5 @@ net/minecraft/
 !net/vulkanmod/
 *.log
 *:Zone.Identifier
+AGENTS.md
+
