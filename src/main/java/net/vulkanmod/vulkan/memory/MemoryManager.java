@@ -80,12 +80,13 @@ public class MemoryManager {
     }
 
     public static void MapAndCopy(long allocation, Consumer<PointerBuffer> consumer) {
-        try (MemoryStack stack = stackPush()) {
-            PointerBuffer data = stack.mallocPointer(1);
-
+        PointerBuffer data = MemoryUtil.memAllocPointer(1);
+        try {
             vmaMapMemory(ALLOCATOR, allocation, data);
             consumer.accept(data);
             vmaUnmapMemory(ALLOCATOR, allocation);
+        } finally {
+            MemoryUtil.memFree(data);
         }
     }
 

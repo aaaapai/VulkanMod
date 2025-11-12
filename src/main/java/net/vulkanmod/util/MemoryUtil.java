@@ -1,5 +1,7 @@
 package net.vulkanmod.util;
 
+import org.lwjgl.PointerBuffer;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -68,6 +70,14 @@ public final class MemoryUtil {
     public static FloatBuffer memCallocFloat(int elements) {
         FloatBuffer buffer = memAllocFloat(elements);
         memSet(memAddress(buffer), (byte) 0, (long) elements * Float.BYTES);
+        return buffer;
+    }
+
+    public static PointerBuffer memAllocPointer(int capacity) {
+        Arena arena = Arena.ofShared();
+        MemorySegment segment = arena.allocate((long) capacity * Long.BYTES, Long.BYTES);
+        PointerBuffer buffer = PointerBuffer.create(segment.address(), capacity);
+        register(buffer, arena);
         return buffer;
     }
 
