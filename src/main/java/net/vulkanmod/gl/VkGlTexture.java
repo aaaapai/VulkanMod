@@ -437,6 +437,10 @@ public class VkGlTexture {
 
     public void setVulkanImage(VulkanImage vulkanImage) {
         this.vulkanImage = vulkanImage;
+        this.width = vulkanImage.width;
+        this.height = vulkanImage.height;
+        this.maxLevel = vulkanImage.mipLevels;
+        this.vkFormat = vulkanImage.format;
     }
 
 }

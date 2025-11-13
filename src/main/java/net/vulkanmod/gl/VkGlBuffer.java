@@ -7,14 +7,15 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-// TODO: This class is only used to emulate a CPU buffer for texture copying purposes
-//  any other use is not supported
+// TODO: Implement missing features.
+//  This class is only used to emulate a CPU buffer for texture copying purposes
 public class VkGlBuffer {
     private static int ID_COUNTER = 1;
     private static final Int2ReferenceOpenHashMap<VkGlBuffer> map = new Int2ReferenceOpenHashMap<>();
     private static int boundId = 0;
     private static VkGlBuffer boundBuffer;
 
+    private static VkGlBuffer arrayBufferBound;
     private static VkGlBuffer pixelPackBufferBound;
     private static VkGlBuffer pixelUnpackBufferBound;
 
@@ -39,6 +40,7 @@ public class VkGlBuffer {
         switch (target) {
             case GL32.GL_PIXEL_PACK_BUFFER -> pixelPackBufferBound = glBuffer;
             case GL32.GL_PIXEL_UNPACK_BUFFER -> pixelUnpackBufferBound = glBuffer;
+            case GL32.GL_ARRAY_BUFFER -> arrayBufferBound = glBuffer;
             default -> throw new IllegalStateException("Unexpected value: " + target);
         }
     }
