@@ -105,6 +105,15 @@ public class GL11M {
      * @reason
      */
     @Overwrite(remap = false)
+    public static void glClearDepth(@NativeType("GLdouble") double depth) {
+        VRenderSystem.clearDepth(depth);
+    }
+
+    /**
+     * @author
+     * @reason
+     */
+    @Overwrite(remap = false)
     public static void glDepthMask(@NativeType("GLboolean") boolean flag) {
         VRenderSystem.depthMask(flag);
     }
