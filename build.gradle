@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.9.2'
+	id 'fabric-loom' version '1.12-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -20,7 +20,7 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
+	// Fabric API.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	ext.includeModule = { name ->
@@ -31,11 +31,13 @@ dependencies {
 
 	includeModule("fabric-api-base")
 	includeModule("fabric-resource-loader-v0")
+	includeModule("fabric-resource-loader-v1")
 	includeModule("fabric-rendering-v1")
 	includeModule("fabric-renderer-api-v1")
 	includeModule("fabric-rendering-fluids-v1")
-	includeModule("fabric-rendering-data-attachment-v1")
 	includeModule("fabric-block-view-api-v2")
+	includeModule("fabric-lifecycle-events-v1")
+	includeModule("fabric-transitive-access-wideners-v1")
 }
 
 project.ext.lwjglVersion = "3.3.3"

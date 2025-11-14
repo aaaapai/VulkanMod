@@ -13,7 +13,6 @@ public class ImageDescriptor implements Descriptor {
     public final String name;
     public final int imageIdx;
 
-    public final boolean isStorageImage;
     public boolean useSampler;
     public boolean isReadOnlyLayout;
     private int layout;
@@ -24,14 +23,23 @@ public class ImageDescriptor implements Descriptor {
     }
 
     public ImageDescriptor(int binding, String type, String name, int imageIdx, boolean isStorageImage) {
+        this(binding, type, name, imageIdx, isStorageImage ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+    public ImageDescriptor(int binding, String type, String name, int imageIdx, int descriptorType) {
         this.binding = binding;
         this.qualifier = type;
         this.name = name;
-        this.isStorageImage = isStorageImage;
-        this.useSampler = !isStorageImage;
         this.imageIdx = imageIdx;
 
-        descriptorType = isStorageImage ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        if (this.imageIdx == -1) {
+            throw new IllegalArgumentException();
+        }
+
+        this.descriptorType = descriptorType;
+
+        boolean isStorageImage = isStorageImage();
+        this.useSampler = !isStorageImage;
         setLayout(isStorageImage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
@@ -74,12 +82,16 @@ public class ImageDescriptor implements Descriptor {
     public long getImageView(VulkanImage image) {
         long view;
 
-        if(mipLevel == -1)
+        if (mipLevel == -1)
             view = image.getImageView();
         else
             view = image.getLevelImageView(mipLevel);
 
         return view;
+    }
+
+    public boolean isStorageImage() {
+        return this.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     }
 
     public static class State {

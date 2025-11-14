@@ -2,8 +2,6 @@ package net.vulkanmod.mixin.render.clouds;
 
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.resource.ResourceHandle;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
@@ -12,7 +10,6 @@ import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.render.profiling.Profiler;
 import net.vulkanmod.render.sky.CloudRenderer;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,7 +25,7 @@ public abstract class LevelRendererM {
     @Unique private CloudRenderer cloudRenderer;
 
     @Inject(method = "addCloudsPass", at = @At("HEAD"), cancellable = true)
-    public void addCloudsPass(FrameGraphBuilder frameGraphBuilder, Matrix4f modelView, Matrix4f projection, CloudStatus cloudStatus, Vec3 camPos, float partialTicks, int i, float g, CallbackInfo ci) {
+    public void addCloudsPass(FrameGraphBuilder frameGraphBuilder, CloudStatus cloudStatus, Vec3 camPos, float partialTicks, int i, float g, CallbackInfo ci) {
         if (this.cloudRenderer == null) {
             this.cloudRenderer = new CloudRenderer();
         }
@@ -40,17 +37,11 @@ public abstract class LevelRendererM {
             this.targets.main = framePass.readsAndWrites(this.targets.main);
         }
 
-        ResourceHandle<RenderTarget> resourceHandle = this.targets.clouds;
         framePass.executes(() -> {
             Profiler profiler = Profiler.getMainProfiler();
             profiler.push("Clouds");
 
-            if (resourceHandle != null) {
-                resourceHandle.get().setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-                resourceHandle.get().clear();
-            }
-
-            this.cloudRenderer.renderClouds(this.level, modelView, projection, this.ticks, partialTicks,
+            this.cloudRenderer.renderClouds(this.level, this.ticks, partialTicks,
                                             camPos.x(), camPos.y(), camPos.z());
 
             profiler.pop();

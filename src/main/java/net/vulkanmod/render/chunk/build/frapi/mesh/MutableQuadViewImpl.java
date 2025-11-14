@@ -17,21 +17,24 @@
 package net.vulkanmod.render.chunk.build.frapi.mesh;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.vulkanmod.render.chunk.build.frapi.VulkanModRenderer;
 import net.vulkanmod.render.model.quad.ModelQuadView;
 import org.jetbrains.annotations.Nullable;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.helper.NormalHelper;
 import net.vulkanmod.render.chunk.build.frapi.helper.TextureHelper;
-import net.vulkanmod.render.chunk.build.frapi.material.RenderMaterialImpl;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
+
+import java.util.Objects;
 
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.*;
 
@@ -63,7 +66,11 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		// Apply non-zero defaults
 		quad.color(-1, -1, -1, -1);
 		quad.cullFace(null);
-		quad.material(VulkanModRenderer.STANDARD_MATERIAL);
+		quad.renderLayer(null);
+		quad.diffuseShade(true);
+		quad.ambientOcclusion(TriState.DEFAULT);
+		quad.glint(null);
+		quad.tintIndex(-1);
 		quad.tintIndex(-1);
 	}
 
@@ -155,6 +162,12 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
+	public final MutableQuadViewImpl nominalFace(@Nullable Direction face) {
+		nominalFace = face;
+		return this;
+	}
+
+	@Override
 	public final MutableQuadViewImpl cullFace(@Nullable Direction face) {
 		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(data[baseIndex + HEADER_BITS], face);
 		nominalFace(face);
@@ -162,14 +175,40 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public final MutableQuadViewImpl nominalFace(@Nullable Direction face) {
-		nominalFace = face;
+	public MutableQuadViewImpl renderLayer(@Nullable ChunkSectionLayer renderLayer) {
+		data[baseIndex + HEADER_BITS] = EncodingFormat.renderLayer(data[baseIndex + HEADER_BITS], renderLayer);
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl material(RenderMaterial material) {
-		data[baseIndex + HEADER_BITS] = EncodingFormat.material(data[baseIndex + HEADER_BITS], (RenderMaterialImpl) material);
+	public MutableQuadViewImpl emissive(boolean emissive) {
+		data[baseIndex + HEADER_BITS] = EncodingFormat.emissive(data[baseIndex + HEADER_BITS], emissive);
+		return this;
+	}
+
+	@Override
+	public MutableQuadViewImpl diffuseShade(boolean shade) {
+		data[baseIndex + HEADER_BITS] = EncodingFormat.diffuseShade(data[baseIndex + HEADER_BITS], shade);
+		return this;
+	}
+
+	@Override
+	public MutableQuadViewImpl ambientOcclusion(TriState ao) {
+		Objects.requireNonNull(ao, "ambient occlusion TriState may not be null");
+		data[baseIndex + HEADER_BITS] = EncodingFormat.ambientOcclusion(data[baseIndex + HEADER_BITS], ao);
+		return this;
+	}
+
+	@Override
+	public MutableQuadViewImpl glint(@Nullable ItemStackRenderState.FoilType glint) {
+		data[baseIndex + HEADER_BITS] = EncodingFormat.glint(data[baseIndex + HEADER_BITS], glint);
+		return this;
+	}
+
+	@Override
+	public MutableQuadViewImpl shadeMode(ShadeMode mode) {
+		Objects.requireNonNull(mode, "ShadeMode may not be null");
+		data[baseIndex + HEADER_BITS] = EncodingFormat.shadeMode(data[baseIndex + HEADER_BITS], mode);
 		return this;
 	}
 
@@ -204,32 +243,38 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, VANILLA_QUAD_STRIDE);
 		isGeometryInvalid = true;
 
+		int normalFlags = 0;
 		int colorIndex = baseIndex + VERTEX_COLOR;
+		int normalIndex = baseIndex + VERTEX_NORMAL;
 
 		for (int i = 0; i < 4; i++) {
 			data[colorIndex] = ColorHelper.fromVanillaColor(data[colorIndex]);
+
+			// Set normal flag if normal is not zero, ignoring W component
+			if ((data[normalIndex] & 0xFFFFFF) != 0) {
+				normalFlags |= 1 << i;
+			}
+
 			colorIndex += VERTEX_STRIDE;
+			normalIndex += VERTEX_STRIDE;
 		}
 
+		normalFlags(normalFlags);
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl fromVanilla(BakedQuad quad, RenderMaterial material, @Nullable Direction cullFace) {
-		fromVanilla(quad.getVertices(), 0);
-		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
-		nominalFace(quad.getDirection());
-		tintIndex(quad.getTintIndex());
+	public final MutableQuadViewImpl fromBakedQuad(BakedQuad quad) {
+		fromVanilla(quad.vertices(), 0);
+//		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
+		nominalFace(quad.direction());
+		diffuseShade(quad.shade());
+		tintIndex(quad.tintIndex());
 
-		if (!quad.isShade()) {
-			material = RenderMaterialImpl.setDisableDiffuse((RenderMaterialImpl) material, true);
-		}
-
-		material(material);
-		tag(0);
+//		tag(0);
 
 		// Copy data from BakedQuad instead of calculating properties
-		ModelQuadView quadView = (ModelQuadView) quad;
+        ModelQuadView quadView = (ModelQuadView) (Object) quad;
 		int normal = quadView.getNormal();
 		data[baseIndex + HEADER_FACE_NORMAL] = normal;
 		NormalHelper.unpackNormalTo(normal, faceNormal);
@@ -241,7 +286,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		this.facing = quadView.getQuadFacing();
 		this.isGeometryInvalid = false;
 
-		int lightEmission = quad.getLightEmission();
+		int lightEmission = quad.lightEmission();
 
 		if (lightEmission > 0) {
 			for (int i = 0; i < 4; i++) {

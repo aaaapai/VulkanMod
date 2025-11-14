@@ -1,12 +1,13 @@
 package net.vulkanmod.config.gui.widget;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.vulkanmod.config.gui.GuiElement;
-import net.vulkanmod.config.gui.GuiRenderer;
+import net.vulkanmod.config.gui.render.GuiRenderer;
 import net.vulkanmod.vulkan.util.ColorUtil;
 
 public abstract class VAbstractWidget extends GuiElement {
@@ -56,13 +57,13 @@ public abstract class VAbstractWidget extends GuiElement {
     }
 
     @Override
-    public boolean mouseClicked(double mX, double mY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
         if (this.active && this.visible) {
-            if (this.isValidClickButton(button)) {
-                boolean bl = this.clicked(mX, mY);
-                if (bl) {
+            if (this.isValidClickButton(event.button())) {
+                boolean clicked = this.clicked(event.x(), event.y());
+                if (clicked) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(mX, mY);
+                    this.onClick(event.x(), event.y());
                     return true;
                 }
             }
@@ -81,9 +82,9 @@ public abstract class VAbstractWidget extends GuiElement {
     }
 
     @Override
-    public boolean mouseReleased(double mX, double mY, int button) {
-        if (this.isValidClickButton(button)) {
-            this.onRelease(mX, mY);
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (this.isValidClickButton(event.button())) {
+            this.onRelease(event.x(), event.y());
             return true;
         } else {
             return false;
@@ -95,9 +96,9 @@ public abstract class VAbstractWidget extends GuiElement {
     }
 
     @Override
-    public boolean mouseDragged(double mX, double mY, int button, double f, double g) {
-        if (this.isValidClickButton(button)) {
-            this.onDrag(mX, mY, f, g);
+    public boolean mouseDragged(MouseButtonEvent event, double d, double e) {
+        if (this.isValidClickButton(event.button())) {
+            this.onDrag(event.x(), event.y(), d, e);
             return true;
         } else {
             return false;

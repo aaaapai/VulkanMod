@@ -1,8 +1,12 @@
 package net.vulkanmod.vulkan.pass;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.client.Minecraft;
-import net.vulkanmod.gl.VkGlTexture;
+import net.vulkanmod.render.engine.VkGpuDevice;
+import net.vulkanmod.render.engine.VkGpuTexture;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.framebuffer.Framebuffer;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
@@ -29,7 +33,8 @@ public class DefaultMainPass implements MainPass {
     private RenderPass mainRenderPass;
     private RenderPass auxRenderPass;
 
-    private VkGlTexture[] colorAttachmentTextures;
+    private GpuTexture[] colorAttachmentTextures;
+    private GpuTextureView[] colorAttachmentTextureViews;
 
     DefaultMainPass() {
         this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
@@ -65,8 +70,9 @@ public class DefaultMainPass implements MainPass {
 
         framebuffer.beginRenderPass(commandBuffer, this.mainRenderPass, stack);
 
-        VkViewport.Buffer pViewport = framebuffer.viewport(stack);
-        vkCmdSetViewport(commandBuffer, 0, pViewport);
+//        VkViewport.Buffer pViewport = framebuffer.viewport(stack);
+//        vkCmdSetViewport(commandBuffer, 0, pViewport);
+        Renderer.setViewport(0, 0, framebuffer.getWidth(), framebuffer.getHeight(), stack);
 
         VkRect2D.Buffer pScissor = framebuffer.scissor(stack);
         vkCmdSetScissor(commandBuffer, 0, pScissor);
@@ -133,22 +139,29 @@ public class DefaultMainPass implements MainPass {
     }
 
     @Override
-    public VkGlTexture getColorAttachment() {
+    public GpuTexture getColorAttachment() {
         return this.colorAttachmentTextures[Renderer.getCurrentImage()];
     }
 
+    @Override
+    public GpuTextureView getColorAttachmentView() {
+        return this.colorAttachmentTextureViews[Renderer.getCurrentImage()];
+    }
+
     private void createSwapChainTextures() {
+        VkGpuDevice device = (VkGpuDevice) RenderSystem.getDevice();
+
         SwapChain swapChain = Renderer.getInstance().getSwapChain();
         var swapChainImages = swapChain.getImages();
         int imageCount = swapChainImages.size();
-        this.colorAttachmentTextures = new VkGlTexture[imageCount];
+        this.colorAttachmentTextures = new GpuTexture[imageCount];
+        this.colorAttachmentTextureViews = new GpuTextureView[imageCount];
 
-        for (int i = 0; i < swapChainImages.size(); i++) {
-            int id = VkGlTexture.genTextureId();
-            VkGlTexture glTexture = VkGlTexture.getTexture(id);
-            VkGlTexture.bindIdToImage(id, swapChainImages.get(i));
-            this.colorAttachmentTextures[i] = glTexture;
+        for (int i = 0; i < imageCount; ++i) {
+            VkGpuTexture attachmentTexture = device.gpuTextureFromVulkanImage(swapChainImages.get(i));
+            GpuTextureView attachmentTextureView = device.createTextureView(attachmentTexture);
+            this.colorAttachmentTextures[i] = attachmentTexture;
+            this.colorAttachmentTextureViews[i] = attachmentTextureView;
         }
     }
-
 }

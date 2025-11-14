@@ -15,7 +15,7 @@ public class EntityOutlineGeneratorM implements ExtendedVertexBuilder {
     private boolean canUseFastVertex = false;
 
     @Inject(method = "<init>*", at = @At("RETURN"))
-    private void getExtBuilder(VertexConsumer vertexConsumer, int i, int j, int k, int l, CallbackInfo ci) {
+    private void getExtBuilder(VertexConsumer vertexConsumer, int i, CallbackInfo ci) {
         if (vertexConsumer instanceof ExtendedVertexBuilder) {
             this.extDelegate = (ExtendedVertexBuilder) vertexConsumer;
             this.canUseFastVertex = true;

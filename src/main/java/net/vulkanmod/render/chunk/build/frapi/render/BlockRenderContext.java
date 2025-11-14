@@ -1,53 +1,35 @@
-/*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package net.vulkanmod.render.chunk.build.frapi.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
+import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
+import net.fabricmc.fabric.api.renderer.v1.render.BlockVertexConsumerProvider;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.ReportedException;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.Initializer;
-import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableQuadViewImpl;
 import net.vulkanmod.render.chunk.build.light.LightMode;
 import net.vulkanmod.render.chunk.build.light.LightPipeline;
 import net.vulkanmod.render.chunk.build.light.data.ArrayLightDataCache;
-import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
 import net.vulkanmod.render.chunk.build.light.flat.FlatLightPipeline;
 import net.vulkanmod.render.chunk.build.light.smooth.NewSmoothLightPipeline;
 import net.vulkanmod.render.chunk.build.light.smooth.SmoothLightPipeline;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 /**
  * Context for non-terrain block rendering.
  */
 public class BlockRenderContext extends AbstractBlockRenderContext {
-	private VertexConsumer vertexConsumer;
+	public static final ThreadLocal<BlockRenderContext> POOL = ThreadLocal.withInitial(BlockRenderContext::new);
+
+	private BlockVertexConsumerProvider vertexConsumers;
+    private ChunkSectionLayer defaultRenderLayer;
 
 	private final ArrayLightDataCache lightDataCache = new ArrayLightDataCache();
 
@@ -63,37 +45,44 @@ public class BlockRenderContext extends AbstractBlockRenderContext {
 		}
 
 		this.setupLightPipelines(flatLightPipeline, smoothLightPipeline);
+
+		random = RandomSource.create();
     }
 
-	public void render(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrixStack, VertexConsumer buffer, boolean cull, RandomSource random, long seed, int overlay) {
+	public void render(BlockAndTintGetter blockView, BlockStateModel model, BlockState state, BlockPos pos, PoseStack matrixStack, BlockVertexConsumerProvider buffers, boolean cull, long seed, int overlay) {
 		Vec3 offset = state.getOffset(pos);
 		matrixStack.translate(offset.x, offset.y, offset.z);
 
 		this.blockPos = pos;
-		this.vertexConsumer = buffer;
-		this.matrix = matrixStack.last().pose();
-		this.normalMatrix = matrixStack.last().normal();
+		this.vertexConsumers = buffers;
+        this.defaultRenderLayer = ItemBlockRenderTypes.getChunkRenderType(state);
+		this.matrices = matrixStack.last();
 		this.overlay = overlay;
-
-		this.random = random;
-		this.seed = seed;
+		this.random.setSeed(seed);
 
 		this.lightDataCache.reset(blockView, pos);
 
 		this.prepareForWorld(blockView, cull);
-		this.prepareForBlock(state, pos, model.useAmbientOcclusion());
+		this.prepareForBlock(state, pos, state.getLightEmission() == 0);
 
-		model.emitBlockQuads(getEmitter(), blockView, state, pos, this.randomSupplier, this::isFaceCulled);
+		model.emitQuads(getEmitter(), blockView, pos, state, random, this::isFaceCulled);
 
-		this.vertexConsumer = null;
+		this.vertexConsumers = null;
+	}
+
+	@Override
+	protected VertexConsumer getVertexConsumer(ChunkSectionLayer layer) {
+		return vertexConsumers.getBuffer(layer);
 	}
 
 	protected void endRenderQuad(MutableQuadViewImpl quad) {
-		final RenderMaterial mat = quad.material();
-		final TriState aoMode = mat.ambientOcclusion();
+		final TriState aoMode = quad.ambientOcclusion();
 		final boolean ao = this.useAO && (aoMode == TriState.TRUE || (aoMode == TriState.DEFAULT && this.defaultAO));
-		final boolean emissive = mat.emissive();
-		final boolean vanillaShade = mat.shadeMode() == ShadeMode.VANILLA;
+		final boolean emissive = quad.emissive();
+		final boolean vanillaShade = quad.shadeMode() == ShadeMode.VANILLA;
+        final ChunkSectionLayer quadRenderLayer = quad.renderLayer();
+        final ChunkSectionLayer renderLayer = quadRenderLayer == null ? defaultRenderLayer : quadRenderLayer;
+		final VertexConsumer vertexConsumer = getVertexConsumer(renderLayer);
 
 		LightPipeline lightPipeline = ao ? this.smoothLightPipeline : this.flatLightPipeline;
 

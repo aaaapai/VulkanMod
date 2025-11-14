@@ -86,7 +86,7 @@ public class FluidRenderer implements FluidRendering.DefaultRenderer {
             }
 
             VoxelShape voxelShape = Shapes.box(0.0, 0.0, 0.0, 1.0, h, 1.0);
-            return Shapes.blockOccudes(voxelShape, occlusionShape, direction);
+            return Shapes.blockOccludes(voxelShape, occlusionShape, direction);
         } else {
             return false;
         }

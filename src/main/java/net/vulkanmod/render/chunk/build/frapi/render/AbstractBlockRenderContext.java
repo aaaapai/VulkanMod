@@ -1,5 +1,6 @@
 package net.vulkanmod.render.chunk.build.frapi.render;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -7,8 +8,11 @@ import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
@@ -21,9 +25,6 @@ import net.vulkanmod.render.chunk.build.frapi.VulkanModRenderer;
 import net.vulkanmod.render.chunk.build.light.LightPipeline;
 import net.vulkanmod.render.chunk.build.light.data.QuadLightData;
 import org.jetbrains.annotations.Nullable;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
-import net.fabricmc.fabric.api.util.TriState;
 import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableQuadViewImpl;
@@ -38,8 +39,6 @@ import java.util.function.Supplier;
 
 public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	private static final Renderer RENDERER = VulkanModRenderer.INSTANCE;
-	protected static final RenderMaterial STANDARD_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).find();
-	protected static final RenderMaterial NO_AO_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).ambientOcclusion(TriState.FALSE).find();
 
 	protected final BlockColorRegistry blockColorRegistry;
 
@@ -54,20 +53,21 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 			renderQuad(this);
 		}
 
-		@Override
-		public void emitBlockQuads(QuadEmitter emitter, BakedModel model, BlockState state,
-								   Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
-			if (this.hasTransform) {
-				super.emitBlockQuads(emitter, model, state, randomSupplier, cullTest);
-			} else {
-				AbstractBlockRenderContext.this.emitVanillaBlockQuads(model, state, randomSupplier, cullTest);
-			}
-		}
+//		@Override
+//		public void emitBlockQuads(QuadEmitter emitter, BakedModel model, BlockState state,
+//								   Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
+//			if (this.hasTransform) {
+//				super.emitBlockQuads(emitter, model, state, randomSupplier, cullTest);
+//			} else {
+//				AbstractBlockRenderContext.this.emitVanillaBlockQuads(model, state, randomSupplier, cullTest);
+//			}
+//		}
 	};
 
 	protected BlockState blockState;
 	protected BlockPos blockPos;
 	protected BlockPos.MutableBlockPos tempPos = new BlockPos.MutableBlockPos();
+	protected ChunkSectionLayer defaultLayer;
 
 	protected BlockAndTintGetter renderRegion;
 
@@ -83,14 +83,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	protected boolean useAO;
 	protected boolean defaultAO;
 
-	protected long seed;
 	protected RandomSource random;
-	public final Supplier<RandomSource> randomSupplier = () -> {
-		long seed = this.seed;
-
-		random.setSeed(seed);
-		return random;
-	};
 
 	protected boolean enableCulling = true;
 	protected int cullCompletionFlags;
@@ -116,6 +109,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAo) {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
+		this.defaultLayer = ItemBlockRenderTypes.getChunkRenderType(blockState);
 
 		this.useAO = Minecraft.useAmbientOcclusion();
 		this.defaultAO = this.useAO && modelAo && blockState.getLightEmission() == 0;
@@ -204,6 +198,8 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		this.renderQuad(quadView);
 	}
 
+	protected abstract VertexConsumer getVertexConsumer(ChunkSectionLayer layer);
+
 	private void renderQuad(MutableQuadViewImpl quad) {
 		if (isFaceCulled(quad.cullFace())) {
 			return;
@@ -238,7 +234,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		QuadLightData data = this.quadLightData;
 
 		// TODO: enhanced AO
-		lightPipeline.calculate(quad, this.blockPos, data, quad.cullFace(), quad.lightFace(), quad.hasShade());
+		lightPipeline.calculate(quad, this.blockPos, data, quad.cullFace(), quad.lightFace(), quad.diffuseShade());
 
 		if (emissive) {
 			for (int i = 0; i < 4; i++) {
@@ -255,9 +251,13 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	public void emitVanillaBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<Direction> cullTest) {
+	public ChunkSectionLayer effectiveRenderLayer(@Nullable ChunkSectionLayer quadRenderLayer) {
+		return quadRenderLayer == null ? defaultLayer : quadRenderLayer;
+	}
+
+	public void emitVanillaBlockQuads(BlockStateModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<Direction> cullTest) {
 		MutableQuadViewImpl quad = this.editorQuad;
-		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? STANDARD_MATERIAL : NO_AO_MATERIAL;
+//		final RenderMaterial defaultMaterial = state.getLightEmission() == 0 ? STANDARD_MATERIAL : NO_AO_MATERIAL;
 
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 			final Direction cullFace = ModelHelper.faceFromIndex(i);
@@ -267,15 +267,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				continue;
 			}
 
-			final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());
-			final int count = quads.size();
+			final List<BlockModelPart> parts = ((BlockStateModel) this).collectParts(random);
+			final int partCount = parts.size();
 
-			//noinspection ForLoopReplaceableByForEach
-			for (int j = 0; j < count; j++) {
-				final BakedQuad q = quads.get(j);
-				quad.fromVanilla(q, defaultMaterial, cullFace);
-
-				this.endRenderQuad(quad);
+			for (int j = 0; j < partCount; j++) {
+				parts.get(j).emitQuads(quad, cullTest);
 			}
 		}
 

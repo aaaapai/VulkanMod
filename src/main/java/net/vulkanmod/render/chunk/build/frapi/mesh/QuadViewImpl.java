@@ -32,6 +32,10 @@ import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.VERTEX_
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.VERTEX_Y;
 import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.VERTEX_Z;
 
+import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
+import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.vulkanmod.render.chunk.cull.QuadFacing;
 import net.vulkanmod.render.model.quad.ModelQuadFlags;
 import net.vulkanmod.render.model.quad.ModelQuadView;
@@ -43,7 +47,6 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.vulkanmod.render.chunk.build.frapi.helper.ColorHelper;
 import net.vulkanmod.render.chunk.build.frapi.helper.GeometryHelper;
 import net.vulkanmod.render.chunk.build.frapi.helper.NormalHelper;
-import net.vulkanmod.render.chunk.build.frapi.material.RenderMaterialImpl;
 import net.minecraft.core.Direction;
 
 /**
@@ -98,10 +101,6 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	public int geometryFlags() {
 		computeGeometry();
 		return EncodingFormat.geometryFlags(data[baseIndex + HEADER_BITS]);
-	}
-
-	public boolean hasShade() {
-		return !material().disableDiffuse();
 	}
 
 	@Override
@@ -221,12 +220,6 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	}
 
 	@Override
-	@Nullable
-	public final Direction cullFace() {
-		return EncodingFormat.cullFace(data[baseIndex + HEADER_BITS]);
-	}
-
-	@Override
 	@NotNull
 	public final Direction lightFace() {
 		computeGeometry();
@@ -251,8 +244,41 @@ public class QuadViewImpl implements QuadView, ModelQuadView {
 	}
 
 	@Override
-	public final RenderMaterialImpl material() {
-		return EncodingFormat.material(data[baseIndex + HEADER_BITS]);
+	@Nullable
+	public final Direction cullFace() {
+		return EncodingFormat.cullFace(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	@Nullable
+	public ChunkSectionLayer renderLayer() {
+		return EncodingFormat.renderLayer(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	public boolean emissive() {
+		return EncodingFormat.emissive(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	public boolean diffuseShade() {
+		return EncodingFormat.diffuseShade(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	public TriState ambientOcclusion() {
+		return EncodingFormat.ambientOcclusion(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	@Nullable
+	public ItemStackRenderState.FoilType glint() {
+		return EncodingFormat.glint(data[baseIndex + HEADER_BITS]);
+	}
+
+	@Override
+	public ShadeMode shadeMode() {
+		return EncodingFormat.shadeMode(data[baseIndex + HEADER_BITS]);
 	}
 
 	@Override

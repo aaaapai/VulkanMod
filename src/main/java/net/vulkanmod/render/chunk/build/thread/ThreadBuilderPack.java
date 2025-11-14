@@ -12,7 +12,7 @@ public class ThreadBuilderPack {
     private static Function<TerrainRenderType, TerrainBuilder> terrainBuilderConstructor;
 
     public static void defaultTerrainBuilderConstructor() {
-        terrainBuilderConstructor = renderType -> new TerrainBuilder(TerrainRenderType.getRenderType(renderType).bufferSize());
+        terrainBuilderConstructor = renderType -> new TerrainBuilder(TerrainRenderType.getLayer(renderType).bufferSize());
     }
 
     public static void setTerrainBuilderConstructor(Function<TerrainRenderType, TerrainBuilder> constructor) {

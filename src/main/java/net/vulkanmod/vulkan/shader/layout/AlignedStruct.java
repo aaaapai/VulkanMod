@@ -11,6 +11,10 @@ public abstract class AlignedStruct {
     protected int size;
 
     protected AlignedStruct(List<Uniform.Info> infoList, int size) {
+        if (size <= 0) {
+            throw new IllegalArgumentException("Struct size cannot be <= 0");
+        }
+
         this.size = size;
 
         if (infoList == null)
@@ -58,8 +62,12 @@ public abstract class AlignedStruct {
         }
 
         public UBO buildUBO(int binding, int stages) {
+            return this.buildUBO("UBO: %d".formatted(binding), binding, stages);
+        }
+
+        public UBO buildUBO(String name, int binding, int stages) {
             //offset is expressed in floats/ints
-            return new UBO(binding, stages, this.currentOffset * 4, this.uniforms);
+            return new UBO(name, binding, stages, this.currentOffset * 4, this.uniforms);
         }
 
         public PushConstants buildPushConstant() {

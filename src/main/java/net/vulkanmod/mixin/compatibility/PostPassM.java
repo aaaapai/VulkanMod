@@ -1,20 +1,25 @@
 package net.vulkanmod.mixin.compatibility;
 
 import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
-import com.mojang.blaze3d.pipeline.MainTarget;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.PostChainConfig;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.PostPass;
 import net.minecraft.resources.ResourceLocation;
+import net.vulkanmod.render.engine.*;
 import net.vulkanmod.vulkan.Renderer;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -22,92 +27,90 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 @Mixin(PostPass.class)
 public abstract class PostPassM {
     @Shadow @Final private String name;
-
     @Shadow @Final private List<PostPass.Input> inputs;
     @Shadow @Final private ResourceLocation outputTargetId;
-    @Shadow @Final private CompiledShaderProgram shader;
-    @Shadow @Final private List<PostChainConfig.Uniform> uniforms;
-
-    @Shadow protected abstract void restoreDefaultUniforms();
+    @Shadow @Final private RenderPipeline pipeline;
+    @Shadow @Final private MappableRingBuffer infoUbo;
+    @Shadow @Final private Map<String, GpuBuffer> customUniforms;
 
     /**
      * @author
      * @reason
      */
     @Overwrite
-    public void addToFrame(FrameGraphBuilder frameGraphBuilder, Map<ResourceLocation, ResourceHandle<RenderTarget>> map, Matrix4f matrix4f) {
+    public void addToFrame(FrameGraphBuilder frameGraphBuilder, Map<ResourceLocation, ResourceHandle<RenderTarget>> map, GpuBufferSlice gpuBufferSlice) {
         FramePass framePass = frameGraphBuilder.addPass(this.name);
 
         for (PostPass.Input input : this.inputs) {
             input.addToPass(framePass, map);
         }
 
-        ResourceHandle<RenderTarget> resourceHandle = map.computeIfPresent(
+        ResourceHandle<RenderTarget> resourceHandle = (ResourceHandle<RenderTarget>)map.computeIfPresent(
                 this.outputTargetId, (resourceLocation, resourceHandlex) -> framePass.readsAndWrites(resourceHandlex)
         );
         if (resourceHandle == null) {
             throw new IllegalStateException("Missing handle for target " + this.outputTargetId);
         } else {
-            framePass.executes(() -> {
-                RenderTarget renderTarget = resourceHandle.get();
-                RenderSystem.viewport(0, 0, renderTarget.width, renderTarget.height);
+            framePass.executes(
+                    () -> {
+                        RenderTarget renderTarget = resourceHandle.get();
+                        RenderSystem.backupProjectionMatrix();
+                        RenderSystem.setProjectionMatrix(gpuBufferSlice, ProjectionType.ORTHOGRAPHIC);
+                        CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
+                        List<Pair<String, GpuTextureView>> list = this.inputs.stream().map(inputxx -> Pair.of(inputxx.samplerName(), inputxx.texture(map))).toList();
 
-                for (PostPass.Input inputx : this.inputs) {
-                    if (inputx instanceof PostPass.TargetInput) {
-                        var targetId = ((PostPass.TargetInput) inputx).targetId();
-                        var inTarget = map.get(targetId).get();
+                        try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(this.infoUbo.currentBuffer(), false, true)) {
+                            Std140Builder std140Builder = Std140Builder.intoBuffer(mappedView.data());
+                            std140Builder.putVec2(renderTarget.width, renderTarget.height);
 
-                        if (inTarget instanceof MainTarget) {
-                            inTarget.bindRead();
+                            for (Pair<String, GpuTextureView> pair : list) {
+                                std140Builder.putVec2(pair.getSecond().getWidth(0), pair.getSecond().getHeight(0));
+                            }
+                        }
+
+                        Renderer.getInstance().endRenderPass();
+
+                        for (var input : this.inputs) {
+                            VkGpuTexture gpuTexture = (VkGpuTexture) input.texture(map).texture();
+                            gpuTexture.getVulkanImage().readOnlyLayout();
+                        }
+
+                        try (RenderPass renderPass = commandEncoder.createRenderPass(
+                                () -> "Post pass " + this.name,
+                                renderTarget.getColorTextureView(),
+                                OptionalInt.empty(),
+                                renderTarget.useDepth ? renderTarget.getDepthTextureView() : null,
+                                OptionalDouble.empty()
+                        )) {
+                            renderPass.setPipeline(this.pipeline);
+                            RenderSystem.bindDefaultUniforms(renderPass);
+                            renderPass.setUniform("SamplerInfo", this.infoUbo.currentBuffer());
+
+                            for (Map.Entry<String, GpuBuffer> entry : this.customUniforms.entrySet()) {
+                                renderPass.setUniform((String)entry.getKey(), (GpuBuffer)entry.getValue());
+                            }
+
+                            for (Pair<String, GpuTextureView> pair2 : list) {
+                                renderPass.bindSampler(pair2.getFirst() + "Sampler", pair2.getSecond());
+                            }
+
+                            renderPass.draw(0, 3);
+                        }
+
+                        this.infoUbo.rotate();
+                        RenderSystem.restoreProjectionMatrix();
+
+                        for (PostPass.Input inputx : this.inputs) {
+                            inputx.cleanup(map);
                         }
                     }
-
-                    inputx.bindTo(this.shader, map);
-                }
-
-                this.shader.safeGetUniform("OutSize").set((float)renderTarget.width, (float)renderTarget.height);
-
-                for (PostChainConfig.Uniform uniform : this.uniforms) {
-                    Uniform uniform2 = this.shader.getUniform(uniform.name());
-                    if (uniform2 != null) {
-                        uniform2.setFromConfig(uniform.values(), uniform.values().size());
-                    }
-                }
-
-                renderTarget.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-                renderTarget.clear();
-                renderTarget.bindWrite(false);
-                RenderSystem.depthFunc(519);
-                RenderSystem.setShader(this.shader);
-                RenderSystem.backupProjectionMatrix();
-                RenderSystem.setProjectionMatrix(matrix4f, ProjectionType.ORTHOGRAPHIC);
-
-                Renderer.setInvertedViewport(0, 0, renderTarget.width, renderTarget.height);
-                Renderer.resetScissor();
-
-                BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-                bufferBuilder.addVertex(0.0F, 0.0F, 500.0F);
-                bufferBuilder.addVertex((float)renderTarget.width, 0.0F, 500.0F);
-                bufferBuilder.addVertex((float)renderTarget.width, (float)renderTarget.height, 500.0F);
-                bufferBuilder.addVertex(0.0F, (float)renderTarget.height, 500.0F);
-
-                BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
-                RenderSystem.depthFunc(515);
-                RenderSystem.restoreProjectionMatrix();
-                renderTarget.unbindWrite();
-
-                Renderer.resetViewport();
-
-                for (PostPass.Input input2 : this.inputs) {
-                    input2.cleanup(map);
-                }
-
-                this.restoreDefaultUniforms();
-            });
+            );
         }
     }
 

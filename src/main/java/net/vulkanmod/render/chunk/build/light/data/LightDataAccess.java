@@ -108,7 +108,7 @@ public abstract class LightDataAccess {
                 sl = region.getBrightness(LightLayer.SKY, pos);
             }
             else {
-                int light = LevelRenderer.getLightColor(region, state, pos);
+                int light = LevelRenderer.getLightColor(LevelRenderer.BrightnessGetter.DEFAULT, region, state, pos);
                 bl = LightTexture.block(light);
                 sl = LightTexture.sky(light);
             }

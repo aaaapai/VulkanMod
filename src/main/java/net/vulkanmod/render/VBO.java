@@ -1,15 +1,8 @@
 package net.vulkanmod.render;
 
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.vulkanmod.interfaces.shader.ShaderMixed;
 import net.vulkanmod.vulkan.Renderer;
-import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.memory.*;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
 import net.vulkanmod.vulkan.memory.buffer.VertexBuffer;
@@ -17,25 +10,21 @@ import net.vulkanmod.vulkan.memory.buffer.index.AutoIndexBuffer;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.texture.VTextureSelector;
-import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
 
-@Environment(EnvType.CLIENT)
 public class VBO {
     private final MemoryType memoryType;
     private VertexBuffer vertexBuffer;
     private IndexBuffer indexBuffer;
 
+    private VertexFormat.Mode mode;
+    private boolean autoIndexed = false;
     private int indexCount;
     private int vertexCount;
-    private VertexFormat.Mode mode;
 
-    AutoIndexBuffer autoIndexBuffer;
-    private boolean autoIndexed = false;
-
-    public VBO(BufferUsage usage) {
-       this.memoryType = usage == BufferUsage.STATIC_WRITE ? MemoryTypes.GPU_MEM : MemoryTypes.HOST_MEM;
+    public VBO(boolean useGpuMem) {
+       this.memoryType = useGpuMem ? MemoryTypes.GPU_MEM : MemoryTypes.HOST_MEM;
     }
 
     public void upload(MeshData meshData) {
@@ -96,73 +85,40 @@ public class VBO {
 
             if (autoIndexBuffer != null) {
                 autoIndexBuffer.checkCapacity(this.vertexCount);
-                this.autoIndexBuffer = autoIndexBuffer;
+                this.indexBuffer = autoIndexBuffer.getIndexBuffer();
             }
 
             this.autoIndexed = true;
-
-        } else {
-            if (this.indexBuffer != null)
+        }
+        else {
+            if (this.indexBuffer != null && !this.autoIndexed) {
                 this.indexBuffer.scheduleFree();
+            }
 
             this.indexBuffer = new IndexBuffer(data.remaining(), MemoryTypes.GPU_MEM);
             this.indexBuffer.copyBuffer(data, data.remaining());
         }
-
     }
 
-    public void drawWithShader(Matrix4f MV, Matrix4f P, CompiledShaderProgram shader) {
-        if (this.indexCount != 0) {
-            RenderSystem.assertOnRenderThread();
-
-            RenderSystem.setShader(shader);
-
-            GraphicsPipeline pipeline = ShaderMixed.of(shader).getPipeline();
-            drawWithShader(MV, P, pipeline);
-        }
-    }
-
-    public void drawWithShader(Matrix4f MV, Matrix4f P, GraphicsPipeline pipeline) {
-        if (this.indexCount != 0) {
-            RenderSystem.assertOnRenderThread();
-
-            VRenderSystem.applyMVP(MV, P);
-
-            VRenderSystem.setPrimitiveTopologyGL(this.mode.asGLMode);
-
-            Renderer renderer = Renderer.getInstance();
-            renderer.bindGraphicsPipeline(pipeline);
-            VTextureSelector.bindShaderTextures(pipeline);
-            renderer.uploadAndBindUBOs(pipeline);
-
-            IndexBuffer indexBuffer;
-            if (this.autoIndexBuffer != null) {
-                indexBuffer = this.autoIndexBuffer.getIndexBuffer();
-            } else {
-                indexBuffer = this.indexBuffer;
-            }
-
-            if (indexBuffer != null) {
-                Renderer.getDrawer().drawIndexed(this.vertexBuffer, indexBuffer, this.indexCount);
-            }
-            else {
-                Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
-            }
-
-            VRenderSystem.applyMVP(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix());
-
-        }
+    public void bind(GraphicsPipeline pipeline) {
+        Renderer renderer = Renderer.getInstance();
+        renderer.bindGraphicsPipeline(pipeline);
+        VTextureSelector.bindShaderTextures(pipeline);
+        renderer.uploadAndBindUBOs(pipeline);
     }
 
     public void draw() {
         if (this.indexCount != 0) {
-            RenderSystem.assertOnRenderThread();
-
             Renderer renderer = Renderer.getInstance();
             Pipeline pipeline = renderer.getBoundPipeline();
             renderer.uploadAndBindUBOs(pipeline);
 
-            Renderer.getDrawer().drawIndexed(this.vertexBuffer, this.indexBuffer, this.indexCount);
+            if (this.indexBuffer != null) {
+                Renderer.getDrawer().drawIndexed(this.vertexBuffer, this.indexBuffer, this.indexCount);
+            }
+            else {
+                Renderer.getDrawer().draw(this.vertexBuffer, this.vertexCount);
+            }
         }
     }
 

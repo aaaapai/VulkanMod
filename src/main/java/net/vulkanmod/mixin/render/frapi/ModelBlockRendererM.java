@@ -19,17 +19,7 @@ package net.vulkanmod.mixin.render.frapi;
 import net.vulkanmod.render.chunk.build.frapi.render.BlockRenderContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(ModelBlockRenderer.class)
 public abstract class ModelBlockRendererM {
@@ -38,13 +28,16 @@ public abstract class ModelBlockRendererM {
     @Unique
     private final ThreadLocal<BlockRenderContext> fabric_contexts = ThreadLocal.withInitial(BlockRenderContext::new);
 
-    @Inject(at = @At("HEAD"), method = "tesselateBlock", cancellable = true)
-    private void hookRender(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrix, VertexConsumer buffer, boolean cull, RandomSource rand, long seed, int overlay, CallbackInfo ci) {
-        if (!model.isVanillaAdapter()) {
-            BlockRenderContext context = fabric_contexts.get();
-            context.render(blockView, model, state, pos, matrix, buffer, cull, rand, seed, overlay);
-            ci.cancel();
-        }
-    }
+    // TODO: frapi
+//    @Inject(at = @At("HEAD"), method = "tesselateBlock", cancellable = true)
+//    private void hookRender(BlockAndTintGetter blockAndTintGetter, List<BlockModelPart> list, BlockState blockState,
+//                            BlockPos blockPos, PoseStack poseStack, VertexConsumer vertexConsumer, boolean bl, int i,
+//                            CallbackInfo ci) {
+//        if (!model.isVanillaAdapter()) {
+//            BlockRenderContext context = fabric_contexts.get();
+//            context.render(blockView, model, state, pos, matrix, buffer, cull, rand, seed, overlay);
+//            ci.cancel();
+//        }
+//    }
 
 }

@@ -1,6 +1,6 @@
 package net.vulkanmod.render.sky;
 
-import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -10,16 +10,20 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.render.PipelineManager;
 import net.vulkanmod.render.VBO;
+import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.util.ColorUtil;
 import org.apache.commons.lang3.Validate;
-import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class CloudRenderer {
     private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/environment/clouds.png");
@@ -57,15 +61,16 @@ public class CloudRenderer {
         this.cloudGrid = createCloudGrid(TEXTURE_LOCATION);
     }
 
-    public void renderClouds(ClientLevel level, Matrix4f modelView, Matrix4f projection, float ticks, float partialTicks, double camX, double camY, double camZ) {
-        float cloudHeight = level.effects().getCloudHeight();
+    public void renderClouds(ClientLevel level, float ticks, float partialTicks, double camX, double camY, double camZ) {
+        Optional<Integer> optional = level.dimensionType().cloudHeight();
 
-        if (Float.isNaN(cloudHeight)) {
+        if (optional.isEmpty()) {
             return;
         }
 
         Minecraft minecraft = Minecraft.getInstance();
 
+        int cloudHeight = optional.get();
         double timeOffset = (ticks + partialTicks) * 0.03F;
         double centerX = (camX + timeOffset);
         double centerZ = camZ + 0.33F * CELL_WIDTH;
@@ -110,7 +115,7 @@ public class CloudRenderer {
                 return;
             }
 
-            this.cloudBuffer = new VBO(BufferUsage.STATIC_WRITE);
+            this.cloudBuffer = new VBO(true);
             this.cloudBuffer.upload(cloudsMesh);
         }
 
@@ -122,37 +127,57 @@ public class CloudRenderer {
         float yTranslation = (float) (centerY);
         float zTranslation = (float) (centerZ - (centerCellZ * CELL_WIDTH));
 
-        Matrix4f matrix4f = new Matrix4f(modelView).translate(-xTranslation, yTranslation, -zTranslation);
+        Renderer.getInstance().getMainPass().rebindMainTarget();
+
+        Matrix4fStack poseStack = RenderSystem.getModelViewStack();
+        poseStack.pushMatrix();
+        poseStack.translate(-xTranslation, yTranslation, -zTranslation);
+        VRenderSystem.applyModelViewMatrix(poseStack);
+        VRenderSystem.calculateMVP();
 
         VRenderSystem.setModelOffset(-xTranslation, 0, -zTranslation);
 
+        // TODO
         Vec3 cloudColor = Vec3.fromRGB24(level.getCloudColor(partialTicks));
-        RenderSystem.setShaderColor((float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 0.8f);
+        VRenderSystem.setShaderColor((float) cloudColor.x, (float) cloudColor.y, (float) cloudColor.z, 0.8f);
 
         GraphicsPipeline pipeline = PipelineManager.getCloudsPipeline();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
+        VRenderSystem.enableBlend();
+        VRenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        VRenderSystem.enableDepthTest();
+        VRenderSystem.depthFunc(GL11.GL_LEQUAL);
+        GlStateManager._enableDepthTest();
+        GlStateManager._depthMask(true);
+        GlStateManager._colorMask(true, true, true, true);
+        GlStateManager._disablePolygonOffset();
+        VRenderSystem.setPolygonModeGL(GL11.GL_FILL);
+        VRenderSystem.setPrimitiveTopologyGL(GL11.GL_TRIANGLES);
 
         boolean fastClouds = this.prevCloudsType == CloudStatus.FAST;
         boolean insideClouds = yState == Y_INSIDE_CLOUDS;
         boolean disableCull = insideClouds || (fastClouds && centerY <= 0.0f);
 
         if (disableCull) {
-            RenderSystem.disableCull();
+            VRenderSystem.disableCull();
+        } else {
+            VRenderSystem.enableCull();
         }
 
         if (!fastClouds) {
-            RenderSystem.colorMask(false, false, false, false);
-            this.cloudBuffer.drawWithShader(matrix4f, projection, pipeline);
+            VRenderSystem.colorMask(false, false, false, false);
+            this.cloudBuffer.bind(pipeline);
+            this.cloudBuffer.draw();
 
-            RenderSystem.colorMask(true, true, true, true);
+            VRenderSystem.colorMask(true, true, true, true);
         }
 
-        this.cloudBuffer.drawWithShader(matrix4f, projection, pipeline);
 
-        RenderSystem.enableCull();
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        this.cloudBuffer.bind(pipeline);
+        this.cloudBuffer.draw();
+
+        poseStack.popMatrix();
+        VRenderSystem.enableCull();
+        VRenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         VRenderSystem.setModelOffset(0.0f, 0.0f, 0.0f);
     }
 
@@ -171,7 +196,8 @@ public class CloudRenderer {
 
         BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        int renderDistance = 32;
+        int cloudRange = Math.min(Minecraft.getInstance().options.cloudRange().get(), 128) * 16;
+        int renderDistance = Mth.ceil(cloudRange / 12.0F);
         boolean insideClouds = this.prevCloudY == Y_INSIDE_CLOUDS;
 
         if (this.prevCloudsType == CloudStatus.FANCY) {

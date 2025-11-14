@@ -1,8 +1,10 @@
 package net.vulkanmod.render.shader;
 
+import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.shaders.ShaderType;
 import net.minecraft.resources.ResourceLocation;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.SPIRVUtils;
@@ -15,10 +17,15 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class ShaderLoadUtil {
 
     private static final String RESOURCES_PATH = SPIRVUtils.class.getResource("/assets/vulkanmod").toExternalForm();
+
+    public static final Set<String> REMAPPED_SHADERS = Sets.newHashSet("core/screenquad.vsh","core/rendertype_item_entity_translucent_cull.vsh");
 
     public static void loadShaders(Pipeline.Builder pipelineBuilder, JsonObject config, String configName, String path) {
         String vertexShader = config.has("vertex") ? config.get("vertex").getAsString() : configName;
@@ -108,6 +115,57 @@ public abstract class ShaderLoadUtil {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public static String getShaderSource(ResourceLocation resourceLocation, ShaderType type) {
+        String shaderExtension = switch (type) {
+            case VERTEX -> ".vsh";
+            case FRAGMENT -> ".fsh";
+        };
+
+        String path = resourceLocation.getPath();
+        String[] splitPath = splitPath(path);
+        String shaderName = "%s%s".formatted(splitPath[1], shaderExtension);
+        String shaderFile = "%s/shaders/%s/%s".formatted(RESOURCES_PATH, path, shaderName);
+
+        InputStream stream;
+        try {
+            stream = getInputStream(shaderFile);
+
+            if (stream == null) {
+                return null;
+            }
+
+            String source = IOUtils.toString(new BufferedReader(new InputStreamReader(stream)));
+            stream.close();
+
+            return source;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String getShaderSource(String path, ShaderType type) {
+        String shaderExtension = switch (type) {
+            case VERTEX -> ".vsh";
+            case FRAGMENT -> ".fsh";
+        };
+
+        String[] splitPath = splitPath(path);
+        String shaderName = "%s%s".formatted(splitPath[1], shaderExtension);
+
+        String shaderFile = "%s/shaders/%s/%s".formatted(RESOURCES_PATH, path, shaderName);
+
+        InputStream stream;
+        try {
+            stream = getInputStream(shaderFile);
+            String source = IOUtils.toString(new BufferedReader(new InputStreamReader(stream)));
+            stream.close();
+
+            return source;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getShaderSource(String basePath, String rendertype, String shaderName, SPIRVUtils.ShaderKind type) {

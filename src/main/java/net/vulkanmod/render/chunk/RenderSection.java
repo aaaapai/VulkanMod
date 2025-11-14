@@ -368,7 +368,8 @@ public class RenderSection {
             sectionSet.clear();
             sectionSet.addAll(fullSet);
 
-            Minecraft.getInstance().levelRenderer.updateGlobalBlockEntities(toRemove, toAdd);
+            // TODO
+//            Minecraft.getInstance().levelRenderer.updateGlobalBlockEntities(toRemove, toAdd);
         }
     }
 

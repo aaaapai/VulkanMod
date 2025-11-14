@@ -1,5 +1,6 @@
 package net.vulkanmod.vulkan.shader;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -16,7 +17,6 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.List;
 
-import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -80,8 +80,11 @@ public class GraphicsPipeline extends Pipeline {
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(vertexInputDescription.bindingDescriptions);
-            vertexInputInfo.pVertexAttributeDescriptions(vertexInputDescription.attributeDescriptions);
+
+            if (vertexInputDescription != null) {
+                vertexInputInfo.pVertexBindingDescriptions(vertexInputDescription.bindingDescriptions);
+                vertexInputInfo.pVertexAttributeDescriptions(vertexInputDescription.attributeDescriptions);
+            }
 
             // ===> ASSEMBLY STAGE <===
 
@@ -241,13 +244,21 @@ public class GraphicsPipeline extends Pipeline {
         final VkVertexInputBindingDescription.Buffer bindingDescriptions;
 
         VertexInputDescription(VertexFormat vertexFormat) {
-            this.bindingDescriptions = getBindingDescription(vertexFormat);
-            this.attributeDescriptions = getAttributeDescriptions(vertexFormat);
+            if (vertexFormat != DefaultVertexFormat.EMPTY) {
+                this.bindingDescriptions = getBindingDescription(vertexFormat);
+                this.attributeDescriptions = getAttributeDescriptions(vertexFormat);
+            }
+            else {
+                this.bindingDescriptions = null;
+                this.attributeDescriptions = null;
+            }
         }
 
         void cleanUp() {
-            MemoryUtil.memFree(this.bindingDescriptions);
-            MemoryUtil.memFree(this.attributeDescriptions);
+            if (this.bindingDescriptions != null) {
+                MemoryUtil.memFree(this.bindingDescriptions);
+                MemoryUtil.memFree(this.attributeDescriptions);
+            }
         }
     }
 

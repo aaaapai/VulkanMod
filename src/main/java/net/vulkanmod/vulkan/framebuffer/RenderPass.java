@@ -165,13 +165,18 @@ public class RenderPass {
     }
 
     public void endRenderPass(VkCommandBuffer commandBuffer) {
-        vkCmdEndRenderPass(commandBuffer);
+        if (Vulkan.DYNAMIC_RENDERING) {
+            KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
+        }
+        else {
+            vkCmdEndRenderPass(commandBuffer);
 
-        if (colorAttachmentInfo != null)
-            framebuffer.getColorAttachment().setCurrentLayout(colorAttachmentInfo.finalLayout);
+            if (colorAttachmentInfo != null)
+                framebuffer.getColorAttachment().setCurrentLayout(colorAttachmentInfo.finalLayout);
 
-        if (depthAttachmentInfo != null)
-            framebuffer.getDepthAttachment().setCurrentLayout(depthAttachmentInfo.finalLayout);
+            if (depthAttachmentInfo != null)
+                framebuffer.getDepthAttachment().setCurrentLayout(depthAttachmentInfo.finalLayout);
+        }
 
         Renderer.getInstance().setBoundRenderPass(null);
     }
@@ -217,10 +222,6 @@ public class RenderPass {
         }
 
         KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffer, renderingInfo);
-    }
-
-    public void endDynamicRendering(VkCommandBuffer commandBuffer) {
-        KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
     }
 
     public Framebuffer getFramebuffer() {

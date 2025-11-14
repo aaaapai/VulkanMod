@@ -26,7 +26,7 @@ public class GuiMixin {
 
     @Inject(method = "render", at = @At(value = "RETURN"))
     private void renderProfilerOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
-        if(ProfilerOverlay.shouldRender && !this.debugOverlay.showDebugScreen())
+        if (ProfilerOverlay.shouldRender && !this.debugOverlay.showDebugScreen())
             ProfilerOverlay.INSTANCE.render(guiGraphics);
     }
 }

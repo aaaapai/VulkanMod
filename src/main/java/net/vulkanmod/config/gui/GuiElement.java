@@ -7,6 +7,7 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GuiElement implements GuiEventListener, NarratableEntry {
@@ -80,46 +81,6 @@ public abstract class GuiElement implements GuiEventListener, NarratableEntry {
             int delta = (int) (Util.getMillis() - this.hoverStopTime);
             return Math.max(1.0f - (delta / time), 0.0f);
         }
-    }
-
-    @Override
-    public void mouseMoved(double d, double e) {
-        GuiEventListener.super.mouseMoved(d, e);
-    }
-
-    @Override
-    public boolean mouseClicked(double d, double e, int i) {
-        return GuiEventListener.super.mouseClicked(d, e, i);
-    }
-
-    @Override
-    public boolean mouseReleased(double d, double e, int i) {
-        return GuiEventListener.super.mouseReleased(d, e, i);
-    }
-
-    @Override
-    public boolean mouseDragged(double d, double e, int i, double f, double g) {
-        return GuiEventListener.super.mouseDragged(d, e, i, f, g);
-    }
-
-    @Override
-    public boolean mouseScrolled(double d, double e, double f, double g) {
-        return GuiEventListener.super.mouseScrolled(d, e, f, g);
-    }
-
-    @Override
-    public boolean keyPressed(int i, int j, int k) {
-        return GuiEventListener.super.keyPressed(i, j, k);
-    }
-
-    @Override
-    public boolean keyReleased(int i, int j, int k) {
-        return GuiEventListener.super.keyReleased(i, j, k);
-    }
-
-    @Override
-    public boolean charTyped(char c, int i) {
-        return GuiEventListener.super.charTyped(c, i);
     }
 
     @Nullable

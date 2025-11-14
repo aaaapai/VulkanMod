@@ -53,7 +53,13 @@ public abstract class PipelineManager {
 
         ShaderLoadUtil.loadShaders(pipelineBuilder, config, configName, "basic");
 
-        return pipelineBuilder.createGraphicsPipeline();
+        var pipeline = pipelineBuilder.createGraphicsPipeline();
+
+        for (var buffer : pipeline.getBuffers()) {
+            buffer.setUseGlobalBuffer(true);
+        }
+
+        return pipeline;
     }
 
     public static GraphicsPipeline getTerrainShader(TerrainRenderType renderType) {

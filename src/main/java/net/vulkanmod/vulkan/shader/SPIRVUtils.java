@@ -22,8 +22,8 @@ import static org.lwjgl.system.MemoryUtil.memASCII;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class SPIRVUtils {
-    private static final boolean DEBUG = false;
-    private static final boolean OPTIMIZATIONS = true;
+    private static final boolean DEBUG = true;
+    private static final boolean OPTIMIZATIONS = false;
 
     private static long compiler;
     private static long options;
@@ -84,9 +84,8 @@ public class SPIRVUtils {
         }
 
         if (shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success) {
-            throw new RuntimeException(
-                    "Failed to compile shader " + filename + " into SPIR-V:\n" + shaderc_result_get_error_message(
-                            result));
+            String errorMessage = shaderc_result_get_error_message(result);
+            throw new RuntimeException("Failed to compile shader %s into SPIR-V:\n\t%s".formatted(filename, errorMessage));
         }
 
         return new SPIRV(result, shaderc_result_get_bytes(result));

@@ -187,6 +187,10 @@ public abstract class Options {
                                             value -> minecraftOptions.cloudStatus().set(value),
                                             () -> minecraftOptions.cloudStatus().get())
                                 .setTranslator(value -> Component.translatable(value.getKey())),
+                        new RangeOption(Component.translatable("options.renderCloudsDistance"),
+                                        2, 128, 1,
+                                        (value) -> minecraftOptions.cloudRange().set(value),
+                                        () -> minecraftOptions.cloudRange().get()),
                         new CyclingOption<>(Component.translatable("options.ao"),
                                             new Integer[]{LightMode.FLAT, LightMode.SMOOTH, LightMode.SUB_BLOCK},
                                             (value) -> {

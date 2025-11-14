@@ -31,11 +31,13 @@ public class VulkanImage {
     public final String name;
     public final int format;
     public final int aspect;
+    public final int arrayLayers;
     public final int mipLevels;
     public final int width;
     public final int height;
     public final int formatSize;
     public final int usage;
+    public final int viewType;
     public final int size;
 
     private long id;
@@ -54,6 +56,7 @@ public class VulkanImage {
         this.mainImageView = imageView;
 
         this.name = name;
+        this.arrayLayers = 1;
         this.mipLevels = mipLevels;
         this.width = width;
         this.height = height;
@@ -61,6 +64,7 @@ public class VulkanImage {
         this.format = format;
         this.usage = usage;
         this.aspect = getAspect(this.format);
+        this.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
         this.size = width * height * formatSize;
 
@@ -72,10 +76,12 @@ public class VulkanImage {
         this.mipLevels = builder.mipLevels;
         this.width = builder.width;
         this.height = builder.height;
+        this.arrayLayers = builder.arrayLayers;
         this.formatSize = builder.formatSize;
         this.format = builder.format;
         this.usage = builder.usage;
         this.aspect = getAspect(this.format);
+        this.viewType = builder.viewType;
 
         this.size = width * height * formatSize;
     }
@@ -84,7 +90,7 @@ public class VulkanImage {
         VulkanImage image = new VulkanImage(builder);
 
         image.createImage();
-        image.mainImageView = createImageView(image.id, builder.format, image.aspect, builder.mipLevels);
+        image.mainImageView = createImageView(image.id, image.viewType, image.format, image.aspect, image.arrayLayers, 0, image.mipLevels);
 
         image.sampler = SamplerManager.getTextureSampler(builder.mipLevels, builder.samplerFlags);
 
@@ -122,7 +128,7 @@ public class VulkanImage {
                     .setLinearFiltering(false)
                     .setClamp(false)
                     .createVulkanImage();
-            image.uploadSubTextureAsync(0, image.width, image.height, 0, 0, 0, 0, 0, buffer);
+            image.uploadSubTextureAsync(0, 0, image.width, image.height, 0, 0, 0, 0, 0, buffer);
             return image;
 //            return createTextureImage(1, 1, 4, false, false, buffer);
         }
@@ -133,12 +139,15 @@ public class VulkanImage {
             LongBuffer pTextureImage = stack.mallocLong(1);
             PointerBuffer pAllocation = stack.pointers(0L);
 
-            MemoryManager.getInstance().createImage(width, height, mipLevels,
-                    format, VK_IMAGE_TILING_OPTIMAL,
-                    usage,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    pTextureImage,
-                    pAllocation);
+            int flags = viewType == VK_IMAGE_VIEW_TYPE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+
+            MemoryManager.getInstance()
+                         .createImage(width, height, arrayLayers, mipLevels,
+                                      format, VK_IMAGE_TILING_OPTIMAL,
+                                      usage, flags,
+                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                      pTextureImage,
+                                      pAllocation);
 
             id = pTextureImage.get(0);
             allocation = pAllocation.get(0);
@@ -172,24 +181,22 @@ public class VulkanImage {
         };
     }
 
-    public static long createImageView(long image, int format, int aspectFlags, int mipLevels) {
-        return createImageView(image, format, aspectFlags, 0, mipLevels);
+    public static long createImageView(long image, int format, int aspectFlags, int arrayLayers, int mipLevels) {
+        return createImageView(image, VK_IMAGE_VIEW_TYPE_2D, format, aspectFlags, arrayLayers, 0, mipLevels);
     }
 
-    public static long createImageView(long image, int format, int aspectFlags, int baseMipLevel, int mipLevels) {
-
+    public static long createImageView(long image, int viewType, int format, int aspectFlags, int arrayLayers, int baseMipLevel, int mipLevels) {
         try (MemoryStack stack = stackPush()) {
-
             VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.calloc(stack);
             viewInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
             viewInfo.image(image);
-            viewInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);
+            viewInfo.viewType(viewType);
             viewInfo.format(format);
             viewInfo.subresourceRange().aspectMask(aspectFlags);
             viewInfo.subresourceRange().baseMipLevel(baseMipLevel);
             viewInfo.subresourceRange().levelCount(mipLevels);
             viewInfo.subresourceRange().baseArrayLayer(0);
-            viewInfo.subresourceRange().layerCount(1);
+            viewInfo.subresourceRange().layerCount(arrayLayers);
 
             LongBuffer pImageView = stack.mallocLong(1);
 
@@ -201,13 +208,36 @@ public class VulkanImage {
         }
     }
 
-    public void uploadSubTextureAsync(int mipLevel, int width, int height, int xOffset, int yOffset, int unpackSkipRows, int unpackSkipPixels, int unpackRowLength, ByteBuffer buffer) {
-        this.uploadSubTextureAsync(mipLevel, width, height,
-                                   xOffset, yOffset, unpackSkipRows, unpackSkipPixels, unpackRowLength,
+    public void uploadSubTextureAsync(int mipLevel,
+                                      int width, int height,
+                                      int xOffset, int yOffset,
+                                      int unpackSkipRows, int unpackSkipPixels, int unpackRowLength,
+                                      ByteBuffer buffer)
+    {
+        this.uploadSubTextureAsync(mipLevel, 0, width, height,
+                                   xOffset, yOffset,
+                                   unpackSkipRows, unpackSkipPixels, unpackRowLength,
                                    MemoryUtil.memAddress(buffer));
     }
 
-    public void uploadSubTextureAsync(int mipLevel, int width, int height, int xOffset, int yOffset, int unpackSkipRows, int unpackSkipPixels, int unpackRowLength, long srcPtr) {
+    public void uploadSubTextureAsync(int mipLevel, int arrayLayer,
+                                      int width, int height,
+                                      int xOffset, int yOffset,
+                                      int unpackSkipRows, int unpackSkipPixels, int unpackRowLength,
+                                      ByteBuffer buffer)
+    {
+        this.uploadSubTextureAsync(mipLevel, arrayLayer, width, height,
+                                   xOffset, yOffset,
+                                   unpackSkipRows, unpackSkipPixels, unpackRowLength,
+                                   MemoryUtil.memAddress(buffer));
+    }
+
+    public void uploadSubTextureAsync(int mipLevel, int arrayLayer,
+                                      int width, int height,
+                                      int xOffset, int yOffset,
+                                      int unpackSkipRows, int unpackSkipPixels, int unpackRowLength,
+                                      long srcPtr)
+    {
         long uploadSize = (long) (unpackRowLength * height - unpackSkipPixels) * this.formatSize;
 
         StagingBuffer stagingBuffer = Vulkan.getStagingBuffer();
@@ -232,7 +262,8 @@ public class VulkanImage {
 
             final int srcOffset = (int) (stagingBuffer.getOffset());
 
-            ImageUtil.copyBufferToImageCmd(stack, commandBuffer, bufferId, this.id, mipLevel, width, height, xOffset, yOffset,
+            ImageUtil.copyBufferToImageCmd(stack, commandBuffer, bufferId, this.id,
+                                           arrayLayer, mipLevel, width, height, xOffset, yOffset,
                                            srcOffset, unpackRowLength, height);
         }
     }
@@ -452,8 +483,10 @@ public class VulkanImage {
         String name;
         int format = VulkanImage.DefaultFormat;
         int formatSize;
+        int arrayLayers = 1;
         byte mipLevels = 1;
         int usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        int viewType = VK_IMAGE_VIEW_TYPE_2D;
 
         byte samplerFlags = 0;
 
@@ -474,6 +507,12 @@ public class VulkanImage {
             return this;
         }
 
+        public Builder setArrayLayers(int n) {
+            this.arrayLayers = (byte) n;
+
+            return this;
+        }
+
         public Builder setMipLevels(int n) {
             this.mipLevels = (byte) n;
 
@@ -490,6 +529,11 @@ public class VulkanImage {
 
         public Builder addUsage(int usage) {
             this.usage |= usage;
+            return this;
+        }
+
+        public Builder setViewType(int viewType) {
+            this.viewType = viewType;
             return this;
         }
 

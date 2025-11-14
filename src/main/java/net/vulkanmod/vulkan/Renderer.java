@@ -1,6 +1,6 @@
 package net.vulkanmod.vulkan;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.mojang.blaze3d.platform.GlConst.GL_COLOR_BUFFER_BIT;
-import static com.mojang.blaze3d.platform.GlConst.GL_DEPTH_BUFFER_BIT;
 import static net.vulkanmod.vulkan.Vulkan.*;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -141,7 +141,6 @@ public class Renderer {
         commandBuffers = new ArrayList<>(framesNum);
 
         try (MemoryStack stack = stackPush()) {
-
             VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
             allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             allocInfo.commandPool(getCommandPool());
@@ -399,10 +398,7 @@ public class Renderer {
         if (skipRendering || !recordingCmds || this.boundFramebuffer == null)
             return;
 
-        if (!DYNAMIC_RENDERING)
-            this.boundRenderPass.endRenderPass(currentCmdBuffer);
-        else
-            KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
+        this.boundRenderPass.endRenderPass(commandBuffer);
 
         this.boundRenderPass = null;
         this.boundFramebuffer = null;
@@ -609,15 +605,31 @@ public class Renderer {
         vkCmdSetDepthBias(commandBuffer, constant, 0.0f, slope);
     }
 
-    public static void clearAttachments(int v) {
+    public static void clearAttachments(int attachments) {
+        clearAttachments(INSTANCE.currentCmdBuffer, attachments);
+    }
+
+    public static void clearAttachments(VkCommandBuffer commandBuffer, int attachments) {
         Framebuffer framebuffer = Renderer.getInstance().boundFramebuffer;
         if (framebuffer == null)
             return;
 
-        clearAttachments(v, framebuffer.getWidth(), framebuffer.getHeight());
+        clearAttachments(commandBuffer, attachments, framebuffer.getWidth(), framebuffer.getHeight());
     }
 
-    public static void clearAttachments(int v, int width, int height) {
+    public static void clearAttachments(int attachments, int width, int height) {
+        clearAttachments(INSTANCE.currentCmdBuffer, attachments, width ,height);
+    }
+
+    public static void clearAttachments(int attachments, int x, int y, int width, int height) {
+        clearAttachments(INSTANCE.currentCmdBuffer, attachments, x, y, width ,height);
+    }
+
+    public static void clearAttachments(VkCommandBuffer commandBuffer, int attachments, int width, int height) {
+        clearAttachments(commandBuffer, attachments, 0, 0, width, height);
+    }
+
+    public static void clearAttachments(VkCommandBuffer commandBuffer, int attachments, int x, int y, int width, int height) {
         if (skipRendering)
             return;
 
@@ -630,9 +642,9 @@ public class Renderer {
             VkClearValue depthValue = VkClearValue.calloc(stack);
             depthValue.depthStencil().set(VRenderSystem.clearDepthValue, 0); //Use fast depth clears if possible
 
-            int attachmentsCount = v == (GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT) ? 2 : 1;
+            int attachmentsCount = attachments == (GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT) ? 2 : 1;
             final VkClearAttachment.Buffer pAttachments = VkClearAttachment.malloc(attachmentsCount, stack);
-            switch (v) {
+            switch (attachments) {
                 case GL_DEPTH_BUFFER_BIT -> {
 
                     VkClearAttachment clearDepth = pAttachments.get(0);
@@ -664,7 +676,7 @@ public class Renderer {
 
             //Rect to clear
             VkRect2D renderArea = VkRect2D.malloc(stack);
-            renderArea.offset().set(0, 0);
+            renderArea.offset().set(x, y);
             renderArea.extent().set(width, height);
 
             VkClearRect.Buffer pRect = VkClearRect.malloc(1, stack);
@@ -672,7 +684,7 @@ public class Renderer {
             pRect.baseArrayLayer(0);
             pRect.layerCount(1);
 
-            vkCmdClearAttachments(INSTANCE.currentCmdBuffer, pAttachments, pRect);
+            vkCmdClearAttachments(commandBuffer, pAttachments, pRect);
         }
     }
 
@@ -713,7 +725,7 @@ public class Renderer {
     }
 
     public static void setScissor(int x, int y, int width, int height) {
-        if (INSTANCE.boundFramebuffer == null)
+        if (!INSTANCE.recordingCmds || INSTANCE.boundFramebuffer == null)
             return;
 
         try (MemoryStack stack = stackPush()) {

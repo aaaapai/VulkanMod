@@ -17,7 +17,8 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class ImageUtil {
 
-    public static void copyBufferToImageCmd(MemoryStack stack, VkCommandBuffer commandBuffer, long buffer, long image,
+    public static void copyBufferToImageCmd(MemoryStack stack, VkCommandBuffer commandBuffer, long buffer,
+                                            long image, int arrayLayer,
                                             int mipLevel, int width, int height, int xOffset, int yOffset,
                                             int bufferOffset, int bufferRowLenght, int bufferImageHeight) {
         VkBufferImageCopy.Buffer region = VkBufferImageCopy.calloc(1, stack);
@@ -26,7 +27,7 @@ public abstract class ImageUtil {
         region.bufferImageHeight(bufferImageHeight);
         region.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
         region.imageSubresource().mipLevel(mipLevel);
-        region.imageSubresource().baseArrayLayer(0);
+        region.imageSubresource().baseArrayLayer(arrayLayer);
         region.imageSubresource().layerCount(1);
         region.imageOffset().set(xOffset, yOffset, 0);
         region.imageExtent(VkExtent3D.calloc(stack).set(width, height, 1));

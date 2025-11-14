@@ -1,21 +1,23 @@
 package net.vulkanmod.config.gui;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.vulkanmod.Initializer;
+import net.vulkanmod.config.gui.render.GuiRenderer;
 import net.vulkanmod.config.gui.widget.VAbstractWidget;
 import net.vulkanmod.config.gui.widget.VButtonWidget;
 import net.vulkanmod.config.option.OptionPage;
 import net.vulkanmod.config.option.Options;
+import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.util.ColorUtil;
 
 import java.util.ArrayList;
@@ -196,11 +198,12 @@ public class VOptionScreen extends Screen {
         this.addWidget(this.supportButton);
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
         for (GuiEventListener element : this.children()) {
-            if (element.mouseClicked(mouseX, mouseY, button)) {
+            if (element.mouseClicked(event, bl)) {
                 this.setFocused(element);
-                if (button == 0) {
+                if (event.button() == 0) {
                     this.setDragging(true);
                 }
 
@@ -213,11 +216,11 @@ public class VOptionScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
         this.setDragging(false);
         this.updateState();
-        return this.getChildAt(mouseX, mouseY)
-                .filter(guiEventListener -> guiEventListener.mouseReleased(mouseX, mouseY, button))
+        return this.getChildAt(event.x(), event.y())
+                .filter(guiEventListener -> guiEventListener.mouseReleased(event))
                 .isPresent();
     }
 
@@ -227,28 +230,13 @@ public class VOptionScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int i, int j, float f) {
-        if (this.minecraft.level == null) {
-            this.renderPanorama(guiGraphics, f);
-        }
-
-        this.renderBlurredBackground();
-        this.renderMenuBackground(guiGraphics);
-
-    }
-
-    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        this.renderBackground(guiGraphics, 0, 0, delta);
-
         GuiRenderer.guiGraphics = guiGraphics;
-        GuiRenderer.setPoseStack(guiGraphics.pose());
-
-        RenderSystem.enableBlend();
+        VRenderSystem.enableBlend();
 
         int size = minecraft.font.lineHeight * 4;
 
-        guiGraphics.blit(RenderType::guiTextured, ICON, 30, 4, 0f, 0f, size, size, size, size);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ICON, 30, 4, 0f, 0f, size, size, size, size);
 
         VOptionList currentList = this.optionPages.get(this.currentListIdx).getOptionList();
         currentList.updateState(mouseX, mouseY);
@@ -275,8 +263,6 @@ public class VOptionScreen extends Screen {
         int color = ColorUtil.ARGB.pack(intensity, intensity, intensity, 0.6f);
         GuiRenderer.fill(x - padding, y - padding, x + width + padding, y + height + padding, color);
 
-//        intensity = 0.4f;
-//        color = ColorUtil.ARGB.pack(intensity, intensity, intensity, 0.9f);
         color = RED;
         GuiRenderer.renderBorder(x - padding, y - padding, x + width + padding, y + height + padding, 1, color);
 

@@ -29,14 +29,17 @@ public class Uniforms {
 
         //Vec1i
         vec1i_uniformMap.put("EndPortalLayers", () -> 15);
-        vec1i_uniformMap.put("FogShape", () -> RenderSystem.getShaderFog().shape().getIndex());
 
         //Vec1
-        vec1f_uniformMap.put("FogStart", () -> RenderSystem.getShaderFog().start());
-        vec1f_uniformMap.put("FogEnd", () -> RenderSystem.getShaderFog().end());
+        vec1f_uniformMap.put("FogStart", () -> VRenderSystem.getFogData().renderDistanceStart);
+        vec1f_uniformMap.put("FogEnd", () -> VRenderSystem.getFogData().renderDistanceEnd);
+        vec1f_uniformMap.put("FogEnvironmentalStart", () -> VRenderSystem.getFogData().environmentalStart);
+        vec1f_uniformMap.put("FogEnvironmentalEnd", () -> VRenderSystem.getFogData().environmentalEnd);
+        vec1f_uniformMap.put("FogRenderDistanceStart", () -> VRenderSystem.getFogData().renderDistanceStart);
+        vec1f_uniformMap.put("FogRenderDistanceEnd", () -> VRenderSystem.getFogData().renderDistanceEnd);
+        vec1f_uniformMap.put("FogSkyEnd", () -> VRenderSystem.getFogData().skyEnd);
+        vec1f_uniformMap.put("FogCloudsEnd", () -> VRenderSystem.getFogData().cloudEnd);
         vec1f_uniformMap.put("LineWidth", RenderSystem::getShaderLineWidth);
-        vec1f_uniformMap.put("GameTime", RenderSystem::getShaderGameTime);
-        vec1f_uniformMap.put("GlintAlpha", RenderSystem::getShaderGlintAlpha);
         vec1f_uniformMap.put("AlphaCutout", () -> VRenderSystem.alphaCutout);
 
         //Vec2
@@ -46,6 +49,7 @@ public class Uniforms {
         vec3f_uniformMap.put("Light0_Direction", () -> VRenderSystem.lightDirection0);
         vec3f_uniformMap.put("Light1_Direction", () -> VRenderSystem.lightDirection1);
         vec3f_uniformMap.put("ModelOffset", () -> VRenderSystem.modelOffset);
+        vec3f_uniformMap.put("ChunkOffset", () -> VRenderSystem.modelOffset);
 
         //Vec4
         vec4f_uniformMap.put("ColorModulator", VRenderSystem::getShaderColor);

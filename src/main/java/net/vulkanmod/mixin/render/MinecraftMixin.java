@@ -40,14 +40,9 @@ public class MinecraftMixin {
         }
     }
 
-    @Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/TimerQuery;getInstance()Ljava/util/Optional;"))
-    private Optional<TimerQuery> removeTimer() {
-        return Optional.empty();
-    }
-
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;tick()V"),
     locals = LocalCapture.CAPTURE_FAILHARD)
-    private void redirectResourceTick(boolean bl, CallbackInfo ci, Runnable runnable, int i, ProfilerFiller profilerFiller, int j) {
+    private void redirectResourceTick(boolean bl, CallbackInfo ci, int i, ProfilerFiller profilerFiller, int j) {
         int n = Math.min(10, i) - 1;
         boolean doUpload = j == n;
         SpriteUpdateUtil.setDoUpload(doUpload);

@@ -1,6 +1,5 @@
 package net.vulkanmod.vulkan.shader;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import net.vulkanmod.vulkan.VRenderSystem;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
 
@@ -127,21 +126,6 @@ public class PipelineState {
             this.srcAlphaFactor = srcAlphaFactor;
             this.dstAlphaFactor = dstAlphaFactor;
             this.blendOp = blendOp;
-        }
-
-        public void setBlendFunction(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
-            this.srcRgbFactor = glToVulkanBlendFactor(sourceFactor.value);
-            this.srcAlphaFactor = glToVulkanBlendFactor(sourceFactor.value);
-            this.dstRgbFactor = glToVulkanBlendFactor(destFactor.value);
-            this.dstAlphaFactor = glToVulkanBlendFactor(destFactor.value);
-        }
-
-        public void setBlendFuncSeparate(GlStateManager.SourceFactor srcRgb, GlStateManager.DestFactor dstRgb,
-                                         GlStateManager.SourceFactor srcAlpha, GlStateManager.DestFactor dstAlpha) {
-            this.srcRgbFactor = glToVulkanBlendFactor(srcRgb.value);
-            this.srcAlphaFactor = glToVulkanBlendFactor(srcAlpha.value);
-            this.dstRgbFactor = glToVulkanBlendFactor(dstRgb.value);
-            this.dstAlphaFactor = glToVulkanBlendFactor(dstAlpha.value);
         }
 
         /* gl to Vulkan conversion */
