@@ -48,7 +48,7 @@ import static net.vulkanmod.render.chunk.build.frapi.mesh.EncodingFormat.*;
  * render - the editor is serving mainly as a way to access vertex data without magical
  * numbers. It also allows for a consistent interface for those transformations.
  */
-public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEmitter, ExtendedQuadEmitter {
+public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEmitter {
 	private static final QuadTransform NO_TRANSFORM = q -> true;
 
 	private static final int[] DEFAULT_QUAD_DATA = new int[EncodingFormat.TOTAL_STRIDE];

@@ -16,8 +16,9 @@
 
 package net.vulkanmod.render.chunk.build.frapi.accessor;
 
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableMeshImpl;
+
+import net.vulkanmod.render.chunk.build.frapi.mesh.MutableMeshImpl;
 
 public interface AccessLayerRenderState {
-	MutableMeshImpl fabric_getMutableMesh();
+	MutableMeshImpl getMutableMesh();
 }

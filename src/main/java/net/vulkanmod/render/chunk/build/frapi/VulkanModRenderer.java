@@ -20,13 +20,13 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.vulkanmod.mixin.render.frapi.BlockRenderDispatcherAccessor;
+import net.vulkanmod.render.chunk.build.frapi.accessor.AccessLayerRenderState;
 import net.vulkanmod.render.chunk.build.frapi.mesh.MutableMeshImpl;
 import net.vulkanmod.render.chunk.build.frapi.render.BlockRenderContext;
 import net.vulkanmod.render.chunk.build.frapi.render.SimpleBlockRenderContext;
 
 /**
- * The Fabric default renderer implementation. Supports all
- * features defined in the API except shaders and offers no special materials.
+ * Fabric renderer implementation.
  */
 public class VulkanModRenderer implements Renderer {
 	public static final VulkanModRenderer INSTANCE = new VulkanModRenderer();
@@ -71,8 +71,6 @@ public class VulkanModRenderer implements Renderer {
 
 	@Override
 	public QuadEmitter getLayerRenderStateEmitter(ItemStackRenderState.LayerRenderState layer) {
-		// TODO
-//		return ((AccessLayerRenderState) layer).fabric_getMutableMesh().emitter();
-		return null;
+		return ((AccessLayerRenderState) layer).getMutableMesh().emitter();
 	}
 }
