@@ -8,7 +8,7 @@ import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
 import net.vulkanmod.vulkan.queue.CommandPool;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageMemoryBarrier;

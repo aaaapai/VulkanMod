@@ -27,7 +27,7 @@ public class Buffer {
         this.type.createBuffer(this, bufferSize);
 
         if (this.type.mappable()) {
-            this.dataPtr = MemoryManager.getInstance().Map(this.allocation).get(0);
+            this.dataPtr = MemoryManager.getInstance().map(this.allocation);
         }
     }
 

@@ -9,11 +9,23 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(targets = "com.mojang.blaze3d.opengl.DirectStateAccess$Emulated", remap = false)
 public abstract class DirectStateAccessEmulatedMixin {
 
+    /**
+     * Mirror framebuffer creation for the emulated OpenGL path.
+     *
+     * @author VulkanMod
+     * @reason Ensure framebuffer IDs are reserved through VkGlFramebuffer even on the legacy path.
+     */
     @Overwrite(remap = false)
     public int createFrameBufferObject() {
         return VkGlFramebuffer.genFramebufferId();
     }
 
+    /**
+     * Mirror attachment logic for emulated DSAs.
+     *
+     * @author VulkanMod
+     * @reason All attachments funnel through VkGlFramebuffer instead of GL.
+     */
     @Overwrite(remap = false)
     public void bindFrameBufferTextures(int framebuffer, int colorTexture, int depthTexture, int level, int bindTarget) {
         if (framebuffer == 0) {
@@ -38,6 +50,12 @@ public abstract class DirectStateAccessEmulatedMixin {
         }
     }
 
+    /**
+     * Provide blit functionality for the emulated backend using Vulkan state.
+     *
+     * @author VulkanMod
+     * @reason VulkanMod must intercept framebuffer copies regardless of GL capability level.
+     */
     @Overwrite(remap = false)
     public void blitFrameBuffers(int srcFramebuffer, int dstFramebuffer,
                                  int srcX0, int srcY0, int srcX1, int srcY1,

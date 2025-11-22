@@ -19,7 +19,7 @@ import java.util.List;
 
 import static net.vulkanmod.vulkan.Vulkan.*;
 import static net.vulkanmod.vulkan.device.DeviceManager.vkDevice;
-import static net.vulkanmod.vulkan.util.VUtil.UINT32_MAX;
+import static net.vulkanmod.util.VUtil.UINT32_MAX;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -61,7 +61,7 @@ public class SwapChain extends Framebuffer {
 
         glfwGetFramebufferSize(window, width, height);
 
-        VkExtent2D actualExtent = VkExtent2D.mallocStack().set(width.get(0), height.get(0));
+        VkExtent2D actualExtent = VkExtent2D.malloc(stackGet()).set(width.get(0), height.get(0));
 
         VkExtent2D minExtent = capabilities.minImageExtent();
         VkExtent2D maxExtent = capabilities.maxImageExtent();

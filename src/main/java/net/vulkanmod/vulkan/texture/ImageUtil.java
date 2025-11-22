@@ -5,7 +5,7 @@ import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.queue.CommandPool;
-import net.vulkanmod.vulkan.util.VUtil;
+import net.vulkanmod.util.VUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;

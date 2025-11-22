@@ -31,7 +31,7 @@ import net.vulkanmod.render.model.quad.QuadUtils;
 import net.vulkanmod.render.vertex.TerrainBufferBuilder;
 import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.util.ColorUtil;
 import org.joml.Vector3f;
 
 public class FluidRenderer implements FluidRendering.DefaultRenderer {

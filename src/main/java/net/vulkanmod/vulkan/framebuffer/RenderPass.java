@@ -1,11 +1,11 @@
 package net.vulkanmod.vulkan.framebuffer;
 
 import net.vulkanmod.vulkan.Renderer;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.texture.VulkanImage;
-import net.vulkanmod.vulkan.util.VUtil;
+import net.vulkanmod.util.VUtil;
 import org.lwjgl.vulkan.KHRDynamicRendering;
 import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkAttachmentReference;

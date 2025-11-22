@@ -7,8 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.config.option.RangeOption;
-import net.vulkanmod.vulkan.VRenderSystem;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.render.core.VRenderSystem;
+import net.vulkanmod.util.ColorUtil;
 import org.lwjgl.glfw.GLFW;
 
 public class RangeOptionWidget extends OptionWidget<RangeOption> {

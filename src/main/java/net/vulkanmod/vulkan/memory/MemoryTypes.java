@@ -4,8 +4,8 @@ import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
-import net.vulkanmod.vulkan.util.VUtil;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.VUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.vulkan.VkMemoryHeap;
 import org.lwjgl.vulkan.VkMemoryType;
 

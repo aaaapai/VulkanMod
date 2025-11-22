@@ -3,8 +3,9 @@ package net.vulkanmod.vulkan.shader;
 import com.mojang.blaze3d.opengl.GlConst;
 import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.SourceFactor;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.framebuffer.RenderPass;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Objects;
 
@@ -287,10 +288,24 @@ public class PipelineState {
 
         public static int glToVulkan(int f) {
             return switch (f) {
-                case 5387 -> VK_LOGIC_OP_OR_REVERSE;
-                //TODO complete
+                case GL11.GL_CLEAR -> VK_LOGIC_OP_CLEAR;
+                case GL11.GL_AND -> VK_LOGIC_OP_AND;
+                case GL11.GL_AND_REVERSE -> VK_LOGIC_OP_AND_REVERSE;
+                case GL11.GL_COPY -> VK_LOGIC_OP_COPY;
+                case GL11.GL_AND_INVERTED -> VK_LOGIC_OP_AND_INVERTED;
+                case GL11.GL_NOOP -> VK_LOGIC_OP_NO_OP;
+                case GL11.GL_XOR -> VK_LOGIC_OP_XOR;
+                case GL11.GL_OR -> VK_LOGIC_OP_OR;
+                case GL11.GL_NOR -> VK_LOGIC_OP_NOR;
+                case GL11.GL_EQUIV -> VK_LOGIC_OP_EQUIVALENT;
+                case GL11.GL_INVERT -> VK_LOGIC_OP_INVERT;
+                case GL11.GL_OR_REVERSE -> VK_LOGIC_OP_OR_REVERSE;
+                case GL11.GL_COPY_INVERTED -> VK_LOGIC_OP_COPY_INVERTED;
+                case GL11.GL_OR_INVERTED -> VK_LOGIC_OP_OR_INVERTED;
+                case GL11.GL_NAND -> VK_LOGIC_OP_NAND;
+                case GL11.GL_SET -> VK_LOGIC_OP_SET;
 
-                default -> VK_LOGIC_OP_AND;
+                default -> VK_LOGIC_OP_COPY;
             };
         }
 

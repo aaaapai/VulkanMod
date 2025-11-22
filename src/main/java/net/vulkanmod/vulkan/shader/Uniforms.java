@@ -2,8 +2,8 @@ package net.vulkanmod.vulkan.shader;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import net.vulkanmod.vulkan.VRenderSystem;
-import net.vulkanmod.vulkan.util.MappedBuffer;
+import net.vulkanmod.render.core.VRenderSystem;
+import net.vulkanmod.util.MappedBuffer;
 
 import java.util.function.Supplier;
 

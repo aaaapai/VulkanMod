@@ -2,7 +2,7 @@ package net.vulkanmod.gl;
 
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import org.lwjgl.opengl.GL32;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;

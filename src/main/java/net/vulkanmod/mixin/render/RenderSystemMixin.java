@@ -5,11 +5,11 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.resources.ResourceLocation;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -62,6 +62,10 @@ public abstract class RenderSystemMixin {
         }
     }
 
+    /**
+     * @author VulkanMod
+     * @reason Default GL state is reimplemented inside VRenderSystem.
+     */
     @Overwrite(remap = false)
     public static void setupDefaultState() {
     }

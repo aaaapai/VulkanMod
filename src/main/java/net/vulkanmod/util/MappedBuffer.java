@@ -1,6 +1,4 @@
-package net.vulkanmod.vulkan.util;
-
-import org.lwjgl.system.MemoryUtil;
+package net.vulkanmod.util;
 
 import java.nio.ByteBuffer;
 
@@ -24,18 +22,18 @@ public class MappedBuffer {
     }
 
     public void putFloat(int idx, float f) {
-        VUtil.putFloat(ptr + idx, f);
+        MemoryUtil.memPutFloat(ptr + idx, f);
     }
 
     public void putInt(int idx, int f) {
-        VUtil.putInt(ptr + idx, f);
+        MemoryUtil.memPutInt(ptr + idx, f);
     }
 
     public float getFloat(int idx) {
-        return VUtil.getFloat(ptr + idx);
+        return MemoryUtil.memGetFloat(ptr + idx);
     }
 
     public int getInt(int idx) {
-        return VUtil.getInt(ptr + idx);
+        return MemoryUtil.memGetInt(ptr + idx);
     }
 }

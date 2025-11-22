@@ -3,7 +3,7 @@ package net.vulkanmod.vulkan.memory.buffer.index;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;

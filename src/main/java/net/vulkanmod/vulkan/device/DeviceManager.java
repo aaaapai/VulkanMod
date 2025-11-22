@@ -2,7 +2,7 @@ package net.vulkanmod.vulkan.device;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.vulkanmod.Initializer;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.queue.*;
 import org.lwjgl.PointerBuffer;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toSet;
 import static net.vulkanmod.vulkan.queue.Queue.findQueueFamilies;
-import static net.vulkanmod.vulkan.util.VUtil.asPointerBuffer;
+import static net.vulkanmod.util.VUtil.asPointerBuffer;
 import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;

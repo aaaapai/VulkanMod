@@ -55,6 +55,7 @@ public abstract class EncodingFormat {
      * used for quick clearing of quad buffers.
      */
     static final int[] EMPTY;
+    private static final int MATERIAL_BIT_LENGTH = 12;
     private static final int CULL_BIT_OFFSET = 0;
     private static final int NORMALS_BIT_LENGTH = 4;
     private static final int MATERIAL_BIT_LENGTH = 12;

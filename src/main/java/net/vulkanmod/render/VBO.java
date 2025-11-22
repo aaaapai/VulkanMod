@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.vulkanmod.vulkan.Renderer;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.memory.MemoryType;
 import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;

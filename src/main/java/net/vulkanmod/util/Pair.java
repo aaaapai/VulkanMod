@@ -1,4 +1,4 @@
-package net.vulkanmod.vulkan.util;
+package net.vulkanmod.util;
 
 public class Pair<A, B> {
     public A first;

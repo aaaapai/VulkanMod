@@ -1,6 +1,6 @@
 package net.vulkanmod.render.vertex;
 
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 public interface VertexBuilder {
     void vertex(long ptr, float x, float y, float z, int color, float u, float v, int light, int packedNormal);
@@ -36,30 +36,33 @@ public interface VertexBuilder {
             MemoryUtil.memPutInt(ptr + 28, packedNormal);
         }
 
-        // TODO
         @Override
         public void position(long ptr, float x, float y, float z) {
-
+            MemoryUtil.memPutFloat(ptr + 0, x);
+            MemoryUtil.memPutFloat(ptr + 4, y);
+            MemoryUtil.memPutFloat(ptr + 8, z);
         }
 
         @Override
         public void color(long ptr, int color) {
-
+            MemoryUtil.memPutInt(ptr + 12, color);
         }
 
         @Override
         public void uv(long ptr, float u, float v) {
-
+            MemoryUtil.memPutFloat(ptr + 16, u);
+            MemoryUtil.memPutFloat(ptr + 20, v);
         }
 
         @Override
         public void light(long ptr, int light) {
-
+            MemoryUtil.memPutShort(ptr + 24, (short) (light & 0xffff));
+            MemoryUtil.memPutShort(ptr + 26, (short) ((light >>> 16) & 0xffff));
         }
 
         @Override
         public void normal(long ptr, int normal) {
-
+            MemoryUtil.memPutInt(ptr + 28, normal);
         }
 
         @Override

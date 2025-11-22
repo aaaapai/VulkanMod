@@ -1,7 +1,7 @@
 package net.vulkanmod.mixin.render;
 
 import net.minecraft.client.renderer.fog.FogRenderer;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

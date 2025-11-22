@@ -1,6 +1,6 @@
 package net.vulkanmod.vulkan.shader.descriptor;
 
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 public class ManualUBO extends UBO {
 

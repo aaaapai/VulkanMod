@@ -9,9 +9,9 @@ import net.vulkanmod.config.gui.GuiRenderer;
 import net.vulkanmod.render.chunk.WorldRenderer;
 import net.vulkanmod.render.chunk.build.task.ChunkTask;
 import net.vulkanmod.render.chunk.build.thread.BuilderResources;
-import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.render.core.VRenderSystem;
 import net.vulkanmod.vulkan.memory.MemoryManager;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.util.ColorUtil;
 
 import java.util.ArrayList;
 import java.util.List;

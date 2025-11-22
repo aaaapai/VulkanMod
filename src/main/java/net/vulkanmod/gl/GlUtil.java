@@ -5,7 +5,7 @@ import net.vulkanmod.vulkan.shader.SPIRVUtils;
 import org.apache.commons.lang3.Validate;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 

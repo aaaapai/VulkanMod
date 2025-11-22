@@ -34,7 +34,7 @@ import net.vulkanmod.render.vertex.TerrainBufferBuilder;
 import net.vulkanmod.render.vertex.TerrainBuilder;
 import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.render.vertex.format.I32_SNorm;
-import net.vulkanmod.vulkan.util.ColorUtil;
+import net.vulkanmod.util.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 

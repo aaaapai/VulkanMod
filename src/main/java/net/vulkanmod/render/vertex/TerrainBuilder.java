@@ -5,19 +5,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.render.PipelineManager;
 import net.vulkanmod.render.chunk.cull.QuadFacing;
+import net.vulkanmod.util.MemoryUtil;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
 public class TerrainBuilder {
     private static final Logger LOGGER = Initializer.LOGGER;
-    private static final MemoryUtil.MemoryAllocator ALLOCATOR = MemoryUtil.getAllocator(false);
     private final VertexFormat format;
     private final QuadSorter quadSorter = new QuadSorter();
     private final TerrainBufferBuilder[] bufferBuilders;
+    private ByteBuffer indexBuffer;
     protected long indexBufferPtr;
-    protected long bufferPtr;
     protected VertexBuilder vertexBuilder;
     private int indexBufferCapacity;
     private boolean building;
@@ -26,7 +25,8 @@ public class TerrainBuilder {
 
     public TerrainBuilder(int size) {
         // TODO index buffer
-        this.indexBufferPtr = ALLOCATOR.malloc(size);
+        this.indexBuffer = MemoryUtil.memAlloc(size);
+        this.indexBufferPtr = MemoryUtil.memAddress(this.indexBuffer);
         this.indexBufferCapacity = size;
 
         this.format = PipelineManager.terrainVertexFormat;
@@ -54,9 +54,14 @@ public class TerrainBuilder {
     }
 
     private void resizeIndexBuffer(int i) {
-        this.bufferPtr = ALLOCATOR.realloc(this.bufferPtr, i);
+        ByteBuffer newBuffer = MemoryUtil.memAlloc(i);
+        int copySize = Math.min(this.indexBufferCapacity, i);
+        MemoryUtil.memCopy(this.indexBufferPtr, MemoryUtil.memAddress(newBuffer), copySize);
+        MemoryUtil.memFree(this.indexBuffer);
+        this.indexBuffer = newBuffer;
+        this.indexBufferPtr = MemoryUtil.memAddress(newBuffer);
         LOGGER.debug("Needed to grow index buffer: Old size {} bytes, new size {} bytes.", this.indexBufferCapacity, i);
-        if (this.bufferPtr == 0L) {
+        if (this.indexBufferPtr == 0L) {
             throw new OutOfMemoryError("Failed to resize buffer from " + this.indexBufferCapacity + " bytes to " + i + " bytes");
         } else {
             this.indexBufferCapacity = i;

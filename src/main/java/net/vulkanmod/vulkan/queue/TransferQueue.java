@@ -2,7 +2,7 @@ package net.vulkanmod.vulkan.queue;
 
 import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.Vulkan;
-import net.vulkanmod.vulkan.util.VUtil;
+import net.vulkanmod.util.VUtil;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkCommandBuffer;

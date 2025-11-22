@@ -4,12 +4,11 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import net.vulkanmod.interfaces.VertexFormatMixed;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -64,6 +63,7 @@ public class GraphicsPipeline extends Pipeline {
         List<VertexFormatElement> elements = vertexFormat.getElements();
 
         int size = elements.size();
+        int[] offsets = vertexFormat.getOffsetsByElement();
 
         VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.calloc(size);
 
@@ -176,7 +176,7 @@ public class GraphicsPipeline extends Pipeline {
                 default -> throw new RuntimeException(String.format("Unknown format: %s", usage));
             }
 
-            posDescription.offset(((VertexFormatMixed) (vertexFormat)).getOffset(i));
+            posDescription.offset(offsets[i]);
         }
 
         return attributeDescriptions.rewind();
@@ -369,8 +369,8 @@ public class GraphicsPipeline extends Pipeline {
         }
 
         void cleanUp() {
-            MemoryUtil.memFree(this.bindingDescriptions);
-            MemoryUtil.memFree(this.attributeDescriptions);
+            this.bindingDescriptions.free();
+            this.attributeDescriptions.free();
         }
     }
 }

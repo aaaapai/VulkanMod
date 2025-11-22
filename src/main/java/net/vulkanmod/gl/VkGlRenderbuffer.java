@@ -7,7 +7,7 @@ import net.vulkanmod.vulkan.texture.VTextureSelector;
 import net.vulkanmod.vulkan.texture.VulkanImage;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 

@@ -3,7 +3,7 @@ package net.vulkanmod.render.chunk.build;
 import net.vulkanmod.render.chunk.cull.QuadFacing;
 import net.vulkanmod.render.chunk.util.BufferUtil;
 import net.vulkanmod.render.vertex.TerrainBuilder;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.nio.ByteBuffer;
 

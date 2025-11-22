@@ -17,8 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.system.MemoryUtil.memASCII;
+import static net.vulkanmod.util.MemoryUtil.NULL;
+import static net.vulkanmod.util.MemoryUtil.memASCII;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class SPIRVUtils {

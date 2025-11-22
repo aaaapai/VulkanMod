@@ -1,9 +1,9 @@
-package net.vulkanmod.vulkan.util;
+package net.vulkanmod.util;
 
 import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import net.vulkanmod.util.MemoryUtil;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -23,27 +23,6 @@ public class VUtil {
 
     public static final int UINT32_MAX = 0xFFFFFFFF;
     public static final long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
-
-    // Safe memory access methods using FFM (Foreign Function & Memory API)
-    public static void putFloat(long address, float value) {
-        MemorySegment.ofAddress(address).set(ValueLayout.JAVA_FLOAT, 0, value);
-    }
-
-    public static void putInt(long address, int value) {
-        MemorySegment.ofAddress(address).set(ValueLayout.JAVA_INT, 0, value);
-    }
-
-    public static void putLong(long address, long value) {
-        MemorySegment.ofAddress(address).set(ValueLayout.JAVA_LONG, 0, value);
-    }
-
-    public static float getFloat(long address) {
-        return MemorySegment.ofAddress(address).get(ValueLayout.JAVA_FLOAT, 0);
-    }
-
-    public static int getInt(long address) {
-        return MemorySegment.ofAddress(address).get(ValueLayout.JAVA_INT, 0);
-    }
 
     public static PointerBuffer asPointerBuffer(Collection<String> collection) {
 

@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.function.BiFunction;
 
-@Mixin(RenderSystem.class)
+@Mixin(value = RenderSystem.class, remap = false)
 public abstract class RenderSystemMixin {
 
     @Shadow @Nullable private static GpuDevice DEVICE;
@@ -25,6 +25,9 @@ public abstract class RenderSystemMixin {
 
     /**
      * Replace Mojang's GL device bootstrap with our Vulkan-backed implementation.
+     *
+     * @author VulkanMod
+     * @reason Ensure RenderSystem initializes the Vulkan GPU device instead of the GL fallback.
      */
     @Overwrite(remap = false)
     public static void initRenderer(long window,
