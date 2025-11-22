@@ -58,7 +58,6 @@ public abstract class EncodingFormat {
     private static final int MATERIAL_BIT_LENGTH = 12;
     private static final int CULL_BIT_OFFSET = 0;
     private static final int NORMALS_BIT_LENGTH = 4;
-    private static final int MATERIAL_BIT_LENGTH = 12;
     private static final int DIRECTION_COUNT = Direction.values().length;
     private static final int NULLABLE_DIRECTION_COUNT = DIRECTION_COUNT + 1;
     private static final int CULL_BIT_LENGTH = Mth.ceillog2(NULLABLE_DIRECTION_COUNT);
