@@ -106,7 +106,10 @@ public class MemoryTypes {
 
         @Override
         public void copyToBuffer(Buffer buffer, ByteBuffer src, long size, long srcOffset, long dstOffset) {
-            VUtil.memcpy(src, buffer, size, srcOffset, dstOffset);
+            StagingBuffer stagingBuffer = Vulkan.getStagingBuffer();
+            stagingBuffer.copyBuffer((int) size, src);
+
+            DeviceManager.getTransferQueue().copyBufferCmd(stagingBuffer.getId(), stagingBuffer.getOffset(), buffer.getId(), dstOffset, size);
         }
 
         @Override

@@ -41,6 +41,12 @@ public class CommandPool {
         }
     }
 
+    public CommandBuffer getCommandBuffer() {
+        try (MemoryStack stack = stackPush()) {
+            return getCommandBuffer(stack);
+        }
+    }
+
     public CommandBuffer getCommandBuffer(MemoryStack stack) {
         if (availableCmdBuffers.isEmpty()) {
             allocateCommandBuffers(stack);

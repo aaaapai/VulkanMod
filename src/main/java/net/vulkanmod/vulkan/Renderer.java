@@ -19,6 +19,7 @@ import net.vulkanmod.vulkan.framebuffer.SwapChain;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.pass.DefaultMainPass;
 import net.vulkanmod.vulkan.pass.MainPass;
+import net.vulkanmod.vulkan.queue.CommandPool;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.PipelineState;
@@ -89,6 +90,7 @@ public class Renderer {
     private ArrayList<Long> imageAvailableSemaphores;
     private ArrayList<Long> renderFinishedSemaphores;
     private ArrayList<Long> inFlightFences;
+    private List<CommandPool.CommandBuffer> transferCbs;
 
     private Framebuffer boundFramebuffer;
     private RenderPass boundRenderPass;
@@ -157,6 +159,19 @@ public class Renderer {
             for (int i = 0; i < framesNum; i++) {
                 commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
             }
+        }
+
+        if (transferCbs != null) {
+            transferCbs.forEach(commandBuffer -> {
+                vkResetCommandBuffer(commandBuffer.handle, 0);
+                commandBuffer.reset();
+            });
+        }
+
+        transferCbs = new ArrayList<>(framesNum);
+
+        for (int i = 0; i < framesNum; i++) {
+            transferCbs.add(DeviceManager.getTransferQueue().getCommandPool().getCommandBuffer());
         }
     }
 
@@ -302,6 +317,7 @@ public class Renderer {
 
         mainPass.end(currentCmdBuffer);
 
+        submitUploads();
         waitFences();
 
         submitFrame();
@@ -377,6 +393,7 @@ public class Renderer {
 
             vkResetFences(device, inFlightFences.get(currentFrame));
 
+            submitUploads();
             waitFences();
 
             if ((vkResult = vkQueueSubmit(DeviceManager.getGraphicsQueue().queue(), submitInfo, inFlightFences.get(currentFrame))) != VK_SUCCESS) {
@@ -387,6 +404,25 @@ public class Renderer {
             vkWaitForFences(device, inFlightFences.get(currentFrame), true, VUtil.UINT64_MAX);
 
             this.beginRenderPass(stack);
+        }
+    }
+
+    public void submitUploads() {
+        var transferCb = transferCbs.get(currentFrame);
+
+        if (transferCb.isRecording()) {
+
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                transferCb.submitCommands(stack,
+                                          DeviceManager.getTransferQueue().queue(),
+                                          false);
+            }
+
+            Synchronization.INSTANCE.addCommandBuffer(transferCb);
+
+            transferCbs.set(currentFrame, DeviceManager.getTransferQueue()
+                                                       .getCommandPool()
+                                                       .getCommandBuffer());
         }
     }
 
@@ -465,6 +501,7 @@ public class Renderer {
 
     @SuppressWarnings("UnreachableCode")
     private void recreateSwapChain() {
+        submitUploads();
         waitFences();
         Vulkan.waitIdle();
 
@@ -591,6 +628,10 @@ public class Renderer {
 
     public SwapChain getSwapChain() {
         return swapChain;
+    }
+
+    public CommandPool.CommandBuffer getTransferCb() {
+        return transferCbs.get(currentFrame);
     }
 
     private static void resetDynamicState(VkCommandBuffer commandBuffer) {

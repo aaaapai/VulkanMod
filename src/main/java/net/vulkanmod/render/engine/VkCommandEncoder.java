@@ -21,14 +21,13 @@ import net.vulkanmod.interfaces.shader.ExtendedRenderPipeline;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Synchronization;
 import net.vulkanmod.vulkan.VRenderSystem;
+import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.framebuffer.Framebuffer;
-import net.vulkanmod.vulkan.memory.buffer.IndexBuffer;
+import net.vulkanmod.vulkan.memory.buffer.StagingBuffer;
 import net.vulkanmod.vulkan.queue.GraphicsQueue;
-import net.vulkanmod.vulkan.queue.Queue;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.Pipeline;
-import net.vulkanmod.vulkan.shader.converter.Sampler;
 import net.vulkanmod.vulkan.shader.descriptor.ImageDescriptor;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
 import net.vulkanmod.vulkan.texture.ImageUtil;
@@ -37,9 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.KHRDynamicRendering;
-import org.lwjgl.vulkan.VK11;
-import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.*;
 import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
@@ -48,8 +45,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT16;
-import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT32;
+import static org.lwjgl.vulkan.VK10.*;
 
 public class VkCommandEncoder implements CommandEncoder {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -260,13 +256,33 @@ public class VkCommandEncoder implements CommandEncoder {
                 throw new IllegalStateException("Buffer already closed");
             }
             else {
-                int remaining = byteBuffer.remaining();
-                if (remaining + gpuBufferSlice.offset() > vkGpuBuffer.size()) {
+                int size = byteBuffer.remaining();
+                if (size + gpuBufferSlice.offset() > vkGpuBuffer.size()) {
                     throw new IllegalArgumentException(
-                            "Cannot write more data than this buffer can hold (attempting to write " + remaining + " bytes at offset " + gpuBufferSlice.offset() + " to " + gpuBufferSlice.length() + " slice size)"
+                            "Cannot write more data than this buffer can hold (attempting to write " + size + " bytes at offset " + gpuBufferSlice.offset() + " to " + gpuBufferSlice.length() + " slice size)"
                     );
                 } else {
-                    vkGpuBuffer.buffer.copyBuffer(byteBuffer, byteBuffer.remaining(), gpuBufferSlice.offset());
+                    int dstOffset = gpuBufferSlice.offset();
+
+                    var commandBuffer = Renderer.getInstance().getTransferCb();
+
+                    StagingBuffer stagingBuffer = Vulkan.getStagingBuffer();
+                    stagingBuffer.copyBuffer(size, byteBuffer);
+
+                    long srcOffset = stagingBuffer.getOffset();
+
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        if (!commandBuffer.isRecording()) {
+                            commandBuffer.begin(stack);
+                        }
+
+                        VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack);
+                        copyRegion.size(size);
+                        copyRegion.srcOffset(srcOffset);
+                        copyRegion.dstOffset(dstOffset);
+
+                        vkCmdCopyBuffer(commandBuffer.handle, stagingBuffer.getId(), vkGpuBuffer.buffer.getId(), copyRegion);
+                    }
                 }
             }
         }
