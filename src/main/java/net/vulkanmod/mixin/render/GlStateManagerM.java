@@ -235,7 +235,7 @@ public class GlStateManagerM {
     @Overwrite(remap = false)
     public static void _polygonOffset(float f, float g) {
         RenderSystem.assertOnRenderThread();
-        VRenderSystem.polygonOffset(g, f);
+        VRenderSystem.polygonOffset(f, g);
     }
 
     /**
