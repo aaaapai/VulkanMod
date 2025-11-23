@@ -310,6 +310,13 @@ public abstract class Options {
                                             Renderer.scheduleSwapChainUpdate();
                                         }, () -> config.frameQueueSize)
                                 .setTooltip(Component.translatable("vulkanmod.options.frameQueue.tooltip")),
+                        new SwitchOption(Component.translatable("vulkanmod.options.textureAnimations"),
+                                         value -> {
+                                             config.textureAnimations = value;
+                                         },
+                                         () -> config.textureAnimations),
+                }),
+                new OptionBlock("", new Option[]{
                         new CyclingOption<>(Component.translatable("vulkanmod.options.deviceSelector"),
                                             IntStream.range(-1, DeviceManager.suitableDevices.size()).boxed()
                                                      .toArray(Integer[]::new),
@@ -321,10 +328,8 @@ public abstract class Options {
                                         value).deviceName)
                                 )
                                 .setTooltip(Component.nullToEmpty("%s: %s".formatted(
-                                                    Component.translatable("vulkanmod.options.deviceSelector.tooltip").getString(),
-                                                    DeviceManager.device.deviceName
-                                            ))
-                        )
+                                Component.translatable("vulkanmod.options.deviceSelector.tooltip").getString(),
+                                DeviceManager.device.deviceName)))
                 })
         };
 

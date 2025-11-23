@@ -44,5 +44,7 @@
   "vulkanmod.options.windowMode.windowedFullscreen": "Windowed Fullscreen",
 
   "vulkanmod.options.builderThreads": "Chunk Builder Threads",
-  "vulkanmod.options.builderThreads.auto": "Auto"
+  "vulkanmod.options.builderThreads.auto": "Auto",
+
+  "vulkanmod.options.textureAnimations": "Texture Animations"
 }

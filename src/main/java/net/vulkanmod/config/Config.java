@@ -28,6 +28,7 @@ public class Config {
     public int builderThreads = 0;
 
     public boolean backFaceCulling = true;
+    public boolean textureAnimations = true;
 
     public void write() {
 
