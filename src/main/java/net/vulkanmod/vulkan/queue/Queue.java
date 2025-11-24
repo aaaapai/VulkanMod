@@ -21,7 +21,7 @@ public abstract class Queue {
     private static VkDevice device;
     private static QueueFamilyIndices queueFamilyIndices;
 
-    private final VkQueue queue;
+    private final VkQueue vkQueue;
 
     protected CommandPool commandPool;
 
@@ -41,7 +41,7 @@ public abstract class Queue {
     Queue(MemoryStack stack, int familyIndex, boolean initCommandPool) {
         PointerBuffer pQueue = stack.mallocPointer(1);
         vkGetDeviceQueue(DeviceManager.vkDevice, familyIndex, 0, pQueue);
-        this.queue = new VkQueue(pQueue.get(0), DeviceManager.vkDevice);
+        this.vkQueue = new VkQueue(pQueue.get(0), DeviceManager.vkDevice);
 
         if (initCommandPool)
             this.commandPool = new CommandPool(familyIndex);
@@ -49,12 +49,12 @@ public abstract class Queue {
 
     public synchronized long submitCommands(CommandPool.CommandBuffer commandBuffer) {
         try (MemoryStack stack = stackPush()) {
-            return commandBuffer.submitCommands(stack, queue, false);
+            return commandBuffer.submitCommands(stack, vkQueue, false);
         }
     }
 
-    public VkQueue queue() {
-        return this.queue;
+    public VkQueue vkQueue() {
+        return this.vkQueue;
     }
 
     public void cleanUp() {
@@ -63,7 +63,7 @@ public abstract class Queue {
     }
 
     public void waitIdle() {
-        vkQueueWaitIdle(queue);
+        vkQueueWaitIdle(vkQueue);
     }
 
     public CommandPool getCommandPool() {

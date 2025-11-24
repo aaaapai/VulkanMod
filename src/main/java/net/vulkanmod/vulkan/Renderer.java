@@ -220,6 +220,7 @@ public class Renderer {
         // runTick might be called recursively,
         // this check forces sync to avoid upload corruption
         if (lastReset == currentFrame) {
+            submitUploads();
             waitFences();
         }
         lastReset = currentFrame;
@@ -345,7 +346,7 @@ public class Renderer {
 
             vkResetFences(device, inFlightFences.get(currentFrame));
 
-            if ((vkResult = vkQueueSubmit(DeviceManager.getGraphicsQueue().queue(), submitInfo, inFlightFences.get(currentFrame))) != VK_SUCCESS) {
+            if ((vkResult = vkQueueSubmit(DeviceManager.getGraphicsQueue().vkQueue(), submitInfo, inFlightFences.get(currentFrame))) != VK_SUCCESS) {
                 vkResetFences(device, inFlightFences.get(currentFrame));
                 throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
             }
@@ -360,7 +361,7 @@ public class Renderer {
 
             presentInfo.pImageIndices(stack.ints(imageIndex));
 
-            vkResult = vkQueuePresentKHR(DeviceManager.getPresentQueue().queue(), presentInfo);
+            vkResult = vkQueuePresentKHR(DeviceManager.getPresentQueue().vkQueue(), presentInfo);
 
             if (vkResult == VK_ERROR_OUT_OF_DATE_KHR || vkResult == VK_SUBOPTIMAL_KHR || swapChainUpdate) {
                 swapChainUpdate = true;
@@ -396,7 +397,7 @@ public class Renderer {
             submitUploads();
             waitFences();
 
-            if ((vkResult = vkQueueSubmit(DeviceManager.getGraphicsQueue().queue(), submitInfo, inFlightFences.get(currentFrame))) != VK_SUCCESS) {
+            if ((vkResult = vkQueueSubmit(DeviceManager.getGraphicsQueue().vkQueue(), submitInfo, inFlightFences.get(currentFrame))) != VK_SUCCESS) {
                 vkResetFences(device, inFlightFences.get(currentFrame));
                 throw new RuntimeException("Failed to submit draw command buffer: %s".formatted(VkResult.decode(vkResult)));
             }
@@ -411,19 +412,17 @@ public class Renderer {
         var transferCb = transferCbs.get(currentFrame);
 
         if (transferCb.isRecording()) {
-
+            final var transferQueue = DeviceManager.getTransferQueue();
             try (MemoryStack stack = MemoryStack.stackPush()) {
-                transferCb.submitCommands(stack,
-                                          DeviceManager.getTransferQueue().queue(),
-                                          false);
+                transferCb.submitCommands(stack, transferQueue.vkQueue(), false);
             }
 
             Synchronization.INSTANCE.addCommandBuffer(transferCb);
 
-            transferCbs.set(currentFrame, DeviceManager.getTransferQueue()
-                                                       .getCommandPool()
-                                                       .getCommandBuffer());
+            transferCbs.set(currentFrame, transferQueue.getCommandPool().getCommandBuffer());
         }
+
+        ImageUploadHelper.INSTANCE.submitCommands();
     }
 
     public void endRenderPass() {
@@ -468,7 +467,6 @@ public class Renderer {
 
     private void waitFences() {
         // Make sure there are no uploads/transitions scheduled
-        ImageUploadHelper.INSTANCE.submitCommands();
         Synchronization.INSTANCE.waitFences();
         Vulkan.getStagingBuffer().reset();
     }
@@ -494,7 +492,7 @@ public class Renderer {
                                             .pWaitSemaphores(stack.longs(imageAvailableSemaphores.get(currentFrame)))
                                             .pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT));
 
-            vkQueueSubmit(DeviceManager.getGraphicsQueue().queue(), info, inFlightFences.get(currentFrame));
+            vkQueueSubmit(DeviceManager.getGraphicsQueue().vkQueue(), info, inFlightFences.get(currentFrame));
             vkWaitForFences(device, inFlightFences.get(currentFrame), true, -1);
         }
     }
