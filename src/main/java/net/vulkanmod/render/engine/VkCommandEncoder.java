@@ -763,7 +763,6 @@ public class VkCommandEncoder implements CommandEncoder {
         return bindPipeline(renderPass.pipeline);
     }
 
-    // TODO
     public void setupUniforms(VkRenderPass renderPass) {
         RenderPipeline renderPipeline = renderPass.pipeline;
         EGlProgram glProgram = ExtendedRenderPipeline.of(renderPass.pipeline).getProgram();
@@ -774,6 +773,14 @@ public class VkCommandEncoder implements CommandEncoder {
             Uniform uniform = glProgram.getUniform(uniformName);
 
             GpuBufferSlice gpuBufferSlice = renderPass.uniforms.get(uniformName);
+
+            // In case uniform buffer is not set, ignore it
+            if (gpuBufferSlice == null) {
+                ubo.setUseGlobalBuffer(true);
+                ubo.setUpdate(false);
+                continue;
+            }
+
             VkGpuBuffer gpuBuffer = (VkGpuBuffer) gpuBufferSlice.buffer();
 
             assert ubo != null;

@@ -1,6 +1,5 @@
 package net.vulkanmod.vulkan.shader.descriptor;
 
-import net.vulkanmod.vulkan.memory.buffer.Buffer;
 import net.vulkanmod.vulkan.memory.buffer.BufferSlice;
 import net.vulkanmod.vulkan.shader.layout.AlignedStruct;
 import net.vulkanmod.vulkan.shader.layout.Uniform;
@@ -15,12 +14,14 @@ public class UBO extends AlignedStruct implements Descriptor {
     public final int stages;
     public final BufferSlice bufferSlice;
     private boolean useGlobalBuffer;
+    private boolean update;
 
     public UBO(String name, int binding, int stages, int size, List<Uniform.Info> infoList) {
         super(infoList, size);
         this.name = name;
         this.binding = binding;
         this.stages = stages;
+        this.update = true;
 
         this.bufferSlice = new BufferSlice();
     }
@@ -57,5 +58,13 @@ public class UBO extends AlignedStruct implements Descriptor {
 
     public void setUseGlobalBuffer(boolean useGlobalBuffer) {
         this.useGlobalBuffer = useGlobalBuffer;
+    }
+
+    public boolean shouldUpdate() {
+        return update;
+    }
+
+    public void setUpdate(boolean update) {
+        this.update = update;
     }
 }

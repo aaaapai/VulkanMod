@@ -74,7 +74,9 @@ public class DescriptorSets {
                 int alignedSize = UniformBuffer.getAlignedSize(ubo.getSize());
                 globalUB.checkCapacity(alignedSize);
 
-                ubo.update(globalUB.getPointer());
+                if (ubo.shouldUpdate()) {
+                    ubo.update(globalUB.getPointer());
+                }
                 globalUB.updateOffset(alignedSize);
 
                 BufferSlice bufferSlice = ubo.getBufferSlice();
