@@ -508,6 +508,8 @@ public class WorldRenderer {
     }
 
     public ChunkAreaManager getChunkAreaManager() {
+        if (this.sectionGrid == null)
+            return null;
         return this.sectionGrid.chunkAreaManager;
     }
 

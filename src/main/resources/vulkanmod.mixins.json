@@ -26,6 +26,7 @@
 
     "debug.crash_report.SystemReportM",
     "debug.DebugEntryMemoryM",
+    "debug.DebugScreenEntriesM",
     "debug.KeyboardHandlerM",
 
     "matrix.Matrix4fM",
