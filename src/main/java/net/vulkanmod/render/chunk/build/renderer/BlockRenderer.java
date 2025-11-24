@@ -70,14 +70,6 @@ public class BlockRenderer extends AbstractBlockRenderContext {
         Vec3 offset = blockState.getOffset(blockPos);
         pos.add((float) offset.x, (float) offset.y, (float) offset.z);
 
-        // Debug
-        if (blockState.getBlock() == Blocks.REDSTONE_WALL_TORCH) {
-            System.nanoTime();
-        }
-        if (blockState.getLightEmission() > 0) {
-            System.nanoTime();
-        }
-
         this.prepareForBlock(blockState, blockPos, blockState.getLightEmission() == 0);
 
         model.emitQuads(this.getEmitter(), renderRegion, blockPos, blockState, this.random, this::isFaceCulled);
