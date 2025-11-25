@@ -242,17 +242,21 @@ public class DescriptorSets {
 
         VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.calloc(size, stack);
 
-        int i;
-        for (i = 0; i < pipeline.buffers.size(); ++i) {
+        int i = 0;
+        for (var buffer : pipeline.getBuffers()) {
             VkDescriptorPoolSize uniformBufferPoolSize = poolSizes.get(i);
-            uniformBufferPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
+            uniformBufferPoolSize.type(buffer.getType());
             uniformBufferPoolSize.descriptorCount(this.poolSize);
+
+            ++i;
         }
 
-        for (; i < pipeline.buffers.size() + pipeline.imageDescriptors.size(); ++i) {
+        for (var imageDescriptor : pipeline.getImageDescriptors()) {
             VkDescriptorPoolSize textureSamplerPoolSize = poolSizes.get(i);
-            textureSamplerPoolSize.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            textureSamplerPoolSize.type(imageDescriptor.getType());
             textureSamplerPoolSize.descriptorCount(this.poolSize);
+
+            ++i;
         }
 
         VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
