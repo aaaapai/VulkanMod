@@ -2,6 +2,7 @@ package net.vulkanmod.vulkan.shader.converter;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.shader.descriptor.ImageDescriptor;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
 import net.vulkanmod.vulkan.shader.layout.AlignedStruct;
@@ -297,8 +298,11 @@ public class GLSLParser {
                             attributeLocation = attributeNames.indexOf(attribute.id);
 
                             if (attributeLocation == -1) {
-                                throw new IllegalStateException("Element %s not found in elements %s".formatted(attribute.id, attributeNames));
+                                Initializer.LOGGER.error("Element %s not found in elements %s".formatted(attribute.id, attributeNames));
+                                attributeLocation = currentInAtt;
                             }
+
+                            currentInAtt++;
                         } else {
                             attributeLocation = currentInAtt++;
                         }
