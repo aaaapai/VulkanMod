@@ -131,6 +131,12 @@ public class VkGpuDevice implements GpuDevice {
         if (gpuTexture.isClosed()) {
             throw new IllegalArgumentException("Can't create texture view with closed texture");
         } else if (startLevel >= 0 && startLevel + levels <= gpuTexture.getMipLevels()) {
+
+            // Try to convert gpuTexture to VkGpuTexture in case it's not
+            if (gpuTexture.getClass() != VkGpuTexture.class) {
+                gpuTexture = VkGpuTexture.fromGlTexture((GlTexture) gpuTexture);
+            }
+
             return new VkTextureView((VkGpuTexture) gpuTexture, startLevel, levels);
         } else {
             throw new IllegalArgumentException(

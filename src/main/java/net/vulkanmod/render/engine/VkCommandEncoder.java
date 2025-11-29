@@ -17,6 +17,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ARGB;
 import net.vulkanmod.gl.VkGlFramebuffer;
+import net.vulkanmod.gl.VkGlTexture;
 import net.vulkanmod.interfaces.shader.ExtendedRenderPipeline;
 import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Synchronization;
@@ -196,9 +197,8 @@ public class VkCommandEncoder implements CommandEncoder {
             else {
                 VkFbo fbo = ((VkGpuTexture)colorAttachment).getFbo(depthAttachment);
 
-                fbo.clear = 0x4100;
-                fbo.clearColor = clearColor;
-                fbo.clearDepth = (float) clearDepth;
+                ((VkGpuTexture) colorAttachment).setClearColor(clearColor);
+                ((VkGpuTexture) depthAttachment).setDepthClearValue((float) clearDepth);
 
                 Framebuffer boundFramebuffer = Renderer.getInstance().getBoundFramebuffer();
                 if (boundFramebuffer.getColorAttachment() == ((VkGpuTexture) colorAttachment).getVulkanImage()
@@ -240,9 +240,14 @@ public class VkCommandEncoder implements CommandEncoder {
             throw new IllegalStateException("Close the existing render pass before creating a new one!");
         }
         else {
-            // depthAttachment is not the target here
-            VRenderSystem.clearDepth(clearDepth);
-            Renderer.clearAttachments(256);
+            Framebuffer boundFramebuffer = Renderer.getInstance().getBoundFramebuffer();
+            if (boundFramebuffer.getDepthAttachment() == ((VkGpuTexture) depthAttachment).getVulkanImage()) {
+                VRenderSystem.clearDepth(clearDepth);
+                Renderer.clearAttachments(0x100);
+            }
+            else {
+                ((VkGpuTexture) depthAttachment).setDepthClearValue((float) clearDepth);
+            }
         }
     }
 
@@ -411,7 +416,9 @@ public class VkCommandEncoder implements CommandEncoder {
                 throw new IllegalStateException("Destination texture is closed");
             } else {
                 VTextureSelector.setActiveTexture(0);
-                VTextureSelector.bindTexture(((VkGpuTexture) gpuTexture).getVulkanImage());
+                var glTexture = VkGlTexture.getTexture(((GlTexture) gpuTexture).glId());
+//                VTextureSelector.bindTexture(((VkGpuTexture) gpuTexture).getVulkanImage());
+                VTextureSelector.bindTexture(glTexture.getVulkanImage());
                 VTextureSelector.uploadSubTexture(level, arrayLayer, width, height, xOffset, yOffset, unpackSkipRows, unpackSkipPixels, nativeImage.getWidth(), nativeImage.getPointer());
             }
         } else {

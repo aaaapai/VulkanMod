@@ -1,10 +1,8 @@
 package net.vulkanmod.vulkan.pass;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
-import net.minecraft.client.Minecraft;
 import net.vulkanmod.render.engine.VkGpuDevice;
 import net.vulkanmod.render.engine.VkGpuTexture;
 import net.vulkanmod.vulkan.Renderer;
@@ -16,7 +14,6 @@ import net.vulkanmod.vulkan.texture.VulkanImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkRect2D;
-import org.lwjgl.vulkan.VkViewport;
 
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
@@ -27,7 +24,6 @@ public class DefaultMainPass implements MainPass {
         return new DefaultMainPass();
     }
 
-    private RenderTarget mainTarget;
     private final Framebuffer mainFramebuffer;
 
     private RenderPass mainRenderPass;
@@ -35,13 +31,13 @@ public class DefaultMainPass implements MainPass {
 
     private GpuTexture[] colorAttachmentTextures;
     private GpuTextureView[] colorAttachmentTextureViews;
+    private GpuTexture depthAttachmentTexture;
 
     DefaultMainPass() {
-        this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
         this.mainFramebuffer = Renderer.getInstance().getSwapChain();
 
         createRenderPasses();
-        createSwapChainTextures();
+        createAttachmentTextures();
     }
 
     private void createRenderPasses() {
@@ -70,8 +66,6 @@ public class DefaultMainPass implements MainPass {
 
         framebuffer.beginRenderPass(commandBuffer, this.mainRenderPass, stack);
 
-//        VkViewport.Buffer pViewport = framebuffer.viewport(stack);
-//        vkCmdSetViewport(commandBuffer, 0, pViewport);
         Renderer.setViewport(0, 0, framebuffer.getWidth(), framebuffer.getHeight(), stack);
 
         VkRect2D.Buffer pScissor = framebuffer.scissor(stack);
@@ -101,7 +95,7 @@ public class DefaultMainPass implements MainPass {
 
     @Override
     public void onResize() {
-        this.createSwapChainTextures();
+        this.createAttachmentTextures();
     }
 
     public void rebindMainTarget() {
@@ -148,11 +142,20 @@ public class DefaultMainPass implements MainPass {
         return this.colorAttachmentTextureViews[Renderer.getCurrentImage()];
     }
 
-    private void createSwapChainTextures() {
+    @Override
+    public GpuTexture getDepthAttachment() {
+        return this.depthAttachmentTexture;
+    }
+
+    private void createAttachmentTextures() {
         VkGpuDevice device = (VkGpuDevice) RenderSystem.getDevice();
 
         SwapChain swapChain = Renderer.getInstance().getSwapChain();
         var swapChainImages = swapChain.getImages();
+
+        if (swapChain.getWidth() == 0 && swapChain.getHeight() == 0)
+            return;
+
         int imageCount = swapChainImages.size();
         this.colorAttachmentTextures = new GpuTexture[imageCount];
         this.colorAttachmentTextureViews = new GpuTextureView[imageCount];
@@ -163,5 +166,7 @@ public class DefaultMainPass implements MainPass {
             this.colorAttachmentTextures[i] = attachmentTexture;
             this.colorAttachmentTextureViews[i] = attachmentTextureView;
         }
+
+        this.depthAttachmentTexture = device.gpuTextureFromVulkanImage(swapChain.getDepthAttachment());
     }
 }
