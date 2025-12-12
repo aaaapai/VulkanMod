@@ -148,7 +148,7 @@ public class Device {
     // Added these to allow detecting GPU vendor, to allow handling vendor specific circumstances:
     // (e.g. such as in case we encounter a vendor specific driver bug)
     public boolean isAMD() {
-        return false;
+        return true;
     }
 
     public boolean isNvidia() {
