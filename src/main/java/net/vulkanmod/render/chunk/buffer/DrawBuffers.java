@@ -52,6 +52,23 @@ public class DrawBuffers {
         this.drawParamsPtr = DrawParametersBuffer.allocateBuffer();
     }
 
+    private static void SimulateCmdDrawIndexedIndirect(VkCommandBuffer commandBuffer, long buffer, long offset, int drawCount, int stride) {
+        // 直接使用内存访问读取间接绘制参数，然后调用直接绘制命令
+        long ptr = buffer + offset;
+        
+        for (int i = 0; i < drawCount; i++) {
+            int indexCount = MemoryUtil.memGetInt(ptr);
+            int instanceCount = MemoryUtil.memGetInt(ptr + 4);
+            int firstIndex = MemoryUtil.memGetInt(ptr + 8);
+            int vertexOffset = MemoryUtil.memGetInt(ptr + 12);
+            int firstInstance = MemoryUtil.memGetInt(ptr + 16);
+            
+            vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+            
+            ptr += stride;
+        }
+    }
+    
     public void upload(RenderSection section, UploadBuffer buffer, TerrainRenderType renderType) {
         var vertexBuffers = buffer.getVertexBuffers();
 
@@ -264,7 +281,7 @@ public class DrawBuffers {
         ByteBuffer byteBuffer = MemoryUtil.memByteBuffer(cmdBufferPtr, queue.size() * QuadFacing.COUNT * CMD_STRIDE);
         indirectBuffer.recordCopyCmd(byteBuffer.position(0));
 
-        vkCmdDrawIndexedIndirect(Renderer.getCommandBuffer(), indirectBuffer.getId(), indirectBuffer.getOffset(), drawCount, CMD_STRIDE);
+        SimulateCmdDrawIndexedIndirect(Renderer.getCommandBuffer(), indirectBuffer.getId(), indirectBuffer.getOffset(), drawCount, CMD_STRIDE);
     }
 
     public void buildDrawBatchesDirect(Vec3 cameraPos, StaticQueue<RenderSection> queue, TerrainRenderType terrainRenderType) {
