@@ -93,7 +93,7 @@ public class Device {
             case (0x10DE) -> decodeNvidia(v); //Nvidia
             case (0x1022) -> decDefVersion(v); //AMD
             case (0x8086) -> decIntelVersion(v); //Intel
-            case (0x14b5) -> decDefVersion(v); //AMD
+            case (0x13b5) -> decDefVersion(v); //AMD
             default -> decDefVersion(v); //Either AMD or Unknown Driver Encoding Scheme
         };
     }
