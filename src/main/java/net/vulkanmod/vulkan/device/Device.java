@@ -142,11 +142,7 @@ public class Device {
     }
 
     public boolean isDrawIndirectSupported(VkPhysicalDevice physicalDevice) {
-       try (MemoryStack stack = MemoryStack.stackPush()) {
-           VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc(stack);
-           vkGetPhysicalDeviceFeatures(physicalDevice, features);
-           return features.multiDrawIndirect();
-       }
+       return drawIndirectSupported;
     }
 
     // Added these to allow detecting GPU vendor, to allow handling vendor specific circumstances:
