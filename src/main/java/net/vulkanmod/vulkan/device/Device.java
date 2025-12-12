@@ -141,7 +141,7 @@ public class Device {
         }
     }
 
-    public boolean isDrawIndirectSupported(VkPhysicalDevice physicalDevice) {
+    public boolean isDrawIndirectSupported() {
        return drawIndirectSupported;
     }
 
