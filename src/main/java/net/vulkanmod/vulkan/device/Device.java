@@ -68,6 +68,7 @@ public class Device {
             case (0x10DE) -> "Nvidia";
             case (0x1022) -> "AMD";
             case (0x8086) -> "Intel";
+            case (0x13b5) -> "Mali";
             default -> "undef"; //Either AMD or Unknown Driver version/vendor and.or Encoding Scheme
         };
     }
@@ -86,6 +87,7 @@ public class Device {
             case (0x10DE) -> decodeNvidia(v); //Nvidia
             case (0x1022) -> decDefVersion(v); //AMD
             case (0x8086) -> decIntelVersion(v); //Intel
+            case (0x13b5) -> decIntelVersion(v); //Mali
             default -> decDefVersion(v); //Either AMD or Unknown Driver Encoding Scheme
         };
     }
@@ -140,7 +142,7 @@ public class Device {
     // Added these to allow detecting GPU vendor, to allow handling vendor specific circumstances:
     // (e.g. such as in case we encounter a vendor specific driver bug)
     public boolean isAMD() {
-        return vendorId == 0x1022;
+        return true;
     }
 
     public boolean isNvidia() {
