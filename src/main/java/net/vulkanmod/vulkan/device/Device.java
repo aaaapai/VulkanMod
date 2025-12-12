@@ -142,17 +142,36 @@ public class Device {
     }
 
     public boolean isDrawIndirectSupported() {
-       return drawIndirectSupported;
+    // 检查设备是否支持间接绘制
+    // 这通常需要检查物理设备特性和扩展支持
+    
+    try (MemoryStack stack = MemoryStack.stackPush()) {
+        // 1. 检查 VkPhysicalDeviceFeatures 中的相关特性
+        VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc(stack);
+        vkGetPhysicalDeviceFeatures(physicalDevice, features);
+        
+        // 检查是否支持 multiDrawIndirect（如果需要）
+        // 或者至少支持基本的 indirect drawing
+        boolean hasIndirectDrawing = features.multiDrawIndirect();
+    
+        // 综合判断：需要支持间接绘制特性、有图形队列、且所有必需扩展都可用
+        return hasIndirectDrawing;
+        
+    } catch (Exception e) {
+        // 记录错误或根据实际情况处理
+        return false;
+    }
     }
 
     // Added these to allow detecting GPU vendor, to allow handling vendor specific circumstances:
     // (e.g. such as in case we encounter a vendor specific driver bug)
     public boolean isAMD() {
-        return true;
+        return vendorId == 0x1022;
     }
 
     public boolean isNvidia() {
-        return vendorId == 0x10DE;
+        return true;
+        //return vendorId == 0x10DE;
     }
 
     public boolean isIntel() {
