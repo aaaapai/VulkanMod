@@ -59,10 +59,7 @@ public class SPIRVUtils {
             shaderc_compile_options_set_generate_debug_info(options);
 
         shaderc_compile_options_set_target_env(options, shaderc_env_version_vulkan_1_1, VK12.VK_API_VERSION_1_1);
-        shaderc_compile_options_set_target_spirv(options, shaderc_spirv_version_1_6);
         shaderc_compile_options_set_include_callbacks(options, SHADER_INCLUDER, SHADER_RELEASER, pUserData);
-        shaderc_compile_options_set_auto_map_locations(options, true);
-        shaderc_compile_options_set_auto_bind_uniforms(options, true);
 
         includePaths = new ObjectArrayList<>();
         addIncludePath("/assets/vulkanmod/shaders/include/");
