@@ -53,7 +53,6 @@ public class DrawBuffers {
     }
 
     private static void SimulateCmdDrawIndexedIndirect(VkCommandBuffer commandBuffer, long buffer, long offset, int drawCount, int stride) {
-        // 直接使用内存访问读取间接绘制参数，然后调用直接绘制命令
         long ptr = buffer + offset;
         
         for (int i = 0; i < drawCount; i++) {
@@ -63,7 +62,7 @@ public class DrawBuffers {
             int vertexOffset = MemoryUtil.memGetInt(ptr + 12);
             int firstInstance = MemoryUtil.memGetInt(ptr + 16);
             
-            vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+            vkCmdDrawIndexedIndirect(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
             
             ptr += stride;
         }
