@@ -1,10 +1,12 @@
 package net.vulkanmod.render.profiling;
 
 import com.google.common.base.Strings;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.vulkanmod.Initializer;
 import net.vulkanmod.config.gui.render.GuiRenderer;
 import net.vulkanmod.render.chunk.WorldRenderer;
 import net.vulkanmod.render.chunk.build.task.ChunkTask;
@@ -96,6 +98,7 @@ public class ProfilerOverlay {
         List<String> list = new ArrayList<>();
         list.add("");
         list.add("Profiler");
+        list.add("Version: %s %s ".formatted(Initializer.getVersion(), SharedConstants.getCurrentVersion().name()));
 
         this.updateResults();
 
