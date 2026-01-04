@@ -123,17 +123,15 @@ public class SwapChain extends Framebuffer {
             createInfo.presentMode(presentMode);
             createInfo.clipped(true);
 
-            createInfo.oldSwapchain(this.swapChainId);
+            if (this.swapChainId != VK_NULL_HANDLE) {
+                this.swapChainImages.forEach(image -> vkDestroyImageView(device, image.getImageView(), null));
+                vkDestroySwapchainKHR(device, this.swapChainId, null);
+            }
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
 
             int result = vkCreateSwapchainKHR(device, createInfo, null, pSwapChain);
             Vulkan.checkResult(result, "Failed to create swap chain");
-
-            if (this.swapChainId != VK_NULL_HANDLE) {
-                this.swapChainImages.forEach(image -> vkDestroyImageView(device, image.getImageView(), null));
-                vkDestroySwapchainKHR(device, this.swapChainId, null);
-            }
 
             this.swapChainId = pSwapChain.get(0);
 
