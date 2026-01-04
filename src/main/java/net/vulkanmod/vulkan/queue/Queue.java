@@ -47,9 +47,13 @@ public abstract class Queue {
             this.commandPool = new CommandPool(familyIndex);
     }
 
-    public synchronized long submitCommands(CommandPool.CommandBuffer commandBuffer) {
+    public long submitCommands(CommandPool.CommandBuffer commandBuffer) {
+        return submitCommands(commandBuffer, false);
+    }
+
+    public synchronized long submitCommands(CommandPool.CommandBuffer commandBuffer, boolean useSemaphore) {
         try (MemoryStack stack = stackPush()) {
-            return commandBuffer.submitCommands(stack, vkQueue, false);
+            return commandBuffer.submitCommands(stack, vkQueue, useSemaphore);
         }
     }
 

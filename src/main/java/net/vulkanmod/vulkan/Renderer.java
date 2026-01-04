@@ -338,9 +338,20 @@ public class Renderer {
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
 
-            submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(stack.longs(imageAvailableSemaphores.get(currentFrame)));
-            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+            Synchronization.INSTANCE.addWaitSemaphore(imageAvailableSemaphores.get(currentFrame));
+            var waitSemaphores = Synchronization.INSTANCE.getWaitSemaphores(stack);
+            int waitSemaphoreCount = waitSemaphores.limit();
+            IntBuffer waitDstStageMask = stack.mallocInt(waitSemaphoreCount);
+
+            for (int i = 0; i < waitSemaphoreCount - 1; i++) {
+                waitDstStageMask.put(i, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+            }
+            // Image available semaphore mask
+            waitDstStageMask.put(waitSemaphoreCount - 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+            submitInfo.pWaitSemaphores(waitSemaphores);
+            submitInfo.waitSemaphoreCount(waitSemaphores.limit());
+            submitInfo.pWaitDstStageMask(waitDstStageMask);
             submitInfo.pSignalSemaphores(stack.longs(renderFinishedSemaphores.get(currentFrame)));
             submitInfo.pCommandBuffers(stack.pointers(currentCmdBuffer));
 
@@ -369,6 +380,9 @@ public class Renderer {
             } else if (vkResult != VK_SUCCESS) {
                 throw new RuntimeException("Failed to present rendered frame: %s".formatted(VkResult.decode(vkResult)));
             }
+
+            // Semaphore waited command buffers will be reset right after waiting this command buffer's fence
+            Synchronization.INSTANCE.scheduleCbReset();
 
             currentFrame = (currentFrame + 1) % framesNum;
         }
@@ -414,10 +428,10 @@ public class Renderer {
         if (transferCb.isRecording()) {
             final var transferQueue = DeviceManager.getTransferQueue();
             try (MemoryStack stack = MemoryStack.stackPush()) {
-                transferCb.submitCommands(stack, transferQueue.vkQueue(), false);
+                transferCb.submitCommands(stack, transferQueue.vkQueue(), true);
             }
 
-            Synchronization.INSTANCE.addCommandBuffer(transferCb);
+            Synchronization.INSTANCE.addCommandBuffer(transferCb, true);
 
             transferCbs.set(currentFrame, transferQueue.getCommandPool().getCommandBuffer());
         }
