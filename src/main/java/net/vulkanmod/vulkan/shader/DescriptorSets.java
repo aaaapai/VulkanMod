@@ -218,16 +218,16 @@ public class DescriptorSets {
     }
 
     private void createDescriptorSets(MemoryStack stack) {
-        LongBuffer layout = stack.mallocLong(this.poolSize);
+        LongBuffer layouts = MemoryUtil.memAllocLong(this.poolSize);
 
         for (int i = 0; i < this.poolSize; ++i) {
-            layout.put(i, pipeline.descriptorSetLayout);
+            layouts.put(i, pipeline.descriptorSetLayout);
         }
 
         VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
         allocInfo.sType$Default();
         allocInfo.descriptorPool(descriptorPool);
-        allocInfo.pSetLayouts(layout);
+        allocInfo.pSetLayouts(layouts);
 
         // Not hotspot code, use heap array
         this.sets = new long[this.poolSize];
@@ -236,6 +236,8 @@ public class DescriptorSets {
         if (result != VK_SUCCESS) {
             throw new RuntimeException("Failed to allocate descriptor sets. Result:" + result);
         }
+
+        MemoryUtil.memFree(layouts);
     }
 
     private void createDescriptorPool(MemoryStack stack) {
