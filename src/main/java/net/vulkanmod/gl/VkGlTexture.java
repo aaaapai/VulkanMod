@@ -1,6 +1,7 @@
 package net.vulkanmod.gl;
 
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
+import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.texture.ImageUtil;
 import net.vulkanmod.vulkan.texture.SamplerManager;
@@ -43,11 +44,14 @@ public class VkGlTexture {
         boundTextureId = id;
         boundTexture = map.get(id);
 
-        if (id <= 0)
+        if (id <= 0) {
             return;
+        }
 
-        if (boundTexture == null)
-            throw new NullPointerException("bound texture is null");
+        if (boundTexture == null) {
+            Initializer.LOGGER.error("Invalid id({}) value", id);
+            return;
+        }
 
         VulkanImage vulkanImage = boundTexture.vulkanImage;
         if (vulkanImage != null)

@@ -819,8 +819,12 @@ public class VkCommandEncoder implements CommandEncoder {
                 break;
             }
 
-            GlStateManager._activeTexture(33984 + samplerIndex);
             VkGpuTexture gpuTexture = textureView.texture();
+            if (gpuTexture.isClosed()) {
+                break;
+            }
+
+            GlStateManager._activeTexture(33984 + samplerIndex);
             GlStateManager._bindTexture(gpuTexture.id);
 
             GlStateManager._texParameter(GL11.GL_TEXTURE_2D, 33084, textureView.baseMipLevel());
