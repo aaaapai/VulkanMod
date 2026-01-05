@@ -442,6 +442,7 @@ public class GLSLParser {
     public List<ImageDescriptor> getSamplerList() {
         List<ImageDescriptor> imageDescriptors = new ObjectArrayList<>();
 
+        int imageIdx = 0;
         for (Sampler sampler : this.samplers) {
 
             int descriptorType = switch (sampler.type) {
@@ -449,8 +450,8 @@ public class GLSLParser {
                 case I_SAMPLER_BUFFER -> VK11.VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
             };
 
-            int imageIdx = VTextureSelector.getTextureIdx(sampler.id);
             imageDescriptors.add(new ImageDescriptor(sampler.binding, "sampler2D", sampler.id, imageIdx, descriptorType));
+            imageIdx++;
         }
 
         return imageDescriptors;
