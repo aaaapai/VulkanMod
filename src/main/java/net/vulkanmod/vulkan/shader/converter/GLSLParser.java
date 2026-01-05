@@ -403,6 +403,10 @@ public class GLSLParser {
             }
         }
 
+        // Rename glsl reserved keywords
+        stringBuilder.append("#define sampler sampler1\n\n");
+        stringBuilder.append("#define sample sample1\n\n");
+
         for (int i = 1; i < stream.size(); i++) {
             node = stream.get(i);
             stringBuilder.append(node.value);
