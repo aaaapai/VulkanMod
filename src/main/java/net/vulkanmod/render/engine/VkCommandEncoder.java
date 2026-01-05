@@ -704,10 +704,6 @@ public class VkCommandEncoder implements CommandEncoder {
             vertexOffset = 0;
         }
 
-        if (renderPipeline.getVertexFormatMode() == VertexFormat.Mode.TRIANGLES) {
-            System.nanoTime();
-        }
-
         VkCommandBuffer vkCommandBuffer = Renderer.getCommandBuffer();
         VkGpuBuffer vertexBuffer = (VkGpuBuffer)renderPass.vertexBuffers[0];
         try (MemoryStack stack = stackPush()) {
