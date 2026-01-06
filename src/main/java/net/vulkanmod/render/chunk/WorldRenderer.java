@@ -345,10 +345,11 @@ public class WorldRenderer {
         renderer.bindGraphicsPipeline(pipeline);
 
         TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-        AbstractTexture abstractTexture = textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS);
-        abstractTexture.setUseMipmaps(true);
-        var texView = abstractTexture.getTextureView();
-        RenderSystem.setShaderTexture(0, texView);
+        AbstractTexture blockAtlasTexture = textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS);
+        blockAtlasTexture.setUseMipmaps(true);
+
+        RenderSystem.setShaderTexture(0, blockAtlasTexture.getTextureView());
+        RenderSystem.setShaderTexture(2, Minecraft.getInstance().gameRenderer.lightTexture().getTextureView());
 
         VTextureSelector.bindShaderTextures(pipeline);
 
