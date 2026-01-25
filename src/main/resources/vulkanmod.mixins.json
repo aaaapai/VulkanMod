@@ -29,6 +29,8 @@
     "debug.DebugScreenEntriesM",
     "debug.KeyboardHandlerM",
 
+    "fix.MainMixin",
+
     "matrix.Matrix4fM",
     "matrix.PoseAccessor",
 
