@@ -122,12 +122,6 @@ public class Framebuffer {
         } else {
             renderPass.beginDynamicRendering(commandBuffer, stack);
         }
-
-        Renderer.getInstance().setBoundRenderPass(renderPass);
-        Renderer.getInstance().setBoundFramebuffer(this);
-
-        Renderer.setViewportState(0, 0, this.width, this.height);
-        Renderer.setScissor(0, 0, this.width, this.height);
     }
 
     protected long getFramebufferId(RenderPass renderPass) {

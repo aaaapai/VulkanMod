@@ -142,19 +142,36 @@ public class VkCommandEncoder implements CommandEncoder {
     }
 
     @Override
-    public void clearColorTexture(GpuTexture colorAttachment, int color) {
+    public void clearColorTexture(GpuTexture colorAttachment, int clearColor) {
         if (this.inRenderPass) {
             throw new IllegalStateException("Close the existing render pass before creating a new one!");
         }
         else if (Renderer.isRecording()) {
-            VkGpuTexture vkGpuTexture = (VkGpuTexture) colorAttachment;
-            VkGlFramebuffer.bindFramebuffer(GL30.GL_FRAMEBUFFER, framebufferId);
-            VkGlFramebuffer.framebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, vkGpuTexture.glId(), 0);
+            if (Minecraft.getInstance().getMainRenderTarget().getColorTexture() == colorAttachment) {
+                Renderer.getInstance().getMainPass().rebindMainTarget();
 
-            VkGlFramebuffer.beginRendering(VkGlFramebuffer.getFramebuffer(framebufferId));
-            VRenderSystem.setClearColor(ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color), ARGB.alphaFloat(color));
-            Renderer.clearAttachments(16384);
-            Renderer.getInstance().endRenderPass();
+                VRenderSystem.setClearColor(ARGB.redFloat(clearColor), ARGB.greenFloat(clearColor), ARGB.blueFloat(clearColor), ARGB.alphaFloat(clearColor));
+                Renderer.clearAttachments(0x4000);
+            }
+            else {
+                VkGpuTexture vkGpuTexture = (VkGpuTexture) colorAttachment;
+                VkGlFramebuffer.bindFramebuffer(GL30.GL_FRAMEBUFFER, framebufferId);
+                VkGlFramebuffer.framebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, vkGpuTexture.glId(), 0);
+
+                VkGlFramebuffer.beginRendering(VkGlFramebuffer.getFramebuffer(framebufferId));
+                VRenderSystem.setClearColor(ARGB.redFloat(clearColor), ARGB.greenFloat(clearColor), ARGB.blueFloat(clearColor), ARGB.alphaFloat(clearColor));
+                Renderer.clearAttachments(0x4000);
+                Renderer.getInstance().endRenderPass();
+
+                VkFbo fbo = ((VkGpuTexture)colorAttachment).getFbo(null);
+
+                ((VkGpuTexture) colorAttachment).setClearColor(clearColor);
+
+                Framebuffer boundFramebuffer = Renderer.getInstance().getBoundFramebuffer();
+                if (boundFramebuffer != null && boundFramebuffer.getColorAttachment() == ((VkGpuTexture) colorAttachment).getVulkanImage()) {
+                    fbo.clearAttachments();
+                }
+            }
         }
         else {
             GraphicsQueue graphicsQueue = DeviceManager.getGraphicsQueue();
@@ -171,14 +188,13 @@ public class VkCommandEncoder implements CommandEncoder {
                 framebuffer.beginRenderPass(commandBuffer.handle, renderPass, stack);
             }
 
-            VRenderSystem.setClearColor(ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color), ARGB.alphaFloat(color));
-            Renderer.clearAttachments(commandBuffer.handle, 16384);
+            VRenderSystem.setClearColor(ARGB.redFloat(clearColor), ARGB.greenFloat(clearColor), ARGB.blueFloat(clearColor), ARGB.alphaFloat(clearColor));
+            Renderer.clearAttachments(commandBuffer.handle, 0x4000, 0, 0, framebuffer.getWidth(), framebuffer.getHeight());
             renderPass.endRenderPass(commandBuffer.handle);
 
             long fence = graphicsQueue.submitCommands(commandBuffer);
             Synchronization.waitFence(fence);
         }
-
     }
 
     @Override
