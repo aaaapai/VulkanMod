@@ -116,12 +116,8 @@ public class Framebuffer {
     }
 
     public void beginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass, MemoryStack stack) {
-        if (!DYNAMIC_RENDERING) {
             long framebufferId = this.getFramebufferId(renderPass);
             renderPass.beginRenderPass(commandBuffer, framebufferId, stack);
-        } else {
-            renderPass.beginDynamicRendering(commandBuffer, stack);
-        }
     }
 
     protected long getFramebufferId(RenderPass renderPass) {
