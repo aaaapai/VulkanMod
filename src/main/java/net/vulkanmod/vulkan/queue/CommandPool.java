@@ -130,6 +130,10 @@ public class CommandPool {
             return fence;
         }
 
+        public long getSemaphore() {
+            return semaphore;
+        }
+
         public boolean isSubmitted() {
             return submitted;
         }

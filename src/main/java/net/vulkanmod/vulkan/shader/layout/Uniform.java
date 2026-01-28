@@ -41,7 +41,7 @@ public class Uniform {
 
     public static Uniform createField(Info info) {
         return switch (info.type) {
-            case "mat4", "vec3", "vec4", "vec2" -> new Uniform(info);
+            case "mat4", "vec3", "vec4", "vec2", "ivec3", "ivec2" -> new Uniform(info);
             case "mat3" -> new Mat3(info);
             case "float" -> new Vec1f(info);
             case "int" -> new Vec1i(info);
@@ -63,7 +63,6 @@ public class Uniform {
         return String.format("%s: %s offset: %d", info.type, info.name, info.offset);
     }
 
-    //TODO
     public static Info createUniformInfo(String type, String name, int count) {
         return switch (type) {
             case "matrix4x4" -> new Info("mat4", name, 4, 16);
@@ -75,7 +74,14 @@ public class Uniform {
 
                 default -> throw new IllegalStateException("Unexpected value: " + count);
             };
-            case "int" -> new Info("int", name, 1, 1);
+            case "int" -> switch (count) {
+                case 4 -> new Info("ivec4", name, 4, 4);
+                case 3 -> new Info("ivec3", name, 4, 3);
+                case 2 -> new Info("ivec2", name, 2, 2);
+                case 1 -> new Info("int", name, 1, 1);
+
+                default -> throw new IllegalStateException("Unexpected value: " + count);
+            };
             default -> throw new RuntimeException("not admitted type..");
         };
     }
@@ -86,8 +92,8 @@ public class Uniform {
             case "mat3" -> new Info(type, name, 4, 9);
 
             case "vec4" -> new Info(type, name, 4, 4);
-            case "vec3" -> new Info(type, name, 4, 3);
-            case "vec2" -> new Info(type, name, 2, 2);
+            case "vec3", "ivec3" -> new Info(type, name, 4, 3);
+            case "vec2", "ivec2" -> new Info(type, name, 2, 2);
 
             case "float", "int" -> new Info(type, name, 1, 1);
 

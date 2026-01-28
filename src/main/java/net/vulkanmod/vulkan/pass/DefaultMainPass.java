@@ -64,7 +64,7 @@ public class DefaultMainPass implements MainPass {
         VulkanImage colorAttachment = framebuffer.getColorAttachment();
         colorAttachment.transitionImageLayout(stack, commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-        framebuffer.beginRenderPass(commandBuffer, this.mainRenderPass, stack);
+        Renderer.getInstance().beginRenderPass(this.mainRenderPass, framebuffer);
 
         Renderer.setViewport(0, 0, framebuffer.getWidth(), framebuffer.getHeight(), stack);
 
@@ -108,11 +108,7 @@ public class DefaultMainPass implements MainPass {
             return;
 
         Renderer.getInstance().endRenderPass(commandBuffer);
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            swapChain.beginRenderPass(commandBuffer, this.auxRenderPass, stack);
-        }
-
+        Renderer.getInstance().beginRenderPass(this.auxRenderPass, swapChain);
     }
 
     @Override

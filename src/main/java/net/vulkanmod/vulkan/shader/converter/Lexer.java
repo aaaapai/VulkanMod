@@ -133,6 +133,7 @@ public class Lexer {
             case '!' -> new Token(Token.TokenType.OPERATOR, "!");
             case '&' -> new Token(Token.TokenType.OPERATOR, "&");
             case '|' -> new Token(Token.TokenType.OPERATOR, "|");
+            case '^' -> new Token(Token.TokenType.OPERATOR, "^");
             case '?' -> new Token(Token.TokenType.OPERATOR, "?");
             case '[' -> new Token(Token.TokenType.OPERATOR, "[");
             case ']' -> new Token(Token.TokenType.OPERATOR, "]");

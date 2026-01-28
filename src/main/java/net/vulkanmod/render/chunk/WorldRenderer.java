@@ -345,10 +345,11 @@ public class WorldRenderer {
         renderer.bindGraphicsPipeline(pipeline);
 
         TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-        AbstractTexture abstractTexture = textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS);
-        abstractTexture.setUseMipmaps(true);
-        var texView = abstractTexture.getTextureView();
-        RenderSystem.setShaderTexture(0, texView);
+        AbstractTexture blockAtlasTexture = textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS);
+        blockAtlasTexture.setUseMipmaps(true);
+
+        RenderSystem.setShaderTexture(0, blockAtlasTexture.getTextureView());
+        RenderSystem.setShaderTexture(2, Minecraft.getInstance().gameRenderer.lightTexture().getTextureView());
 
         VTextureSelector.bindShaderTextures(pipeline);
 
@@ -399,7 +400,6 @@ public class WorldRenderer {
         double d0 = camX - this.xTransparentOld;
         double d1 = camY - this.yTransparentOld;
         double d2 = camZ - this.zTransparentOld;
-//        if (d0 * d0 + d1 * d1 + d2 * d2 > 1.0D) {
         if (d0 * d0 + d1 * d1 + d2 * d2 > 2.0D) {
             this.xTransparentOld = camX;
             this.yTransparentOld = camY;
@@ -408,12 +408,13 @@ public class WorldRenderer {
 
             Iterator<RenderSection> iterator = this.sectionGraph.getSectionQueue().iterator(false);
 
-            while (iterator.hasNext() && j < 15) {
+            while (iterator.hasNext() && j < 200) {
                 RenderSection section = iterator.next();
-
                 section.resortTransparency(this.taskDispatcher);
 
-                ++j;
+                if (!section.isCompletelyEmpty()) {
+                    ++j;
+                }
             }
         }
 

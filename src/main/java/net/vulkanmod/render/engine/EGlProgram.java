@@ -7,7 +7,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import net.vulkanmod.vulkan.shader.Pipeline;
 import net.vulkanmod.vulkan.shader.descriptor.UBO;
-import net.vulkanmod.vulkan.texture.VTextureSelector;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -56,7 +55,7 @@ public class EGlProgram {
         for (String samplerName : samplers) {
             var imageDescriptor = pipeline.getImageDescriptor(samplerName);
             int binding = imageDescriptor.getBinding();
-            int imageIdx = VTextureSelector.getTextureIdx(samplerName);
+            int imageIdx = imageDescriptor.imageIdx;
             this.uniformsByName.put(samplerName, new Uniform.Sampler(binding, imageIdx));
         }
 
@@ -65,7 +64,7 @@ public class EGlProgram {
     @Nullable
     public Uniform getUniform(String string) {
         RenderSystem.assertOnRenderThread();
-        return (Uniform)this.uniformsByName.get(string);
+        return this.uniformsByName.get(string);
     }
 
     public int getProgramId() {

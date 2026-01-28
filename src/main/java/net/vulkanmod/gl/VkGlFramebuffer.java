@@ -157,7 +157,7 @@ public class VkGlFramebuffer {
     }
 
     boolean beginRendering() {
-        return Renderer.getInstance().beginRendering(this.renderPass, this.framebuffer);
+        return Renderer.getInstance().beginRenderPass(this.renderPass, this.framebuffer);
     }
 
     public void setAttachmentTexture(int attachment, int id) {

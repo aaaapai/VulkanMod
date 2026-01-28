@@ -7,6 +7,7 @@ import net.vulkanmod.vulkan.Renderer;
 import net.vulkanmod.vulkan.Vulkan;
 import net.vulkanmod.vulkan.device.DeviceManager;
 import net.vulkanmod.vulkan.queue.Queue;
+import net.vulkanmod.vulkan.texture.SamplerManager;
 import net.vulkanmod.vulkan.texture.VulkanImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -122,17 +123,15 @@ public class SwapChain extends Framebuffer {
             createInfo.presentMode(presentMode);
             createInfo.clipped(true);
 
-            createInfo.oldSwapchain(this.swapChainId);
+            if (this.swapChainId != VK_NULL_HANDLE) {
+                this.swapChainImages.forEach(image -> vkDestroyImageView(device, image.getImageView(), null));
+                vkDestroySwapchainKHR(device, this.swapChainId, null);
+            }
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
 
             int result = vkCreateSwapchainKHR(device, createInfo, null, pSwapChain);
             Vulkan.checkResult(result, "Failed to create swap chain");
-
-            if (this.swapChainId != VK_NULL_HANDLE) {
-                this.swapChainImages.forEach(image -> vkDestroyImageView(device, image.getImageView(), null));
-                vkDestroySwapchainKHR(device, this.swapChainId, null);
-            }
 
             this.swapChainId = pSwapChain.get(0);
 
@@ -152,7 +151,8 @@ public class SwapChain extends Framebuffer {
                 long imageView = VulkanImage.createImageView(imageId, this.format, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
 
                 VulkanImage image = new VulkanImage("Swapchain", imageId, this.format, 1, this.width, this.height, 4, 0, imageView);
-                image.updateTextureSampler(true, true, false);
+                long samplerId = SamplerManager.getSampler(true, true, 0);
+                image.setSampler(samplerId);
                 this.swapChainImages.add(image);
             }
         }

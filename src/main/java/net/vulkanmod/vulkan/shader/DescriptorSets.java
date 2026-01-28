@@ -25,8 +25,8 @@ public class DescriptorSets {
 
     private final Pipeline pipeline;
     private int poolSize = 10;
-    private long descriptorPool;
-    private LongBuffer sets;
+    private long descriptorPool = VK_NULL_HANDLE;
+    private long[] sets;
     private long currentSet;
     private int currentIdx = -1;
 
@@ -149,7 +149,7 @@ public class DescriptorSets {
         // Check pool size
         checkPoolSize(stack);
 
-        this.currentSet = this.sets.get(this.currentIdx);
+        this.currentSet = this.sets[this.currentIdx];
 
         VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(pipeline.buffers.size() + pipeline.imageDescriptors.size(), stack);
         VkDescriptorBufferInfo.Buffer[] bufferInfos = new VkDescriptorBufferInfo.Buffer[pipeline.buffers.size()];
@@ -218,23 +218,26 @@ public class DescriptorSets {
     }
 
     private void createDescriptorSets(MemoryStack stack) {
-        LongBuffer layout = stack.mallocLong(this.poolSize);
+        LongBuffer layouts = MemoryUtil.memAllocLong(this.poolSize);
 
         for (int i = 0; i < this.poolSize; ++i) {
-            layout.put(i, pipeline.descriptorSetLayout);
+            layouts.put(i, pipeline.descriptorSetLayout);
         }
 
         VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
         allocInfo.sType$Default();
         allocInfo.descriptorPool(descriptorPool);
-        allocInfo.pSetLayouts(layout);
+        allocInfo.pSetLayouts(layouts);
 
-        this.sets = MemoryUtil.memAllocLong(this.poolSize);
+        // Not hotspot code, use heap array
+        this.sets = new long[this.poolSize];
 
         int result = vkAllocateDescriptorSets(DEVICE, allocInfo, this.sets);
         if (result != VK_SUCCESS) {
             throw new RuntimeException("Failed to allocate descriptor sets. Result:" + result);
         }
+
+        MemoryUtil.memFree(layouts);
     }
 
     private void createDescriptorPool(MemoryStack stack) {

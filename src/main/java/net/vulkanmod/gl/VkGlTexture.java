@@ -1,6 +1,7 @@
 package net.vulkanmod.gl;
 
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
+import net.vulkanmod.Initializer;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.texture.ImageUtil;
 import net.vulkanmod.vulkan.texture.SamplerManager;
@@ -43,11 +44,14 @@ public class VkGlTexture {
         boundTextureId = id;
         boundTexture = map.get(id);
 
-        if (id <= 0)
+        if (id <= 0) {
             return;
+        }
 
-        if (boundTexture == null)
-            throw new NullPointerException("bound texture is null");
+        if (boundTexture == null) {
+            Initializer.LOGGER.error("Invalid id({}) value", id);
+            return;
+        }
 
         VulkanImage vulkanImage = boundTexture.vulkanImage;
         if (vulkanImage != null)
@@ -279,7 +283,7 @@ public class VkGlTexture {
     boolean needsUpdate = false;
     int maxLevel = 0;
     int maxLod = 0;
-    int minFilter, magFilter = GL11.GL_LINEAR;
+    int minFilter = GL11.GL_NEAREST, magFilter = GL11.GL_NEAREST;
 
     boolean clamp = true;
 
@@ -340,17 +344,34 @@ public class VkGlTexture {
         if (vulkanImage == null)
             return;
 
-        byte samplerFlags;
-        samplerFlags = clamp ? SamplerManager.CLAMP_BIT : 0;
-        samplerFlags |= magFilter == GL11.GL_LINEAR ? SamplerManager.LINEAR_FILTERING_BIT : 0;
+        int addressMode = clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        int vkMagFilter, vkMinFilter, mipmapMode;
 
-        samplerFlags |= switch (minFilter) {
-            case GL11.GL_LINEAR_MIPMAP_LINEAR -> SamplerManager.USE_MIPMAPS_BIT | SamplerManager.MIPMAP_LINEAR_FILTERING_BIT;
-            case GL11.GL_NEAREST_MIPMAP_NEAREST -> SamplerManager.USE_MIPMAPS_BIT;
-            default -> 0;
+        switch (minFilter) {
+            case GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR -> {
+                vkMinFilter = VK_FILTER_LINEAR; mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            }
+            case GL11.GL_LINEAR_MIPMAP_NEAREST -> {
+                vkMinFilter = VK_FILTER_LINEAR; mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            }
+            case GL11.GL_NEAREST_MIPMAP_NEAREST, GL11.GL_NEAREST -> {
+                vkMinFilter = VK_FILTER_NEAREST; mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            }
+            case GL11.GL_NEAREST_MIPMAP_LINEAR -> {
+                vkMinFilter = VK_FILTER_NEAREST; mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            }
+            default -> throw new IllegalStateException("Unexpected min filter value: %d".formatted(minFilter));
+        }
+
+        vkMagFilter = switch (magFilter) {
+            case GL11.GL_LINEAR -> VK_FILTER_LINEAR;
+            case GL11.GL_NEAREST -> VK_FILTER_NEAREST;
+            default -> throw new IllegalStateException("Unexpected mag filter value: %d".formatted(magFilter));
         };
 
-        vulkanImage.updateTextureSampler(maxLod, samplerFlags);
+        long sampler = SamplerManager.getSampler(addressMode, addressMode, vkMinFilter, vkMagFilter, mipmapMode, maxLod, false, 0, -1);
+
+        vulkanImage.setSampler(sampler);
     }
 
     private void uploadSubImage(int level, int xOffset, int yOffset, int width, int height, int format, ByteBuffer pixels) {

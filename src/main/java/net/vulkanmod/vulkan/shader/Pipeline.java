@@ -291,7 +291,7 @@ public abstract class Pipeline {
         public GraphicsPipeline createGraphicsPipeline() {
             Validate.isTrue(this.imageDescriptors != null && this.UBOs != null
                             && this.vertShaderSPIRV != null && this.fragShaderSPIRV != null,
-                    "Cannot create Pipeline: resources missing");
+                            "Cannot create Pipeline: resources missing");
 
             if (this.manualUBO != null)
                 this.UBOs.add(this.manualUBO);
@@ -357,42 +357,51 @@ public abstract class Pipeline {
         }
 
         private void parseUboNode(JsonElement jsonelement) {
-            JsonObject jsonobject = GsonHelper.convertToJsonObject(jsonelement, "UBO");
-            int binding = GsonHelper.getAsInt(jsonobject, "binding");
-            int type = getStageFromString(GsonHelper.getAsString(jsonobject, "type"));
-            JsonArray fields = GsonHelper.getAsJsonArray(jsonobject, "fields");
+            JsonObject uboJson = GsonHelper.convertToJsonObject(jsonelement, "UBO");
+            int binding = GsonHelper.getAsInt(uboJson, "binding");
+            int type = getStageFromString(GsonHelper.getAsString(uboJson, "type"));
 
-            AlignedStruct.Builder builder = new AlignedStruct.Builder();
+            UBO ubo;
+            if (GsonHelper.isArrayNode(uboJson, "fields")) {
+                JsonArray fields = GsonHelper.getAsJsonArray(uboJson, "fields");
 
-            for (JsonElement jsonelement2 : fields) {
-                JsonObject jsonobject2 = GsonHelper.convertToJsonObject(jsonelement2, "uniform");
-                //need to store some infos
-                String name = GsonHelper.getAsString(jsonobject2, "name");
-                String type2 = GsonHelper.getAsString(jsonobject2, "type");
-                int count = GsonHelper.getAsInt(jsonobject2, "count");
+                AlignedStruct.Builder builder = new AlignedStruct.Builder();
 
-                Uniform.Info uniformInfo = Uniform.createUniformInfo(type2, name, count);
-                uniformInfo.setupSupplier();
+                for (JsonElement field : fields) {
+                    JsonObject fieldObject = GsonHelper.convertToJsonObject(field, "uniform");
+                    String name = GsonHelper.getAsString(fieldObject, "name");
+                    String type2 = GsonHelper.getAsString(fieldObject, "type");
+                    int count = GsonHelper.getAsInt(fieldObject, "count");
 
-                if (!uniformInfo.hasSupplier()) {
-                    if (this.uniformSupplierGetter != null) {
-                        var uniformSupplier = this.uniformSupplierGetter.apply(uniformInfo);
+                    Uniform.Info uniformInfo = Uniform.createUniformInfo(type2, name, count);
+                    uniformInfo.setupSupplier();
 
-                        if (uniformSupplier == null) {
+                    if (!uniformInfo.hasSupplier()) {
+                        if (this.uniformSupplierGetter != null) {
+                            var uniformSupplier = this.uniformSupplierGetter.apply(uniformInfo);
+
+                            if (uniformSupplier == null) {
+                                throw new IllegalStateException("No uniform supplier found for uniform: (%s:%s)".formatted(type2, name));
+                            }
+
+                            uniformInfo.setBufferSupplier(uniformSupplier);
+                        }
+                        else {
                             throw new IllegalStateException("No uniform supplier found for uniform: (%s:%s)".formatted(type2, name));
                         }
+                    }
 
-                        uniformInfo.setBufferSupplier(uniformSupplier);
-                    }
-                    else {
-                        throw new IllegalStateException("No uniform supplier found for uniform: (%s:%s)".formatted(type2, name));
-                    }
+                    builder.addUniformInfo(uniformInfo);
                 }
 
-                builder.addUniformInfo(uniformInfo);
+                ubo = builder.buildUBO(binding, type);
             }
+            else {
+                int size = GsonHelper.getAsInt(uboJson, "size");
 
-            UBO ubo = builder.buildUBO(binding, type);
+                ubo = new UBO("UBO %d".formatted(binding), binding, type, size, null);
+                ubo.setUseGlobalBuffer(false);
+            }
 
             if (binding >= this.nextBinding)
                 this.nextBinding = binding + 1;

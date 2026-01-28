@@ -55,16 +55,16 @@ public class VkGpuTexture extends GlTexture {
 
     public void flushModeChanges() {
         if (this.modesDirty) {
-            byte samplerFlags;
-            samplerFlags = magFilter == FilterMode.LINEAR ? SamplerManager.LINEAR_FILTERING_BIT : 0;
+            int maxLod = this.useMipmaps ? this.getMipLevels() - 1 : 0;
 
-            // TODO: split min filtering
+            int magFilterVk = magFilter == FilterMode.LINEAR ? VK10.VK_FILTER_LINEAR : VK10.VK_FILTER_NEAREST;
+            int minFilterVk = minFilter == FilterMode.LINEAR ? VK10.VK_FILTER_LINEAR : VK10.VK_FILTER_NEAREST;
 
-            if (this.useMipmaps) {
-                samplerFlags |= SamplerManager.USE_MIPMAPS_BIT | SamplerManager.MIPMAP_LINEAR_FILTERING_BIT;
-            }
+            long sampler = SamplerManager.getSampler(VK10.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK10.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                                     minFilterVk, magFilterVk, VK10.VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                                                     maxLod, false, 0, -1);
 
-            glTexture.getVulkanImage().updateTextureSampler(this.getMipLevels(), samplerFlags);
+            glTexture.getVulkanImage().setSampler(sampler);
 
             this.modesDirty = false;
         }

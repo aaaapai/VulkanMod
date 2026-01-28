@@ -12,9 +12,6 @@ public abstract class Platform {
     private static final String activeDE = determineDE();
 
     public static void init() {
-        // Increase stack size to 256 KB to prevent out of stack error on nvidia driver
-        Configuration.STACK_SIZE.set(256);
-
         GLFW.glfwInitHint(GLFW_PLATFORM, activePlat);
         LOGGER.info("Selecting Platform: {}", getStringFromPlat(activePlat));
         LOGGER.info("GLFW: {}", GLFW.glfwGetVersionString());
