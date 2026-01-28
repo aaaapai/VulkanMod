@@ -144,7 +144,8 @@ public abstract class DeviceManager {
             else if (!otherDevices.isEmpty())
                 currentDevice = otherDevices.get(0);
             else {
-                throw new IllegalStateException("Failed to find a suitable GPU");
+                //throw new IllegalStateException("Failed to find a suitable GPU");
+                currentDevice = otherDevices.get(0);
             }
         }
 
