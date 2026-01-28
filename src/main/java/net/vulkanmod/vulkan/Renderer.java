@@ -853,6 +853,8 @@ public class Renderer {
     }
 
     public static void popPushDebugSection(String s) {
+        popDebugSection();
+        pushDebugSection(s);
     }
 
     public static int getFramesNum() {
