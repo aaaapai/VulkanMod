@@ -191,12 +191,19 @@ public abstract class DeviceManager {
             createInfo.pEnabledFeatures(deviceFeatures.features());
             createInfo.pNext(deviceVulkan11Features);
 
+            // Enable VK_KHR_maintenance4: relaxes SPIR-V interface matching
+            // (allows vec3 vertex output → vec2 fragment input truncation)
+            VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = VkPhysicalDeviceMaintenance4FeaturesKHR.calloc(stack);
+            maintenance4Features.sType$Default();
+            maintenance4Features.maintenance4(true);
+            deviceVulkan11Features.pNext(maintenance4Features.address());
+
             if (Vulkan.DYNAMIC_RENDERING) {
                 VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeaturesKHR = VkPhysicalDeviceDynamicRenderingFeaturesKHR.calloc(stack);
                 dynamicRenderingFeaturesKHR.sType$Default();
                 dynamicRenderingFeaturesKHR.dynamicRendering(true);
 
-                deviceVulkan11Features.pNext(dynamicRenderingFeaturesKHR.address());
+                maintenance4Features.pNext(dynamicRenderingFeaturesKHR.address());
 
 //                //Vulkan 1.3 dynamic rendering
 //                VkPhysicalDeviceVulkan13Features deviceVulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack);

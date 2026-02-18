@@ -53,10 +53,30 @@ public class GraphicsPipeline extends Pipeline {
     }
 
     public long getHandle(PipelineState state) {
-        return graphicsPipelines.computeIfAbsent(state, this::createGraphicsPipeline);
+        long handle = graphicsPipelines.computeIfAbsent(state, this::createGraphicsPipeline);
+        if (handle == VK_NULL_HANDLE) {
+            // Remove the cached null handle so creation can be retried
+            graphicsPipelines.removeLong(state);
+        }
+        return handle;
     }
 
     private long createGraphicsPipeline(PipelineState state) {
+        // Validate handles before calling vkCreateGraphicsPipelines to prevent native driver crashes
+        if (vertShaderModule == 0 || fragShaderModule == 0) {
+            System.err.println("[VulkanMod] FATAL: Cannot create graphics pipeline '" + name + "' - shader modules are invalid"
+                + " (vert=" + vertShaderModule + " frag=" + fragShaderModule + ")");
+            return VK_NULL_HANDLE;
+        }
+        if (pipelineLayout == 0) {
+            System.err.println("[VulkanMod] FATAL: Cannot create graphics pipeline '" + name + "' - pipeline layout is VK_NULL_HANDLE");
+            return VK_NULL_HANDLE;
+        }
+        if (state.renderPass == null || state.renderPass.getId() == 0) {
+            System.err.println("[VulkanMod] FATAL: Cannot create graphics pipeline '" + name + "' - render pass is null/invalid");
+            return VK_NULL_HANDLE;
+        }
+
         try (MemoryStack stack = stackPush()) {
             ByteBuffer entryPoint = stack.UTF8("main");
 
@@ -136,20 +156,26 @@ public class GraphicsPipeline extends Pipeline {
 
             // ===> COLOR BLENDING <===
 
-            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
-            colorBlendAttachment.colorWriteMask(state.colorMask_i);
+            // MRT: create one blend attachment state per color attachment in the render pass
+            int colorAttCount = (state.renderPass != null) ? state.renderPass.getColorAttachmentCount() : 1;
+            if (colorAttCount < 1) colorAttCount = 1;
 
-            if (PipelineState.BlendState.enable(state.blendState_i)) {
-                colorBlendAttachment.blendEnable(true);
-                colorBlendAttachment.srcColorBlendFactor(PipelineState.BlendState.getSrcRgbFactor(state.blendState_i));
-                colorBlendAttachment.dstColorBlendFactor(PipelineState.BlendState.getDstRgbFactor(state.blendState_i));
-                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-                colorBlendAttachment.srcAlphaBlendFactor(PipelineState.BlendState.getSrcAlphaFactor(state.blendState_i));
-                colorBlendAttachment.dstAlphaBlendFactor(PipelineState.BlendState.getDstAlphaFactor(state.blendState_i));
-                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
-            }
-            else {
-                colorBlendAttachment.blendEnable(false);
+            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(colorAttCount, stack);
+            for (int att = 0; att < colorAttCount; att++) {
+                VkPipelineColorBlendAttachmentState blendAtt = colorBlendAttachment.get(att);
+                blendAtt.colorWriteMask(state.colorMask_i);
+
+                if (PipelineState.BlendState.enable(state.blendState_i)) {
+                    blendAtt.blendEnable(true);
+                    blendAtt.srcColorBlendFactor(PipelineState.BlendState.getSrcRgbFactor(state.blendState_i));
+                    blendAtt.dstColorBlendFactor(PipelineState.BlendState.getDstRgbFactor(state.blendState_i));
+                    blendAtt.colorBlendOp(VK_BLEND_OP_ADD);
+                    blendAtt.srcAlphaBlendFactor(PipelineState.BlendState.getSrcAlphaFactor(state.blendState_i));
+                    blendAtt.dstAlphaBlendFactor(PipelineState.BlendState.getDstAlphaFactor(state.blendState_i));
+                    blendAtt.alphaBlendOp(VK_BLEND_OP_ADD);
+                } else {
+                    blendAtt.blendEnable(false);
+                }
             }
 
             VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack);
@@ -317,16 +343,25 @@ public class GraphicsPipeline extends Pipeline {
                             offset += 8;
                         }
                         case SHORT -> {
-                            posDescription.format(VK_FORMAT_R16G16_SINT);
                             posDescription.offset(offset);
-
-                            offset += 4;
+                            if (elementCount <= 2) {
+                                posDescription.format(VK_FORMAT_R16G16_SINT);
+                                offset += 4;
+                            } else {
+                                posDescription.format(VK_FORMAT_R16G16B16A16_SINT);
+                                offset += elementCount * 2;
+                            }
                         }
                         case USHORT -> {
-                            posDescription.format(VK_FORMAT_R16G16_UINT);
                             posDescription.offset(offset);
-
-                            offset += 4;
+                            if (elementCount <= 2) {
+                                posDescription.format(VK_FORMAT_R16G16_UINT);
+                                offset += 4;
+                            } else {
+                                // Use SINT to match shader's ivec3 (e.g. iris_Entity)
+                                posDescription.format(VK_FORMAT_R16G16B16A16_SINT);
+                                offset += elementCount * 2;
+                            }
                         }
                     }
                 }
@@ -339,21 +374,62 @@ public class GraphicsPipeline extends Pipeline {
                 }
 
                 case GENERIC -> {
-                    if (type == VertexFormatElement.Type.SHORT && elementCount == 1) {
-                        posDescription.format(VK_FORMAT_R16_SINT);
-                        posDescription.offset(offset);
-
-                        offset += 2;
+                    int fmt;
+                    int sz;
+                    if (type == VertexFormatElement.Type.FLOAT) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R32_SFLOAT; sz = 4; }
+                            case 2 -> { fmt = VK_FORMAT_R32G32_SFLOAT; sz = 8; }
+                            case 3 -> { fmt = VK_FORMAT_R32G32B32_SFLOAT; sz = 12; }
+                            case 4 -> { fmt = VK_FORMAT_R32G32B32A32_SFLOAT; sz = 16; }
+                            default -> throw new RuntimeException("Unsupported GENERIC FLOAT count: " + elementCount);
+                        }
+                    } else if (type == VertexFormatElement.Type.SHORT) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R16_SINT; sz = 2; }
+                            case 2 -> { fmt = VK_FORMAT_R16G16_SINT; sz = 4; }
+                            case 3 -> { fmt = VK_FORMAT_R16G16B16A16_SINT; sz = 8; }
+                            case 4 -> { fmt = VK_FORMAT_R16G16B16A16_SINT; sz = 8; }
+                            default -> throw new RuntimeException("Unsupported GENERIC SHORT count: " + elementCount);
+                        }
+                    } else if (type == VertexFormatElement.Type.BYTE) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R8_SNORM; sz = 1; }
+                            case 2 -> { fmt = VK_FORMAT_R8G8_SNORM; sz = 2; }
+                            case 3 -> { fmt = VK_FORMAT_R8G8B8A8_SNORM; sz = 4; }
+                            case 4 -> { fmt = VK_FORMAT_R8G8B8A8_SNORM; sz = 4; }
+                            default -> throw new RuntimeException("Unsupported GENERIC BYTE count: " + elementCount);
+                        }
+                    } else if (type == VertexFormatElement.Type.INT) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R32_SINT; sz = 4; }
+                            case 2 -> { fmt = VK_FORMAT_R32G32_SINT; sz = 8; }
+                            case 3 -> { fmt = VK_FORMAT_R32G32B32_SINT; sz = 12; }
+                            case 4 -> { fmt = VK_FORMAT_R32G32B32A32_SINT; sz = 16; }
+                            default -> throw new RuntimeException("Unsupported GENERIC INT count: " + elementCount);
+                        }
+                    } else if (type == VertexFormatElement.Type.USHORT) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R16_UINT; sz = 2; }
+                            case 2 -> { fmt = VK_FORMAT_R16G16_UINT; sz = 4; }
+                            case 3 -> { fmt = VK_FORMAT_R16G16B16A16_UINT; sz = 8; }
+                            case 4 -> { fmt = VK_FORMAT_R16G16B16A16_UINT; sz = 8; }
+                            default -> throw new RuntimeException("Unsupported GENERIC USHORT count: " + elementCount);
+                        }
+                    } else if (type == VertexFormatElement.Type.UBYTE) {
+                        switch (elementCount) {
+                            case 1 -> { fmt = VK_FORMAT_R8_UINT; sz = 1; }
+                            case 2 -> { fmt = VK_FORMAT_R8G8_UINT; sz = 2; }
+                            case 3 -> { fmt = VK_FORMAT_R8G8B8A8_UINT; sz = 4; }
+                            case 4 -> { fmt = VK_FORMAT_R8G8B8A8_UINT; sz = 4; }
+                            default -> throw new RuntimeException("Unsupported GENERIC UBYTE count: " + elementCount);
+                        }
+                    } else {
+                        throw new RuntimeException(String.format("Unknown GENERIC type: %s count: %d", type, elementCount));
                     }
-                    else if (type == VertexFormatElement.Type.INT && elementCount == 1) {
-                        posDescription.format(VK_FORMAT_R32_SINT);
-                        posDescription.offset(offset);
-
-                        offset += 4;
-                    }
-                    else {
-                        throw new RuntimeException(String.format("Unknown format: %s", usage));
-                    }
+                    posDescription.format(fmt);
+                    posDescription.offset(offset);
+                    offset += sz;
                 }
 
                 default -> throw new RuntimeException(String.format("Unknown format: %s", usage));

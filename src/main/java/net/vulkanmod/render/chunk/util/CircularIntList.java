@@ -1,73 +1,53 @@
 package net.vulkanmod.render.chunk.util;
 
 import org.apache.commons.lang3.Validate;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 
 public class CircularIntList {
     private int[] list;
-    private final int startIndex;
+    private final int size;
 
-    private int[] previous;
-    private int[] next;
-
-    private OwnIterator iterator;
-
-    public CircularIntList(int size, int startIndex) {
-        this.startIndex = startIndex;
-
-        this.generateList(size);
+    public CircularIntList(int size) {
+        this.size = size;
+        this.list = new int[size];
     }
 
-    private void generateList(int size) {
-        int[] list = new int[size];
+    public CircularIntList(int size, int startIndex) {
+        this(size);
+        this.updateStartIdx(startIndex);
+    }
 
-        this.previous = new int[size];
-        this.next = new int[size];
-
+    public void updateStartIdx(int startIndex) {
         int k = 0;
-        for(int i = startIndex; i < size; ++i) {
-            list[k] = i;
-
-            ++k;
+        for (int i = startIndex; i < size; ++i) {
+            list[k++] = i;
         }
-        for(int i = 0; i < startIndex; ++i) {
-            list[k] = i;
-            ++k;
+        for (int i = 0; i < startIndex; ++i) {
+            list[k++] = i;
         }
-
-        this.previous[0] = -1;
-        System.arraycopy(list, 0, this.previous, 1, size - 1);
-
-        this.next[size - 1] = -1;
-        System.arraycopy(list, 1, this.next, 0, size - 1);
-
-        this.list = list;
     }
 
     public int getNext(int i) {
-        return this.next[i];
+        return (i + 1 < size) ? list[i + 1] : -1;
     }
 
     public int getPrevious(int i) {
-        return this.previous[i];
+        return (i - 1 >= 0) ? list[i - 1] : -1;
     }
 
     public OwnIterator iterator() {
         return new OwnIterator();
     }
 
-    public RangeIterator rangeIterator(int startIndex, int endIndex) {
-        return new RangeIterator(startIndex, endIndex);
+    public RangeIterator createRangeIterator() {
+        return new RangeIterator();
     }
 
-    public void restartIterator() {
-        this.iterator.restart();
+    public RangeIterator rangeIterator(int startIndex, int endIndex) {
+        RangeIterator it = new RangeIterator();
+        it.update(startIndex, endIndex);
+        return it;
     }
 
     public class OwnIterator implements Iterator<Integer> {
@@ -96,14 +76,19 @@ public class CircularIntList {
 
     public class RangeIterator implements Iterator<Integer> {
         private int currentIndex;
-        private final int startIndex;
-        private final int maxIndex;
+        private int startIndex;
+        private int maxIndex;
 
-        public RangeIterator(int startIndex, int endIndex) {
+        public RangeIterator() {
+            this.startIndex = 0;
+            this.maxIndex = 0;
+            this.currentIndex = -1;
+        }
+
+        public void update(int startIndex, int endIndex) {
             this.startIndex = startIndex;
             this.maxIndex = endIndex;
             Validate.isTrue(this.maxIndex < list.length, "Beyond max size");
-
             this.restart();
         }
 
@@ -115,13 +100,7 @@ public class CircularIntList {
         @Override
         public Integer next() {
             currentIndex++;
-            try {
-                return list[currentIndex];
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException();
-            }
-
+            return list[currentIndex];
         }
 
         public int getCurrentIndex() {

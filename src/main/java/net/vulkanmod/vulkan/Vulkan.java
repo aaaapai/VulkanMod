@@ -39,8 +39,7 @@ import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
 public class Vulkan {
 
-    public static final boolean ENABLE_VALIDATION_LAYERS = false;
-//    public static final boolean ENABLE_VALIDATION_LAYERS = true;
+    public static final boolean ENABLE_VALIDATION_LAYERS = true;
 
     //    public static final boolean DYNAMIC_RENDERING = true;
     public static final boolean DYNAMIC_RENDERING = false;
@@ -68,6 +67,12 @@ public class Vulkan {
             extensions.add(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
         }
 
+        // VK_KHR_maintenance4 relaxes SPIR-V interface matching rules:
+        // allows vec3 vertex output → vec2 fragment input (truncation).
+        // Required for shader packs that declare different-sized varyings
+        // between vertex and fragment stages (valid in OpenGL, strict in Vulkan).
+        extensions.add("VK_KHR_maintenance4");
+
         return new HashSet<>(extensions);
     }
 
@@ -75,20 +80,18 @@ public class Vulkan {
 
         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
 
-        String s;
+        String msg = callbackData.pMessageString();
+        String msgId = callbackData.pMessageIdNameString();
+
         if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0) {
-            s = "\u001B[31m" + callbackData.pMessageString();
-
-//            System.err.println("Stack dump:");
-//            Thread.dumpStack();
+            net.vulkanmod.Initializer.LOGGER.error("[VK_VALIDATION] {} : {}", msgId, msg);
+            System.err.println("\u001B[31m[VK_VALIDATION ERROR] " + msgId + " : " + msg);
+        } else if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0) {
+            net.vulkanmod.Initializer.LOGGER.warn("[VK_VALIDATION] {} : {}", msgId, msg);
+            System.err.println("[VK_VALIDATION WARN] " + msgId + " : " + msg);
         } else {
-            s = callbackData.pMessageString();
+            net.vulkanmod.Initializer.LOGGER.info("[VK_VALIDATION] {} : {}", msgId, msg);
         }
-
-        System.err.println(s);
-
-        if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0)
-            System.nanoTime();
 
         return VK_FALSE;
     }

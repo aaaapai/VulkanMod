@@ -29,6 +29,11 @@ public class ChunkAreaManager {
     int prevX;
     int prevZ;
 
+    // Cached CircularIntLists and iterators to reduce GC pressure
+    private CircularIntList xList;
+    private CircularIntList zList;
+    private CircularIntList.RangeIterator cachedXComplIterator;
+
     public ChunkAreaManager(int width, int height, int minHeight) {
         this.minHeight = minHeight;
         this.sectionGridWidth = width;
@@ -73,8 +78,15 @@ public class ChunkAreaManager {
         int zAbsChunkIndex = zS - this.xzSize / 2;
         int zStart = Math.floorMod(zAbsChunkIndex, this.xzSize);
 
-        CircularIntList xList = new CircularIntList(this.xzSize, xStart);
-        CircularIntList zList = new CircularIntList(this.xzSize, zStart);
+        if (this.xList == null) {
+            this.xList = new CircularIntList(this.xzSize);
+            this.zList = new CircularIntList(this.xzSize);
+            this.cachedXComplIterator = this.xList.createRangeIterator();
+        }
+        this.xList.updateStartIdx(xStart);
+        this.zList.updateStartIdx(zStart);
+        CircularIntList xList = this.xList;
+        CircularIntList zList = this.zList;
         CircularIntList.OwnIterator xIterator = xList.iterator();
         CircularIntList.OwnIterator zIterator = zList.iterator();
 
@@ -105,7 +117,8 @@ public class ChunkAreaManager {
         }
 
         CircularIntList.RangeIterator xRangeIterator = xList.rangeIterator(xRangeStart, xRangeEnd);
-        CircularIntList.RangeIterator xComplIterator = xList.rangeIterator(xComplStart, xComplEnd);
+        this.cachedXComplIterator.update(xComplStart, xComplEnd);
+        CircularIntList.RangeIterator xComplIterator = this.cachedXComplIterator;
         CircularIntList.RangeIterator zRangeIterator = zList.rangeIterator(zRangeStart, zRangeEnd);
 
         xAbsChunkIndex = xS - this.xzSize / 2 + xRangeStart;

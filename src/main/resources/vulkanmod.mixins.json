@@ -7,6 +7,7 @@
   "mixins": [
   ],
   "client": [
+    "MainMixin",
     "window.WindowMixin",
     "window.WindowAccessor",
 

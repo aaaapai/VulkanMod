@@ -76,8 +76,10 @@ public class Drawer {
         AutoIndexBuffer autoIndexBuffer;
         int indexCount;
 
+        int stride = vertexFormat.getVertexSize();
+
         VertexBuffer vertexBuffer = this.vertexBuffers[this.currentFrame];
-        vertexBuffer.copyToVertexBuffer(vertexFormat.getVertexSize(), vertexCount, buffer);
+        vertexBuffer.copyToVertexBuffer(stride, vertexCount, buffer);
 
         switch (mode) {
             case QUADS -> {

@@ -70,8 +70,8 @@ public class GlslConverter {
         vshOut.insert(0, samplersVertCode);
         fshOut.insert(0, samplersFragCode);
 
-        vshOut.insert(0, "#version 450\n\n");
-        fshOut.insert(0, "#version 450\n\n");
+        vshOut.insert(0, "#version 450\n\n#define sampler sampler1\n#define sample sample1\n\n");
+        fshOut.insert(0, "#version 450\n\n#define sampler sampler1\n#define sample sample1\n\n");
 
         this.vshConverted = vshOut.toString();
         this.fshConverted = fshOut.toString();
@@ -92,6 +92,10 @@ public class GlslConverter {
             case "uniform" -> this.state = State.MATCHING_UNIFORM;
             case "in", "out" -> this.state = State.MATCHING_IN_OUT;
             case "#version" -> {
+                return null;
+            }
+            case "precision" -> {
+                // Strip precision qualifiers (not valid in GLSL 450, used by resource pack shaders)
                 return null;
             }
             case "#moj_import" -> {

@@ -10,7 +10,7 @@ import net.vulkanmod.vulkan.shader.descriptor.ImageDescriptor;
 import java.nio.ByteBuffer;
 
 public abstract class VTextureSelector {
-    public static final int SIZE = 12;
+    public static final int SIZE = 32;
 
     private static final VulkanImage[] boundTextures = new VulkanImage[SIZE];
 
@@ -54,15 +54,15 @@ public abstract class VTextureSelector {
     }
 
     public static int getTextureIdx(String name) {
+        if (name.startsWith("Sampler")) {
+            String numStr = name.substring(7);
+            try {
+                int idx = Integer.parseInt(numStr);
+                if (idx >= 0 && idx < SIZE) return idx;
+            } catch (NumberFormatException ignored) {}
+        }
         return switch (name) {
-            case "Sampler0", "DiffuseSampler" -> 0;
-            case "Sampler1" -> 1;
-            case "Sampler2" -> 2;
-            case "Sampler3" -> 3;
-            case "Sampler4" -> 4;
-            case "Sampler5" -> 5;
-            case "Sampler6" -> 6;
-            case "Sampler7" -> 7;
+            case "DiffuseSampler" -> 0;
             default -> throw new IllegalStateException("Unknown sampler name: " + name);
         };
     }
@@ -71,16 +71,39 @@ public abstract class VTextureSelector {
         var imageDescriptors = pipeline.getImageDescriptors();
 
         for (ImageDescriptor state : imageDescriptors) {
-            final int shaderTexture = RenderSystem.getShaderTexture(state.imageIdx);
+            int idx = state.imageIdx;
+
+            // RenderSystem.shaderTextures[] is only 12 elements (vanilla MC limit).
+            // For indices >= 12 (used by shader mods like Iris), skip the RenderSystem
+            // lookup and use whatever texture is already bound in VTextureSelector
+            // (Iris binds its textures via GlStateManager._bindTexture before draw).
+            if (idx >= 12) {
+                // If nothing is bound yet at this index, bind a fallback
+                if (idx < SIZE && boundTextures[idx] == null) {
+                    GlTexture fallback = GlTexture.getTexture(MissingTextureAtlasSprite.getTexture().getId());
+                    if (fallback != null && fallback.getVulkanImage() != null) {
+                        boundTextures[idx] = fallback.getVulkanImage();
+                    }
+                }
+                continue;
+            }
+
+            final int shaderTexture = RenderSystem.getShaderTexture(idx);
+
+            // If RenderSystem has no texture set (returns 0) and we already have a
+            // texture bound at this index (e.g. from Iris), keep the existing binding
+            if (shaderTexture == 0 && idx < SIZE && boundTextures[idx] != null) {
+                continue;
+            }
 
             GlTexture texture = GlTexture.getTexture(shaderTexture);
 
             if (texture != null && texture.getVulkanImage() != null) {
-                VTextureSelector.bindTexture(state.imageIdx, texture.getVulkanImage());
+                VTextureSelector.bindTexture(idx, texture.getVulkanImage());
             }
             else {
                  texture = GlTexture.getTexture(MissingTextureAtlasSprite.getTexture().getId());
-                VTextureSelector.bindTexture(state.imageIdx, texture.getVulkanImage());
+                VTextureSelector.bindTexture(idx, texture.getVulkanImage());
             }
         }
     }

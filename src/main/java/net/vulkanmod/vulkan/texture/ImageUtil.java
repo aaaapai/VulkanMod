@@ -148,14 +148,14 @@ public abstract class ImageUtil {
 
             VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.calloc(1, stack);
             barrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-            barrier.oldLayout(VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+            barrier.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
             barrier.newLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             barrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
             barrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
             barrier.image(image.getId());
 
             barrier.subresourceRange().baseMipLevel(0);
-            barrier.subresourceRange().levelCount(image.mipLevels - 1);
+            barrier.subresourceRange().levelCount(Math.max(1, image.mipLevels - 1));
             barrier.subresourceRange().baseArrayLayer(0);
             barrier.subresourceRange().layerCount(VK_REMAINING_ARRAY_LAYERS);
 
@@ -165,18 +165,18 @@ public abstract class ImageUtil {
             barrier.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
 
             vkCmdPipelineBarrier(commandBuffer.getHandle(),
-                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                     0,
                     null,
                     null,
                     barrier);
 
-            barrier.oldLayout(VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+            barrier.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
             barrier.subresourceRange().baseMipLevel(image.mipLevels - 1);
             barrier.subresourceRange().levelCount(1);
 
             vkCmdPipelineBarrier(commandBuffer.getHandle(),
-                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                     0,
                     null,
                     null,

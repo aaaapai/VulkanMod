@@ -57,6 +57,12 @@ public interface VertexBuilder {
 
             MemoryUtil.memPutShort(ptr + 12, (short) (u * UV_CONV_MUL));
             MemoryUtil.memPutShort(ptr + 14, (short) (v * UV_CONV_MUL));
+
+            // Zero-fill UV2 element (bytes 16-19) to prevent uninitialized memory reads.
+            // COMPRESSED_TERRAIN declares ELEMENT_UV2 at location 3 (stride 20 bytes),
+            // but only 16 bytes are written above. The GPU reads these 4 bytes even though
+            // Iris terrain shaders extract light from position.w instead of UV2.
+            MemoryUtil.memPutInt(ptr + 16, 0);
         }
 
         @Override

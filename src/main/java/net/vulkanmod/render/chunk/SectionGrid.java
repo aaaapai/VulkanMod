@@ -23,6 +23,11 @@ public class SectionGrid {
     private int prevSecX;
     private int prevSecZ;
 
+    // Cached CircularIntLists and iterators to reduce GC pressure
+    private CircularIntList xList;
+    private CircularIntList zList;
+    private CircularIntList.RangeIterator cachedXComplIterator;
+
     public SectionGrid(Level level, int viewDistance) {
         this.level = level;
         this.setViewDistance(viewDistance);
@@ -86,8 +91,15 @@ public class SectionGrid {
         int zAbsChunkIndex = secZ - this.gridWidth / 2;
         int zStart = Math.floorMod(zAbsChunkIndex, this.gridWidth);
 
-        CircularIntList xList = new CircularIntList(this.gridWidth, xStart);
-        CircularIntList zList = new CircularIntList(this.gridWidth, zStart);
+        if (this.xList == null) {
+            this.xList = new CircularIntList(this.gridWidth);
+            this.zList = new CircularIntList(this.gridWidth);
+            this.cachedXComplIterator = this.xList.createRangeIterator();
+        }
+        this.xList.updateStartIdx(xStart);
+        this.zList.updateStartIdx(zStart);
+        CircularIntList xList = this.xList;
+        CircularIntList zList = this.zList;
         CircularIntList.OwnIterator xIterator = xList.iterator();
         CircularIntList.OwnIterator zIterator = zList.iterator();
 
@@ -118,7 +130,8 @@ public class SectionGrid {
         }
 
         CircularIntList.RangeIterator xRangeIterator = xList.rangeIterator(xRangeStart, xRangeEnd);
-        CircularIntList.RangeIterator xComplIterator = xList.rangeIterator(xComplStart, xComplEnd);
+        this.cachedXComplIterator.update(xComplStart, xComplEnd);
+        CircularIntList.RangeIterator xComplIterator = this.cachedXComplIterator;
         CircularIntList.RangeIterator zRangeIterator = zList.rangeIterator(zRangeStart, zRangeEnd);
 
         xAbsChunkIndex = secX - (this.gridWidth >> 1) + xRangeStart;

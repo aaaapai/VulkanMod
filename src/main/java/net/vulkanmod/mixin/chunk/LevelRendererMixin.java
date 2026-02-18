@@ -64,6 +64,11 @@ public abstract class LevelRendererMixin {
      */
     @Overwrite
     private void setupRender(Camera camera, Frustum frustum, boolean isCapturedFrustum, boolean spectator) {
+        // Skip during Iris shadow passes to prevent shadow frustum from overwriting
+        // main frustum state in SectionGraph (see WorldRenderer.setShadowPassActive).
+        if (WorldRenderer.isShadowPassActive()) {
+            return;
+        }
         this.worldRenderer.setupRenderer(camera, frustum, isCapturedFrustum, spectator);
     }
 

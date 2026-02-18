@@ -3,6 +3,7 @@ package net.vulkanmod.vulkan.device;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.KHRMaintenance4.*;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 
@@ -30,6 +31,7 @@ public class Device {
 
     public final VkPhysicalDeviceFeatures2 availableFeatures;
     public final VkPhysicalDeviceVulkan11Features availableFeatures11;
+    public final VkPhysicalDeviceMaintenance4FeaturesKHR availableMaintenance4;
 
 //    public final VkPhysicalDeviceVulkan13Features availableFeatures13;
 //    public final boolean vulkan13Support;
@@ -55,12 +57,10 @@ public class Device {
         this.availableFeatures11.sType$Default();
         this.availableFeatures.pNext(this.availableFeatures11);
 
-        //Vulkan 1.3
-//        this.availableFeatures13 = VkPhysicalDeviceVulkan13Features.malloc();
-//        this.availableFeatures13.sType$Default();
-//        this.availableFeatures11.pNext(this.availableFeatures13.address());
-//
-//        this.vulkan13Support = this.device.getCapabilities().apiVersion == VK_API_VERSION_1_3;
+        // Query VK_KHR_maintenance4 support
+        this.availableMaintenance4 = VkPhysicalDeviceMaintenance4FeaturesKHR.calloc();
+        this.availableMaintenance4.sType$Default();
+        this.availableFeatures11.pNext(this.availableMaintenance4.address());
 
         vkGetPhysicalDeviceFeatures2(this.physicalDevice, this.availableFeatures);
 

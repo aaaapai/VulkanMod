@@ -110,8 +110,26 @@ public class VBO {
 
             RenderSystem.setShader(() -> shader);
 
-            drawWithShader(MV, P, ((ShaderMixed) shader).getPipeline());
+            // Set RenderSystem model-view to the passed MV so that Iris ExtendedShader
+            // picks up the correct camera rotation for iris_ModelViewMat.
+            // Do NOT set the projection — ExtendedShader.apply() has its own infinity fix
+            // that correctly rebuilds iris_ProjMat from FOV. Setting it to the CapturedState
+            // projection (which may have wrong values from early-frame FOV computation)
+            // would override that fix.
+            Matrix4f savedMV = new Matrix4f(RenderSystem.getModelViewMatrix());
+            RenderSystem.getModelViewMatrix().set(MV);
 
+            ((ShaderMixed) shader).updateUniformsOnly();
+
+            GraphicsPipeline pipeline = ((ShaderMixed) shader).getPipeline();
+            if (pipeline == null) {
+                RenderSystem.getModelViewMatrix().set(savedMV);
+                return;
+            }
+
+            drawWithShader(MV, P, pipeline);
+
+            RenderSystem.getModelViewMatrix().set(savedMV);
         }
     }
 
@@ -119,11 +137,13 @@ public class VBO {
         if (this.indexCount != 0) {
             RenderSystem.assertOnRenderThread();
 
+            Renderer renderer = Renderer.getInstance();
+            if (renderer.getBoundRenderPass() == null) return;
+
             VRenderSystem.applyMVP(MV, P);
 
             VRenderSystem.setPrimitiveTopologyGL(this.mode.asGLMode);
 
-            Renderer renderer = Renderer.getInstance();
             renderer.bindGraphicsPipeline(pipeline);
             VTextureSelector.bindShaderTextures(pipeline);
             renderer.uploadAndBindUBOs(pipeline);

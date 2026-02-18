@@ -14,7 +14,7 @@ public abstract class CodeParser {
      */
     public static String parseCodeLine(String line) {
         LinkedList<String> tokens = new LinkedList<>();
-        StringTokenizer tokenizer = new StringTokenizer(line, " \t\n\r\f,(){}%", true);
+        StringTokenizer tokenizer = new StringTokenizer(line, " \t\n\r\f,(){}", true);
 
         String delims = " \t\n\r\f";
 
@@ -32,24 +32,6 @@ public abstract class CodeParser {
         int i = 0;
         while (i < tokens.size()) {
             token = tokens.get(i);
-
-            if (token.equals("%")) {
-                processed.removeLast();
-
-                String prevToken = tokens.get(i - 1);
-                String nextToken = tokens.get(i + 1);
-
-                prevToken = checkTokenMapping(prevToken);
-                nextToken = checkTokenMapping(nextToken);
-
-                String newToken = "mod(%s, %s)".formatted(prevToken, nextToken);
-                processed.add(newToken);
-
-                changed = true;
-
-                i += 2;
-                continue;
-            }
 
             String remappedToken = checkTokenMapping(token);
 

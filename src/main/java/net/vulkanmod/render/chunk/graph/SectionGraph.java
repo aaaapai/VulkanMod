@@ -75,12 +75,16 @@ public class SectionGraph {
         this.initUpdate();
         this.initializeQueueForFullUpdate(camera);
 
+        int seedCount = this.sectionQueue.size();
+
         if (flag)
             this.updateRenderChunks();
         else
             this.updateRenderChunksSpectator();
 
+        int rebuildCount = this.rebuildQueue.size();
         this.scheduleRebuilds();
+
 
         this.minecraft.getProfiler().pop();
     }
@@ -161,9 +165,12 @@ public class SectionGraph {
 
     private void updateRenderChunks() {
         int maxDirectionsChanges = Initializer.CONFIG.advCulling - 1;
+        int bfsIdx = 0;
 
         while (this.sectionQueue.hasNext()) {
             RenderSection renderSection = this.sectionQueue.poll();
+
+            bfsIdx++;
 
             if (notInFrustum(renderSection))
                 continue;
@@ -247,8 +254,11 @@ public class SectionGraph {
     }
 
     private void updateRenderChunksSpectator() {
+        int bfsIdx = 0;
         while (this.sectionQueue.hasNext()) {
             RenderSection renderSection = this.sectionQueue.poll();
+
+            bfsIdx++;
 
             if (notInFrustum(renderSection))
                 continue;
@@ -303,6 +313,10 @@ public class SectionGraph {
 
     public ResettableQueue<RenderSection> getBlockEntitiesSections() {
         return this.blockEntitiesSections;
+    }
+
+    public int getNonEmptyChunks() {
+        return nonEmptyChunks;
     }
 
     public short getLastFrame() {

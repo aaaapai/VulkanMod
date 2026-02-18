@@ -178,7 +178,7 @@ public class TaskDispatcher {
         }
     }
 
-    public boolean isIdle() { return this.idleThreads == this.threads.length && this.compileResults.isEmpty(); }
+    public boolean isIdle() { return this.threads != null && this.idleThreads == this.threads.length && this.compileResults.isEmpty(); }
 
     public void clearBatchQueue() {
         while(!this.highPriorityTasks.isEmpty()) {

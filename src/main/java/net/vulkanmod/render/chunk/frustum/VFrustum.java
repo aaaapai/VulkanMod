@@ -4,8 +4,12 @@ import net.minecraft.world.phys.AABB;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VFrustum {
+    private static final Logger LOGGER = LoggerFactory.getLogger("VFrustum");
+
     private Vector4f viewVector = new Vector4f();
     private double camX;
     private double camY;
@@ -22,10 +26,16 @@ public class VFrustum {
         double d4 = Math.ceil(this.camY / (double) offset) * (double) offset;
         double d5 = Math.ceil(this.camZ / (double) offset) * (double) offset;
 
+        int iterations = 0;
         while (this.intersectAab((float) (d0 - this.camX), (float) (d1 - this.camY), (float) (d2 - this.camZ), (float) (d3 - this.camX), (float) (d4 - this.camY), (float) (d5 - this.camZ)) >= 0) {
             this.camZ -= (this.viewVector.z() * 4.0F);
             this.camX -= (this.viewVector.x() * 4.0F);
             this.camY -= (this.viewVector.y() * 4.0F);
+            iterations++;
+            if (iterations > 100) {
+                LOGGER.warn("[VFrustum] offsetToFullyIncludeCameraCube exceeded 100 iterations, aborting");
+                break;
+            }
         }
 
         return this;

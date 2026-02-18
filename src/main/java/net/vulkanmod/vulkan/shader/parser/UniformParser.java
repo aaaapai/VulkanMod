@@ -112,12 +112,21 @@ public class UniformParser {
         int currentLocation = 1;
 
         List<ImageDescriptor> imageDescriptors = new ObjectArrayList<>();
+        java.util.Set<String> seenNames = new java.util.HashSet<>();
 
         for(StageUniforms stageUniforms : this.stageUniforms) {
             for(Uniform uniform : stageUniforms.samplers) {
-                int imageIdx = currentLocation - 1;
-                imageDescriptors.add(new ImageDescriptor(currentLocation, uniform.type, uniform.name, imageIdx));
-                currentLocation++;
+                // Deduplicate samplers across stages — same sampler name gets one binding
+                if (seenNames.add(uniform.name)) {
+                    int imageIdx;
+                    try {
+                        imageIdx = net.vulkanmod.vulkan.texture.VTextureSelector.getTextureIdx(uniform.name);
+                    } catch (IllegalStateException e) {
+                        imageIdx = currentLocation - 1;
+                    }
+                    imageDescriptors.add(new ImageDescriptor(currentLocation, uniform.type, uniform.name, imageIdx));
+                    currentLocation++;
+                }
             }
         }
 

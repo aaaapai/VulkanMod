@@ -277,7 +277,8 @@ public abstract class Pipeline {
                 ub.checkCapacity(alignedSize);
 
                 if (!useOwnUB) {
-                    ubo.update(ub.getPointer());
+                    long writePtr = ub.getPointer();
+                    ubo.update(writePtr);
                     ub.updateOffset(alignedSize);
                 }
 
@@ -530,6 +531,10 @@ public abstract class Pipeline {
         public void setSPIRVs(SPIRV vertShaderSPIRV, SPIRV fragShaderSPIRV) {
             this.vertShaderSPIRV = vertShaderSPIRV;
             this.fragShaderSPIRV = fragShaderSPIRV;
+        }
+
+        public void setPushConstants(PushConstants pushConstants) {
+            this.pushConstants = pushConstants;
         }
 
         public void compileShaders() {

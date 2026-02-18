@@ -18,7 +18,6 @@ public class VertexBuffer extends Buffer {
 
     public void copyToVertexBuffer(long vertexSize, long vertexCount, ByteBuffer byteBuffer) {
         int bufferSize = (int) (vertexSize * vertexCount);
-//        long bufferSize = byteBuffer.limit();
 
         if(bufferSize > this.bufferSize - this.usedBytes) {
             resizeBuffer((this.bufferSize + bufferSize) * 2);
@@ -27,14 +26,11 @@ public class VertexBuffer extends Buffer {
         this.type.copyToBuffer(this, bufferSize, byteBuffer);
         offset = usedBytes;
         usedBytes += bufferSize;
-
     }
 
     private void resizeBuffer(int newSize) {
         MemoryManager.getInstance().addToFreeable(this);
         this.createBuffer(newSize);
-
-//        System.out.println("resized vertexBuffer to: " + newSize);
     }
 
 }

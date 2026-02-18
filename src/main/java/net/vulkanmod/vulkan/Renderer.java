@@ -373,7 +373,7 @@ public class Renderer {
     }
 
     public void endRenderPass(VkCommandBuffer commandBuffer) {
-        if (skipRendering || this.boundFramebuffer == null)
+        if (skipRendering || this.boundFramebuffer == null || !recordingCmds)
             return;
 
         if (!DYNAMIC_RENDERING)
@@ -523,6 +523,10 @@ public class Renderer {
         return boundRenderPass;
     }
 
+    public Framebuffer getBoundFramebuffer() {
+        return boundFramebuffer;
+    }
+
     public void setMainPass(MainPass mainPass) {
         this.mainPass = mainPass;
     }
@@ -535,15 +539,45 @@ public class Renderer {
         this.onResizeCallbacks.add(runnable);
     }
 
+    private static int diagBindFailCount = 0;
+
     public void bindGraphicsPipeline(GraphicsPipeline pipeline) {
+        if (boundRenderPass == null || currentCmdBuffer == null) {
+            if (diagBindFailCount < 10) {
+                diagBindFailCount++;
+                Initializer.LOGGER.error("[PIPELINE_BIND_DIAG] bindGraphicsPipeline FAILED: renderPass={} cmdBuffer={} pipeline={}",
+                    boundRenderPass != null ? "active" : "NULL",
+                    currentCmdBuffer != null ? "active" : "NULL",
+                    pipeline.getClass().getSimpleName());
+            }
+            return;
+        }
+
         VkCommandBuffer commandBuffer = currentCmdBuffer;
 
         PipelineState currentState = PipelineState.getCurrentPipelineState(boundRenderPass);
-        final long handle = pipeline.getHandle(currentState);
-
-        if (boundPipelineHandle == handle) {
+        final long handle;
+        try {
+            handle = pipeline.getHandle(currentState);
+        } catch (Exception e) {
+            if (diagBindFailCount < 10) {
+                diagBindFailCount++;
+                Initializer.LOGGER.error("[PIPELINE_BIND_DIAG] pipeline.getHandle() THREW for state={}: {}",
+                    currentState, e.getMessage());
+                e.printStackTrace();
+            }
             return;
         }
+
+        if (handle == 0) {
+            if (diagBindFailCount < 10) {
+                diagBindFailCount++;
+                Initializer.LOGGER.error("[PIPELINE_BIND_DIAG] pipeline.getHandle() returned 0 for state={}", currentState);
+            }
+            return;
+        }
+
+        if (boundPipelineHandle == handle) return;
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, handle);
         boundPipelineHandle = handle;
@@ -597,6 +631,10 @@ public class Renderer {
 
     public static void clearAttachments(int v, int width, int height) {
         if (skipRendering)
+            return;
+
+        // Safety: vkCmdClearAttachments requires an active render pass
+        if (INSTANCE.boundRenderPass == null || !INSTANCE.recordingCmds)
             return;
 
         try (MemoryStack stack = stackPush()) {

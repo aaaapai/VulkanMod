@@ -263,7 +263,7 @@ public abstract class VRenderSystem {
     }
 
     public static void enablePolygonOffset() {
-        Renderer.setDepthBias(depthBias[0], depthBias[1]);
+        Renderer.setDepthBias(depthBias[1], depthBias[0]);
     }
 
     public static void disablePolygonOffset() {

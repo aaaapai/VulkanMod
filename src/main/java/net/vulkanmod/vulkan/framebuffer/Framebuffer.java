@@ -32,6 +32,7 @@ public class Framebuffer {
     boolean hasDepthAttachment;
 
     private VulkanImage colorAttachment;
+    private java.util.List<VulkanImage> colorAttachmentList; // MRT support
     protected VulkanImage depthAttachment;
 
     private final ObjectArrayList<RenderPass> renderPasses = new ObjectArrayList<>();
@@ -56,6 +57,11 @@ public class Framebuffer {
         else {
             this.colorAttachment = builder.colorAttachment;
             this.depthAttachment = builder.depthAttachment;
+
+            // MRT: store the full list if provided
+            if (builder.colorAttachmentList != null && builder.colorAttachmentList.size() > 1) {
+                this.colorAttachmentList = new java.util.ArrayList<>(builder.colorAttachmentList);
+            }
         }
     }
 
@@ -96,7 +102,18 @@ public class Framebuffer {
         try (MemoryStack stack = MemoryStack.stackPush()) {
 
             LongBuffer attachments;
-            if (colorAttachment != null && depthAttachment != null) {
+
+            // MRT: if we have multiple color attachments, include all of them
+            if (colorAttachmentList != null && colorAttachmentList.size() > 1) {
+                int totalAttachments = colorAttachmentList.size() + (depthAttachment != null ? 1 : 0);
+                attachments = stack.mallocLong(totalAttachments);
+                for (int i = 0; i < colorAttachmentList.size(); i++) {
+                    attachments.put(i, colorAttachmentList.get(i).getImageView());
+                }
+                if (depthAttachment != null) {
+                    attachments.put(colorAttachmentList.size(), depthAttachment.getImageView());
+                }
+            } else if (colorAttachment != null && depthAttachment != null) {
                 attachments = stack.longs(colorAttachment.getImageView(), depthAttachment.getImageView());
             } else if (colorAttachment != null) {
                 attachments = stack.longs(colorAttachment.getImageView());
@@ -123,6 +140,12 @@ public class Framebuffer {
     }
 
     public void beginRenderPass(VkCommandBuffer commandBuffer, RenderPass renderPass, MemoryStack stack) {
+        // Layout transition is handled by the render pass internally:
+        // initialLayout (= finalLayout from previous pass, e.g. SHADER_READ_ONLY)
+        // is transitioned to the subpass layout (COLOR_ATTACHMENT_OPTIMAL) automatically.
+        // An input subpass dependency (EXTERNAL→0) ensures proper synchronization.
+        // Explicit barriers are NOT needed and would set the WRONG layout.
+
         if (!DYNAMIC_RENDERING) {
             long framebufferId = this.getFramebufferId(renderPass);
             renderPass.beginRenderPass(commandBuffer, framebufferId, stack);
@@ -135,6 +158,23 @@ public class Framebuffer {
 
         Renderer.setViewport(0, 0, this.width, this.height);
         Renderer.setScissor(0, 0, this.width, this.height);
+    }
+
+    /**
+     * Transitions all color and depth attachments to the layouts expected by render passes.
+     * Safe to call redundantly — skips images already in the correct layout.
+     */
+    public void transitionAttachmentsForRendering(MemoryStack stack, VkCommandBuffer commandBuffer) {
+        int colorCount = getColorAttachmentCount();
+        for (int i = 0; i < colorCount; i++) {
+            VulkanImage img = getColorAttachment(i);
+            if (img != null && img.getCurrentLayout() != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+                VulkanImage.transitionImageLayout(stack, commandBuffer, img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            }
+        }
+        if (depthAttachment != null && depthAttachment.getCurrentLayout() != VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            VulkanImage.transitionImageLayout(stack, commandBuffer, depthAttachment, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        }
     }
 
     protected long getFramebufferId(RenderPass renderPass) {
@@ -167,8 +207,12 @@ public class Framebuffer {
 
     public void cleanUp(boolean cleanImages) {
         if (cleanImages) {
-            if (this.colorAttachment != null)
+            if (this.colorAttachmentList != null) {
+                for (VulkanImage img : this.colorAttachmentList)
+                    img.free();
+            } else if (this.colorAttachment != null) {
                 this.colorAttachment.free();
+            }
 
             if (this.depthAttachment != null)
                 this.depthAttachment.free();
@@ -198,6 +242,25 @@ public class Framebuffer {
         return colorAttachment;
     }
 
+    public VulkanImage getColorAttachment(int index) {
+        if (colorAttachmentList != null && index < colorAttachmentList.size()) {
+            return colorAttachmentList.get(index);
+        }
+        if (index == 0) return colorAttachment;
+        return null;
+    }
+
+    public int getColorAttachmentCount() {
+        if (colorAttachmentList != null) return colorAttachmentList.size();
+        return colorAttachment != null ? 1 : 0;
+    }
+
+    public java.util.List<VulkanImage> getColorAttachmentList() {
+        if (colorAttachmentList != null) return colorAttachmentList;
+        if (colorAttachment != null) return java.util.List.of(colorAttachment);
+        return java.util.List.of();
+    }
+
     public int getWidth() {
         return this.width;
     }
@@ -222,12 +285,17 @@ public class Framebuffer {
         return new Builder(colorAttachment, depthAttachment);
     }
 
+    public static Builder builder(java.util.List<VulkanImage> colorAttachments, VulkanImage depthAttachment) {
+        return new Builder(colorAttachments, depthAttachment);
+    }
+
     public static class Builder {
         final boolean createImages;
         final int width, height;
         int format, depthFormat;
 
         VulkanImage colorAttachment;
+        java.util.List<VulkanImage> colorAttachmentList; // MRT
         VulkanImage depthAttachment;
 
 //        int colorAttachments;
@@ -240,9 +308,6 @@ public class Framebuffer {
         public Builder(int width, int height, int colorAttachments, boolean hasDepthAttachment) {
             Validate.isTrue(colorAttachments > 0 || hasDepthAttachment, "At least 1 attachment needed");
 
-            //TODO multi color attachments
-            Validate.isTrue(colorAttachments <= 1, "Not supported");
-
             this.createImages = true;
             this.format = DEFAULT_FORMAT;
             this.depthFormat = Vulkan.getDefaultDepthFormat();
@@ -251,7 +316,7 @@ public class Framebuffer {
 
             this.width = width;
             this.height = height;
-            this.hasColorAttachment = colorAttachments == 1;
+            this.hasColorAttachment = colorAttachments >= 1;
             this.hasDepthAttachment = hasDepthAttachment;
         }
 
@@ -264,6 +329,26 @@ public class Framebuffer {
 
             this.width = colorAttachment.width;
             this.height = colorAttachment.height;
+            this.hasColorAttachment = true;
+            this.hasDepthAttachment = depthAttachment != null;
+
+            this.depthFormat = this.hasDepthAttachment ? depthAttachment.format : 0;
+            this.linearFiltering = true;
+            this.depthLinearFiltering = false;
+        }
+
+        public Builder(java.util.List<VulkanImage> colorAttachments, VulkanImage depthAttachment) {
+            Validate.isTrue(!colorAttachments.isEmpty(), "At least 1 color attachment needed");
+
+            this.createImages = false;
+            this.colorAttachment = colorAttachments.get(0);
+            this.colorAttachmentList = colorAttachments;
+            this.depthAttachment = depthAttachment;
+
+            this.format = colorAttachments.get(0).format;
+
+            this.width = colorAttachments.get(0).width;
+            this.height = colorAttachments.get(0).height;
             this.hasColorAttachment = true;
             this.hasDepthAttachment = depthAttachment != null;
 

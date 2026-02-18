@@ -49,7 +49,20 @@ import org.lwjgl.opengl.GL11;
 import java.util.*;
 
 public class WorldRenderer {
+    private static int irisDiagFrameCounter = 0;
     private static WorldRenderer INSTANCE;
+
+    // Set by Iris shadow rendering to prevent shadow pass from
+    // overwriting main frustum state in SectionGraph.
+    private static volatile boolean shadowPassActive = false;
+
+    public static void setShadowPassActive(boolean active) {
+        shadowPassActive = active;
+    }
+
+    public static boolean isShadowPassActive() {
+        return shadowPassActive;
+    }
 
     private final Minecraft minecraft;
     private ClientLevel level;
@@ -195,6 +208,7 @@ public class WorldRenderer {
                 this.lastCamRotY = camera.getYRot();
 
                 this.sectionGraph.update(camera, frustum, spectator);
+
             }
         }
 
@@ -212,8 +226,11 @@ public class WorldRenderer {
         profiler.push("Uploads");
 
         try {
-            if (this.taskDispatcher.updateSections())
+            boolean hadResults = this.taskDispatcher.updateSections();
+            if (hadResults)
                 this.graphNeedsUpdate = true;
+
+            irisDiagFrameCounter++;
         } catch (Exception e) {
             Initializer.LOGGER.error(e.getMessage());
             allChanged();
@@ -316,6 +333,8 @@ public class WorldRenderer {
         GraphicsPipeline pipeline = PipelineManager.getTerrainShader(terrainRenderType);
         renderer.bindGraphicsPipeline(pipeline);
 
+        // Ensure lightmap texture is properly bound for terrain rendering
+        this.minecraft.gameRenderer.lightTexture().turnOnLightLayer();
         VTextureSelector.bindShaderTextures(pipeline);
 
         IndexBuffer indexBuffer = Renderer.getDrawer().getQuadsIndexBuffer().getIndexBuffer();
@@ -323,16 +342,21 @@ public class WorldRenderer {
 
         int currentFrame = Renderer.getCurrentFrame();
         Set<TerrainRenderType> allowedRenderTypes = Initializer.CONFIG.uniqueOpaqueLayer ? TerrainRenderType.COMPACT_RENDER_TYPES : TerrainRenderType.SEMI_COMPACT_RENDER_TYPES;
+
         if (allowedRenderTypes.contains(terrainRenderType)) {
             terrainRenderType.setCutoutUniform();
 
+            int chunkAreaCount = 0;
+            int drawBatchCount = 0;
             for (Iterator<ChunkArea> iterator = this.sectionGraph.getChunkAreaQueue().iterator(isTranslucent); iterator.hasNext(); ) {
                 ChunkArea chunkArea = iterator.next();
                 var queue = chunkArea.sectionQueue;
                 DrawBuffers drawBuffers = chunkArea.drawBuffers;
+                chunkAreaCount++;
 
                 renderer.uploadAndBindUBOs(pipeline);
                 if (drawBuffers.getAreaBuffer(terrainRenderType) != null && queue.size() > 0) {
+                    drawBatchCount++;
 
                     drawBuffers.bindBuffers(Renderer.getCommandBuffer(), pipeline, terrainRenderType, camX, camY, camZ);
                     renderer.uploadAndBindUBOs(pipeline);
@@ -343,6 +367,7 @@ public class WorldRenderer {
                         drawBuffers.buildDrawBatchesDirect(queue, terrainRenderType);
                 }
             }
+
         }
 
         if (terrainRenderType == TerrainRenderType.CUTOUT || terrainRenderType == TerrainRenderType.TRIPWIRE) {
@@ -376,12 +401,13 @@ public class WorldRenderer {
 
             Iterator<RenderSection> iterator = this.sectionGraph.getSectionQueue().iterator(false);
 
-            while (iterator.hasNext() && j < 15) {
+            while (iterator.hasNext() && j < 200) {
                 RenderSection section = iterator.next();
 
-                section.resortTransparency(this.taskDispatcher);
-
-                ++j;
+                if (section.getCompiledSection().hasTransparencyState()) {
+                    section.resortTransparency(this.taskDispatcher);
+                    ++j;
+                }
             }
         }
 
