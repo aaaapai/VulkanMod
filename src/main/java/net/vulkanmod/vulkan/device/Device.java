@@ -74,6 +74,23 @@ public class Device {
             case (0x10DE) -> "Nvidia";
             case (0x1022) -> "AMD";
             case (0x8086) -> "Intel";
+            case (0x13b5) -> "ARM";
+            case (0x19e5) -> "Maleoon";
+            case (0x5143) -> "Qualcomm";
+            case (0x1AE0) -> "GOOGLE";
+            case (0x4D4F4351) -> "Qualcomm_DXGI";
+            case (0x144D) -> "Samsung";
+            case (0x15ad) -> "VMWare";
+            case (0x106B) -> "Apple";
+            case (0x1414) -> "Microsoft";
+            case (0x1AF4) -> "VirtIO";
+            case (0x10005) -> "Mesa";
+            case (0x5040001) -> "Adreno540";
+            case (0x43051401) -> "Adreno750";
+            case (0x0) -> "Lavapipe";
+            case (0xC0DE) -> "Swiftshader";
+            
+            
             default -> "undef"; //Either AMD or Unknown Driver version/vendor and.or Encoding Scheme
         };
     }
@@ -113,9 +130,6 @@ public class Device {
             var a = stack.mallocInt(1);
             vkEnumerateInstanceVersion(a);
             int vkVer1 = a.get(0);
-            if (VK_VERSION_MINOR(vkVer1) < 2) {
-                throw new RuntimeException("Vulkan 1.2 not supported: Only Has: %s".formatted(decDefVersion(vkVer1)));
-            }
             return vkVer1;
         }
     }
