@@ -31,7 +31,7 @@ public class Device {
 
     public final VkPhysicalDeviceFeatures2 availableFeatures;
     public final VkPhysicalDeviceVulkan11Features availableFeatures11;
-    public final VkPhysicalDeviceMaintenance4FeaturesKHR availableMaintenance4;
+    //public final VkPhysicalDeviceMaintenance4FeaturesKHR availableMaintenance4;
 
 //    public final VkPhysicalDeviceVulkan13Features availableFeatures13;
 //    public final boolean vulkan13Support;
