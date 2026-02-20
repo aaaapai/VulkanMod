@@ -71,7 +71,7 @@ public class Vulkan {
         // allows vec3 vertex output → vec2 fragment input (truncation).
         // Required for shader packs that declare different-sized varyings
         // between vertex and fragment stages (valid in OpenGL, strict in Vulkan).
-        extensions.add("VK_KHR_maintenance4");
+        //extensions.add("VK_KHR_maintenance4");
 
         return new HashSet<>(extensions);
     }
