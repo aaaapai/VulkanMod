@@ -58,9 +58,9 @@ public class Device {
         this.availableFeatures.pNext(this.availableFeatures11);
 
         // Query VK_KHR_maintenance4 support
-        this.availableMaintenance4 = VkPhysicalDeviceMaintenance4FeaturesKHR.calloc();
+        /*this.availableMaintenance4 = VkPhysicalDeviceMaintenance4FeaturesKHR.calloc();
         this.availableMaintenance4.sType$Default();
-        this.availableFeatures11.pNext(this.availableMaintenance4.address());
+        this.availableFeatures11.pNext(this.availableMaintenance4.address());*/
 
         vkGetPhysicalDeviceFeatures2(this.physicalDevice, this.availableFeatures);
 
