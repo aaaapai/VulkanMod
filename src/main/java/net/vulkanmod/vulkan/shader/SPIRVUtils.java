@@ -24,8 +24,8 @@ import static org.lwjgl.system.MemoryUtil.memASCII;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class SPIRVUtils {
-    private static final boolean DEBUG = false;
-    private static final boolean OPTIMIZATIONS = true;
+    private static final boolean DEBUG = true;
+    private static final boolean OPTIMIZATIONS = false;
 
     private static long compiler;
     private static long options;
@@ -62,7 +62,7 @@ public class SPIRVUtils {
         if(DEBUG)
             shaderc_compile_options_set_generate_debug_info(options);
 
-        shaderc_compile_options_set_target_env(options, shaderc_env_version_vulkan_1_2, VK12.VK_API_VERSION_1_2);
+        shaderc_compile_options_set_target_env(options, shaderc_env_version_vulkan_1_1, VK12.VK_API_VERSION_1_1);
         shaderc_compile_options_set_include_callbacks(options, SHADER_INCLUDER, SHADER_RELEASER, pUserData);
 
         includePaths = new ObjectArrayList<>();
